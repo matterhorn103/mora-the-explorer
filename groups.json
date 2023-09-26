@@ -1,0 +1,20 @@
+{
+    "fer": "fernandez",
+    "gar": "garcia",
+    "gil": "gilmour",
+    "glo": "glorius",
+    "nae": "naesborg",
+    "rav": "ravoo",
+    "stu": "studer",
+    "other": {
+        "ac": "ac",
+        "biochemie": "biochemie",
+        "extern": "extern",
+        "ipc": "ipc",
+        "kb": "kb",
+        "meet": "meet",
+        "nmr": "nmr",
+        "nuk": "nuk",
+        "pharmazie": "pharmazie"
+    }
+}
