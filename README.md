@@ -1,4 +1,5 @@
 # mora_the_explorer
+This is a fresh public version of the formerly private repo, without the commit history.
 
 A small GUI program written for use at the Organic Chemistry department at the WWU Münster.
 Mora the Explorer checks the central \\mora server for NMR data matching the user's details and automatically saves any new ones to a folder of the user's choosing (e.g. personal analytics folder).
