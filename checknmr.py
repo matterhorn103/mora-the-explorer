@@ -183,7 +183,7 @@ def check_nmr(fed_options, check_day, mora_path, spec_paths, wild_group, prog_ba
                 logging.info("    " + str(split_details))
                 # Look for search string in extracted title, then copy matching spectra
                 # Confirm that the title is even long enough to avoid IndexErrors
-                if (len(split_title) < 2) or (len(split_title[1]) < 3) or ((wild_group is True) and len(split_title) < 3):
+                if len(split_title) < 2:
                     logging.info("Title doesn't have enough parts")
                     continue
                 # Add nmr to front of spectrum title so that the group initials get matched to the "initials" provided by the user, allowing Klaus to download all spectra from a specific group
