@@ -79,14 +79,16 @@ def check_nmr(fed_options, check_day, mora_path, spec_paths, wild_group, prog_ba
     # Format paths of spectrometer folders
     spectrometer = fed_options["spec"]
     if spectrometer == "300er":
-        # Add fix here to use folder where spectra from 2022 were moved to in Jan 2023
-        #if check_day[-4:] == "2022":
-        #    primary_check_path = spec_paths[spectrometer] / "22-av300_2022" / check_day
-        #else:
-        primary_check_path = spec_paths[spectrometer] / check_day
+        # For previous years other than the current
+        year = int(check_day[-4:])
+        if year != date.today().year:
+            primary_check_path = spec_paths[spectrometer] / f"{str(year)[-2:]}-av300_{year}" / check_day
+        else:
+            primary_check_path = spec_paths[spectrometer] / check_day
         # Give message if folder for the given date doesn't exist yet
         if primary_check_path.exists() is False:
             output_list.append("no folder exists for this date!")
+            logging.info(f"no folder exists at: {primary_check_path}")
             return output_list
         check_path_list = [primary_check_path]
         # If main folder exists, check if other folders are available for same day (generated on mora when two samples are submitted with same exp. no.)
@@ -100,17 +102,28 @@ def check_nmr(fed_options, check_day, mora_path, spec_paths, wild_group, prog_ba
         check_day_a = "neo400a_" + check_day
         check_day_b = "neo400b_" + check_day
         check_day_c = "neo400c_" + check_day
-        # Add fix here to use folder where spectra from 2022 were moved to in Jan 2023
-        #if check_day[-4:] == "2022":
-        #    check_path_a = spec_paths[spectrometer] / "22-neo400a_2022" / check_day_a
-        #    check_path_b = spec_paths[spectrometer] / "22-neo400b_2022" / check_day_b
-        #    check_path_c = spec_paths[spectrometer] / "22-neo400c_2022" / check_day_c
-        #else:
-        check_path_a = spec_paths[spectrometer] / check_day_a
-        check_path_b = spec_paths[spectrometer] / check_day_b
-        check_path_c = spec_paths[spectrometer] / check_day_c
-        check_path_300er = spec_paths["300er"] / check_day
+        # For previous years other than the current
+        year = int(check_day[-4:])
+        if year != date.today().year:
+            check_path_a = spec_paths[spectrometer] / f"{str(year)[-2:]}-neo400a_{year}" / check_day_a
+            check_path_b = spec_paths[spectrometer] / f"{str(year)[-2:]}-neo400b_{year}" / check_day_b
+            check_path_c = spec_paths[spectrometer] / f"{str(year)[-2:]}-neo400c_{year}" / check_day_c
+            check_path_300er = spec_paths["300er"] / f"{str(year)[-2:]}-av300_{year}" / check_day
+        else:
+            check_path_a = spec_paths[spectrometer] / check_day_a
+            check_path_b = spec_paths[spectrometer] / check_day_b
+            check_path_c = spec_paths[spectrometer] / check_day_c
+            check_path_300er = spec_paths["300er"] / check_day
         check_path_list = [check_path_a, check_path_b, check_path_c, check_path_300er]
+        for path in check_path_list:
+            hit = False
+            if path.exists() is False:
+                logging.info(f"no folder exists at: {path}")
+            elif path.exists() is True:
+                hit = True
+            if hit is not True:
+                output_list.append("no folders exist for this date!")
+                return output_list
         # Add any extra folders for this date beyond the expected four to check list
         unchanging_check_path_list = check_path_list
         for entry in unchanging_check_path_list:
