@@ -115,15 +115,15 @@ def check_nmr(fed_options, check_day, mora_path, spec_paths, wild_group, prog_ba
             check_path_c = spec_paths[spectrometer] / check_day_c
             check_path_300er = spec_paths["300er"] / check_day
         check_path_list = [check_path_a, check_path_b, check_path_c, check_path_300er]
+        hit = False
         for path in check_path_list:
-            hit = False
             if path.exists() is False:
                 logging.info(f"no folder exists at: {path}")
             elif path.exists() is True:
                 hit = True
-            if hit is not True:
-                output_list.append("no folders exist for this date!")
-                return output_list
+        if hit is not True:
+            output_list.append("no folders exist for this date!")
+            return output_list
         # Add any extra folders for this date beyond the expected four to check list
         unchanging_check_path_list = check_path_list
         for entry in unchanging_check_path_list:
