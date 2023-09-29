@@ -163,10 +163,14 @@ def check_nmr(fed_options, check_day, mora_path, spec_paths, wild_group, prog_ba
     # Now process needs to be slightly different depending on the spectrometer, as the directory structures are different
     if spectrometer == "300er" or spectrometer == "400er":
         # Initialize progress bar
-        if spectrometer == "300er":
-            prog_bar.setMaximum(100)
-        elif spectrometer == "400er":
-            prog_bar.setMaximum(100 * len(check_path_list))
+        try:
+            if spectrometer == "300er":
+                prog_bar.setMaximum(100)
+            elif spectrometer == "400er":
+                prog_bar.setMaximum(100 * len(check_path_list))
+        except:
+            # This stops python from hanging when the program is closed
+            exit()
         prog_state = 0
         progress_callback.emit(prog_state)
         # Loop through each folder in check_path_list (usually only one for 300er, several for 400er as separate ones are generated for each spectrometer)

@@ -733,11 +733,13 @@ The repeat function is also disabled as long as this option is selected.
                 notification_text = "Unknown error occurred."
             self.notification.setText(notification_text + " Click to dismiss")
         self.notification.show()
-        # Display system notification - doesn't seem to be implemented for macOS currently
-        try:
-            plyer.notification.notify(title="Hola!", message=notification_text, app_name="Mora the Explorer", timeout=120)
-        except:
-            pass
+        if self.since_button.isChecked() is False:
+            # Display system notification - doesn't seem to be implemented for macOS currently
+            # Only if a single date is checked, because with the since function the system notifications get annoying
+            try:
+                plyer.notification.notify(title="Hola!", message=notification_text, app_name="Mora the Explorer", timeout=120)
+            except:
+                pass
 
     def notification_clicked(self):
         self.notification.hide()
