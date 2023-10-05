@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import filecmp
 import json
 import logging
 import os
@@ -24,7 +23,7 @@ import platform
 import subprocess
 import shutil
 import sys
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from pathlib import Path
 
 import darkdetect
@@ -65,12 +64,20 @@ else:
 
 # Set up logging
 log = rsrc_dir / "log.log"
-logging.basicConfig(filename=log, filemode="w", format="%(asctime)s %(message)s", encoding="utf-8", level=logging.INFO)
+logging.basicConfig(
+    filename=log,
+    filemode="w",
+    format="%(asctime)s %(message)s",
+    encoding="utf-8",
+    level=logging.INFO,
+)
+
 
 class WorkerSignals(QObject):
     progress = Signal(int)
     result = Signal(object)
     completed = Signal()
+
 
 class Worker(QRunnable):
     def __init__(self, fn, *args, **kwargs):
@@ -109,7 +116,9 @@ class MainWindow(QMainWindow):
 
         # Load initial options from config file, or make one if it doesn't exist yet
         # platformdirs automatically saves the config file in the place appropriate to the os
-        self.config_file_path = Path(platformdirs.user_config_dir("mora_the_explorer", roaming=True)) / "config.json"
+        self.config_file_path = (
+            Path(platformdirs.user_config_dir("mora_the_explorer", roaming=True)) / "config.json"
+        )
         old_config_path = rsrc_dir / "config.json"
         if self.config_file_path.exists() is True:
             with open(self.config_file_path, encoding="utf-8") as config_file:
@@ -159,7 +168,7 @@ class MainWindow(QMainWindow):
         # Define paths to spectrometers based on loaded mora_path
         self.path_300er = self.mora_path / "300er"
         self.path_400er = self.mora_path / "400er"
-        #self.path_hf = self.mora_path / "500-600er" / self.groups_dict[self.options["group"]]
+        # self.path_hf = self.mora_path / "500-600er" / self.groups_dict[self.options["group"]]
         self.spectrometer_paths = {
             "300er": self.path_300er,
             "400er": self.path_400er,
@@ -217,7 +226,9 @@ class MainWindow(QMainWindow):
         for AK in self.AKlist:
             AKbutton = QRadioButton(AK)
             self.button_list.append(AKbutton)
-            if (AK == self.options["group"]) or (AK == "other" and self.AK_button_group.checkedButton() is None):
+            if (AK == self.options["group"]) or (
+                AK == "other" and self.AK_button_group.checkedButton() is None
+            ):
                 AKbutton.setChecked(True)
             self.AK_button_group.addButton(AKbutton)
             if len(self.AKlist) <= 4 or self.AKlist.index(AK) < (len(self.AKlist) / 2):
@@ -236,7 +247,6 @@ class MainWindow(QMainWindow):
             self.other_box.hide()
         self.other_box.currentTextChanged.connect(self.group_changed)
         options_layout.addWidget(self.other_box, 2, 2)
-
 
         # Destination path entry box
         dest_path_label = QLabel("save in:")
@@ -456,11 +466,13 @@ class MainWindow(QMainWindow):
         except PermissionError:
             failed_permission_dialog = QMessageBox(self)
             failed_permission_dialog.setWindowTitle("Access to mora server denied")
-            failed_permission_dialog.setText("""
+            failed_permission_dialog.setText(
+                """
 You have been denied permission to access the mora server.
 Check the connection and your authentication details and try again.
 The program will now close.
-            """)
+            """
+            )
             failed_permission_dialog.exec()
             logging.info("Permission to access server denied")
             return "permission_error"
@@ -469,10 +481,10 @@ The program will now close.
     def notify_update(self):
         update_dialog = QMessageBox(self)
         update_dialog.setWindowTitle("Update available")
-        update_dialog.setText(
-            f"There appears to be a new update available at:\n{self.update_path}"
+        update_dialog.setText(f"There appears to be a new update available at:\n{self.update_path}")
+        update_dialog.setInformativeText(
+            f"Your version is {self.version_no}\nThe version on the server is {self.newest_version_no}"
         )
-        update_dialog.setInformativeText(f"Your version is {self.version_no}\nThe version on the server is {self.newest_version_no}")
         update_dialog.setStandardButtons(QMessageBox.Ignore | QMessageBox.Open)
         update_dialog.setDefaultButton(QMessageBox.Ignore)
         choice = update_dialog.exec()
@@ -501,7 +513,7 @@ The repeat function is also disabled as long as this option is selected.
         if len(new_initials) > 0:
             if (self.options["group"] == "nmr") and (new_initials.split()[0] == "*"):
                 self.initials_entry.setMaxLength(5)
-                if (len(new_initials.split()) > 1):
+                if len(new_initials.split()) > 1:
                     self.wild_group = True
                     self.options["initials"] = new_initials.split()[1]
                 else:
@@ -523,9 +535,7 @@ The repeat function is also disabled as long as this option is selected.
         else:
             self.other_box.hide()
             self.options["group"] = self.AK_button_group.checkedButton().text()
-            self.path_hf = (
-                self.mora_path / "500-600er" / self.groups_dict[self.options["group"]]
-            )
+            self.path_hf = self.mora_path / "500-600er" / self.groups_dict[self.options["group"]]
         self.spectrometer_paths["hf"] = self.path_hf
         self.refresh_visible_specs()
         # If nmr group has been selected, disable the naming option checkboxes as they will be treated as selected anyway. Also make sure wild option is turned off
@@ -558,7 +568,7 @@ The repeat function is also disabled as long as this option is selected.
     def open_path(self):
         if Path(self.options["dest_path"]).exists() is True:
             if platform.system() == "Windows":
-            # Extra quotes necessary because cmd.exe can't handle spaces in path names otherwise
+                # Extra quotes necessary because cmd.exe can't handle spaces in path names otherwise
                 os.system(f'start "" "{self.options["dest_path"]}"')
             elif platform.system() == "Darwin":
                 subprocess.Popen(["open", self.options["dest_path"]])
@@ -649,7 +659,15 @@ The repeat function is also disabled as long as this option is selected.
         self.start_check_button.setEnabled(False)
         formatted_date = self.format_date(date)
         # Start main checking function in worker thread
-        worker = Worker(checknmr, self.options, formatted_date, self.mora_path, self.spectrometer_paths, self.wild_group, self.prog_bar)
+        worker = Worker(
+            checknmr,
+            self.options,
+            formatted_date,
+            self.mora_path,
+            self.spectrometer_paths,
+            self.wild_group,
+            self.prog_bar,
+        )
         worker.signals.progress.connect(self.update_progress)
         worker.signals.result.connect(self.handle_output)
         worker.signals.completed.connect(self.check_ended)
@@ -695,9 +713,9 @@ The repeat function is also disabled as long as this option is selected.
             entry_label = QLabel(entry)
             self.display_layout.addWidget(entry_label)
             # Move scroll area so that the user sees immediately which spectra were found or what the error was - but only the first time this happens (haven't been able to make this work)
-            #if entry == self.copied_list[0] and self.copied_list[0][:5] != "check":
-                #QApplication.processEvents()
-                #self.display_scroll.ensureWidgetVisible(entry_label, ymargin=50)
+            # if entry == self.copied_list[0] and self.copied_list[0][:5] != "check":
+            # QApplication.processEvents()
+            # self.display_scroll.ensureWidgetVisible(entry_label, ymargin=50)
         # Behaviour for repeat check function. Deactivate for hf spectrometer. See also self.timer in init function
         if (self.options["repeat_switch"] is True) and (self.options["spec"] != "hf"):
             self.start_check_button.hide()
@@ -737,12 +755,18 @@ The repeat function is also disabled as long as this option is selected.
             # Display system notification - doesn't seem to be implemented for macOS currently
             # Only if a single date is checked, because with the since function the system notifications get annoying
             try:
-                plyer.notification.notify(title="Hola!", message=notification_text, app_name="Mora the Explorer", timeout=120)
+                plyer.notification.notify(
+                    title="Hola!",
+                    message=notification_text,
+                    app_name="Mora the Explorer",
+                    timeout=120,
+                )
             except:
                 pass
 
     def notification_clicked(self):
         self.notification.hide()
+
 
 logging.info("Initializing program")
 app = QApplication(sys.argv)
