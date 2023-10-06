@@ -232,9 +232,9 @@ def check_nmr(
                 if split_title[1][0:3] == fed_options["initials"] or (
                     (wild_group is True) and (split_title[2][0:3] == fed_options["initials"])
                 ):
-                    # Or alternatively, just check if any of the title components match the initials
-                    # (normally to be avoided to prevent false positives)
-                    # if fed_options["initials"] in split_title:
+                # Or alternatively, just check if any of the title components match the initials
+                # (normally to be avoided to prevent false positives)
+                # if fed_options["initials"] in split_title:
                     logging.info("Spectrum matches search query!")
                     # Formatting options specifically for nmr group, include everything - even
                     # date and spec via parent folder name
