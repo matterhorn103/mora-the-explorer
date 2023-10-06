@@ -92,12 +92,23 @@ def check_nmr(
             )
         else:
             primary_check_path = spec_paths[spectrometer] / check_day
-        # Give message if folder for the given date doesn't exist yet
-        if primary_check_path.exists() is False:
-            output_list.append("no folder exists for this date!")
-            logging.info(f"no folder exists at: {primary_check_path}")
-            return output_list
         check_path_list = [primary_check_path]
+        # Account for different structure in 2019/start of 2020
+        if year <= 2020:
+            check_path_300er_old = (
+                spec_paths[spectrometer] / f"{str(year)[-2:]}-dpx300_{year}" / check_day
+            )
+            check_path_list.append(check_path_300er_old)
+        # Give message if folder for the given date doesn't exist yet
+        hit = False
+        for path in check_path_list:
+            if path.exists() is False:
+                logging.info(f"no folder exists at: {path}")
+            elif path.exists() is True:
+                hit = True
+        if hit is not True:
+            output_list.append("no folders exist for this date!")
+            return output_list
         # If main folder exists, check if other folders are available for same day (generated
         # on mora when two samples are submitted with same exp. no.)
         for num in range(2, 10):
@@ -129,6 +140,14 @@ def check_nmr(
             check_path_c = spec_paths[spectrometer] / check_day_c
             check_path_300er = spec_paths["300er"] / check_day
         check_path_list = [check_path_a, check_path_b, check_path_c, check_path_300er]
+        # Account for different structure in 2019/start of 2020
+        if year <= 2020:
+            check_path_400er_old = (
+                spec_paths[spectrometer] / f"{str(year)[-2:]}-av400_{year}" / check_day
+            )
+            check_path_300er_old = spec_paths["300er"] / f"{str(year)[-2:]}-dpx300_{year}" / check_day
+            check_path_list.extend([check_path_400er_old, check_path_300er_old])
+        # Give message if folder for the given date doesn't exist yet
         hit = False
         for path in check_path_list:
             if path.exists() is False:
