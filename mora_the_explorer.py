@@ -647,12 +647,10 @@ The repeat function is also disabled as long as this option is selected.
         return formatted_date
 
     def started(self):
+        self.queued_checks = 0
         if self.only_button.isChecked() is True or self.options["spec"] == "hf":
-            self.queued_checks = 1
             self.single_check(self.date_selected)
         elif self.since_button.isChecked() is True:
-            # Give number of checks initial value of zero so it can be added to iteratively below
-            self.queued_checks = 0
             self.multiday_check(self.date_selected)
 
     def single_check(self, date):
@@ -672,6 +670,7 @@ The repeat function is also disabled as long as this option is selected.
         worker.signals.result.connect(self.handle_output)
         worker.signals.completed.connect(self.check_ended)
         self.threadpool.start(worker)
+        self.queued_checks += 1
 
     def multiday_check(self, initial_date):
         end_date = date.today() + timedelta(days=1)
@@ -679,7 +678,6 @@ The repeat function is also disabled as long as this option is selected.
         while date_to_check != end_date:
             self.single_check(date_to_check)
             date_to_check += timedelta(days=1)
-            self.queued_checks += 1
 
     def update_progress(self, prog_state):
         self.prog_bar.setValue(prog_state)
@@ -725,6 +723,7 @@ The repeat function is also disabled as long as this option is selected.
         self.queued_checks -= 1
         if self.queued_checks == 0:
             self.start_check_button.setEnabled(True)
+            logging.info("Task complete")
 
     # I suspect this duplicates the functionality above, and doesn't seem to be used anywhere? Consider removal
     def start_timer(self):
