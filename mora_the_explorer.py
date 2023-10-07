@@ -750,7 +750,7 @@ The repeat function is also disabled as long as this option is selected.
                 notification_text = "Unknown error occurred."
             self.notification.setText(notification_text + " Click to dismiss")
         self.notification.show()
-        if self.since_button.isChecked() is False:
+        if self.since_button.isChecked() is False and platform.system() != "Darwin":
             # Display system notification - doesn't seem to be implemented for macOS currently
             # Only if a single date is checked, because with the since function the system notifications get annoying
             try:
@@ -758,7 +758,7 @@ The repeat function is also disabled as long as this option is selected.
                     title="Hola!",
                     message=notification_text,
                     app_name="Mora the Explorer",
-                    timeout=120,
+                    timeout=2,
                 )
             except:
                 pass
