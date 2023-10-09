@@ -3,3 +3,8 @@ Matt Milner
 v1.6.0
 License: GPLv3
 Please report any bugs to milner@uni-muenster.de!
+Changes in this version:
+- No more endless notifications during a since check
+- Ability to download spectra from 2022
+- Spectra as far back as 2019 available upon request to Klaus
+- Eliminated a bug that caused program to hang when closed

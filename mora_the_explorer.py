@@ -177,7 +177,7 @@ class MainWindow(QMainWindow):
         # Title and version info header
         self.setWindowTitle("Mora the Explorer")
         with open(rsrc_dir / "version.txt", encoding="utf-8") as version_file:
-            version_info = version_file.read()
+            version_info = "".join(version_file.readlines()[:5])
         version_box = QLabel(version_info)
         version_box.setAlignment(Qt.AlignHCenter)
 
@@ -457,9 +457,16 @@ class MainWindow(QMainWindow):
         try:
             if update_path_version_file.exists() is True:
                 with open(update_path_version_file, encoding="utf-8") as newest_version_file:
-                    self.newest_version_no = newest_version_file.readlines()[2].rstrip()
+                    version_file_info = newest_version_file.readlines()
+                    self.newest_version_no = version_file_info[2].rstrip()
+                    self.changelog = "".join(version_file_info[5:]).rstrip()
                 if self.version_no != self.newest_version_no:
                     self.notify_update()
+                if self.version_no == "v1.6.0" and not (rsrc_dir / "notified.txt").exists():
+                    self.notify_changelog()
+                    with open((rsrc_dir / "notified.txt"), "w") as record_file:
+                        # Save empty file so that the user is not notified next time
+                        pass
                 return "remote_version_found"
             else:
                 return "no_remote_version"
@@ -483,7 +490,7 @@ The program will now close.
         update_dialog.setWindowTitle("Update available")
         update_dialog.setText(f"There appears to be a new update available at:\n{self.update_path}")
         update_dialog.setInformativeText(
-            f"Your version is {self.version_no}\nThe version on the server is {self.newest_version_no}"
+            f"Your version is {self.version_no}\nThe version on the server is {self.newest_version_no}\n{self.changelog}"
         )
         update_dialog.setStandardButtons(QMessageBox.Ignore | QMessageBox.Open)
         update_dialog.setDefaultButton(QMessageBox.Ignore)
@@ -492,6 +499,11 @@ The program will now close.
             if self.update_path.exists() is True:
                 # Extra quotes necessary because cmd.exe can't handle spaces in path names otherwise
                 os.system(f'start "" "{self.update_path}"')
+
+    # Popup to show changelog for current version upon upgrade to v1.6.0
+    def notify_changelog(self):
+        changelog_info = QMessageBox.information(self, "Changes in v1.6.0", self.changelog)
+
 
     # Spawn popup dialog that dissuades user from using the "since" function regularly, unless the nmr group has been selected
     def since_function_activated(self):
