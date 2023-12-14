@@ -1,5 +1,5 @@
 """
-Mora the Explorer checks for new NMR spectra at the Organic Chemistry department at the WWU Münster.
+Mora the Explorer checks for new NMR spectra at the Organic Chemistry department at the University of Münster.
 Copyright (C) 2023 Matthew J. Milner
 
 This program is free software: you can redistribute it and/or modify
