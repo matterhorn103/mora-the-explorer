@@ -53,7 +53,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
 )
 
-from checknmr import check_nmr as checknmr
+from checknmr import check_nmr
 
 
 # Assign directory containing the various supporting files to a variable so we can use it whenever necessary. For whatever reason __file__ doesn't give the right location on a mac when a .app has been generated with pyinstaller
@@ -670,7 +670,7 @@ The repeat function is also disabled as long as this option is selected.
         formatted_date = self.format_date(date)
         # Start main checking function in worker thread
         worker = Worker(
-            checknmr,
+            check_nmr,
             self.options,
             formatted_date,
             self.mora_path,
