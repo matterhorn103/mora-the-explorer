@@ -1,0 +1,43 @@
+# This file configures mora_the_explorer's internal settings
+
+# If you are looking for your user configuration, it is stored in config.json, at:
+# Windows:  %USERPROFILE%\AppData\Roaming\mora_the_explorer
+# macOS:    ~/Library/Application Support/mora_the_explorer
+# Linux:    $XDG_DATA_HOME/mora_the_explorer or ~/.local/share/mora_the_explorer
+
+[default_config]
+initials = "mjm"
+group = "gil"
+dest_path = "copy full path here"
+inc_init = false
+inc_solv = false
+nmrcheck_style = false
+spec = "400er"
+repeat_switch = false
+repeat_delay = 5
+
+[paths]
+update = "//mora/nmr/mnova/mora_the_explorer"
+Windows = "//mora/nmr"
+Darwin = "/Volumes/nmr"     # Darwin = macOS
+Linux = "path"              # Overwrite this with your mount point for mora
+
+[groups]
+fer = "fernandez"
+gar = "garcia"
+gil = "gilmour"
+glo = "glorius"
+nae = "naesborg"
+rav = "ravoo"
+stu = "studer"
+
+[groups.other]
+ac = "ac"
+biochemie = "biochemie"
+extern = "extern"
+ipc = "ipc"
+kb = "kb"
+meet = "meet"
+nmr = "nmr"
+nuk = "nuk"
+pharmazie = "pharmazie"

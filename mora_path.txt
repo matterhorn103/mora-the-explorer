@@ -1,3 +1,0 @@
-//mora/nmr
-/Volumes/nmr
-overwrite this line with the mount point on Linux
