@@ -27,6 +27,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon, QPalette, QColor
 from PySide6.QtWidgets import QApplication
 
+from config import Config
 from main_window import MainWindow
 
 
@@ -77,6 +78,9 @@ if __name__ == "__main__":
         level=logging.INFO,
     )
 
+    # Load configuration
+    config = Config(rsrc_dir)
+
     logging.info("Initializing program")
     app = QApplication(sys.argv)
 
@@ -84,7 +88,7 @@ if __name__ == "__main__":
         set_dark_mode(app)
 
     # Create instance of MainWindow, then show it
-    window = MainWindow(rsrc_dir)
+    window = MainWindow(rsrc_dir, config)
     window.show()
 
 

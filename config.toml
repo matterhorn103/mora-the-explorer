@@ -1,11 +1,15 @@
-# This file configures mora_the_explorer's internal settings
+# This file configures mora_the_explorer's *default* internal settings and should not be changed
 
-# If you are looking for your user configuration, it is stored in config.json, at:
+# If you are looking for your user configuration, it is stored in the user's own config.toml, at:
 # Windows:  %USERPROFILE%\AppData\Roaming\mora_the_explorer
 # macOS:    ~/Library/Application Support/mora_the_explorer
-# Linux:    $XDG_DATA_HOME/mora_the_explorer or ~/.local/share/mora_the_explorer
+# Linux:    $XDG_CONFIG_HOME/mora_the_explorer or ~/.config/mora_the_explorer
 
-[default_config]
+# The user version of config.toml is primarily used to store the set of search options saved by the
+# user, however if that file contains key-value pairs for anything else e.g. paths.Linux, those take
+# precedence over those specified here
+
+[default_options]
 initials = "mjm"
 group = "gil"
 dest_path = "copy full path here"
@@ -19,10 +23,14 @@ repeat_delay = 5
 [paths]
 update = "//mora/nmr/mnova/mora_the_explorer"
 Windows = "//mora/nmr"
-Darwin = "/Volumes/nmr"     # Darwin = macOS
-Linux = "path"              # Overwrite this with your mount point for mora
+Darwin = "/Volumes/nmr"         # Darwin = macOS
+Linux = "will be overwritten"   # Specify in user config, not here!
 
 [groups]
+# Available groups in the style `initialism = full_name`
+# The initialism is the standard one used for each group's experiments and data institute-wide and
+# is used in the search for Bruker spectra (as it must be included in the measurement title)
+# The full name is the name of the group's folder at //mora/nmr/500-600er
 fer = "fernandez"
 gar = "garcia"
 gil = "gilmour"

@@ -27,3 +27,5 @@ shiboken6==6.7.0
     # via pyside6
     # via pyside6-addons
     # via pyside6-essentials
+tomli-w==1.0.0
+    # via mora-the-explorer

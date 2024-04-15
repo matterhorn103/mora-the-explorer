@@ -22,11 +22,9 @@ import os
 import platform
 import subprocess
 import sys
-import tomllib
 from datetime import date, timedelta
 from pathlib import Path
 
-import platformdirs
 import plyer
 
 from PySide6.QtCore import QSize, QTimer, Qt, QRunnable, Signal, Slot, QThreadPool, QObject
@@ -51,6 +49,7 @@ from PySide6.QtWidgets import (
 )
 
 from checknmr import check_nmr
+from config import Config
 
 
 class WorkerSignals(QObject):
@@ -82,21 +81,19 @@ class Worker(QRunnable):
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, resource_directory):
+    def __init__(self, resource_directory: Path, config: Config):
         super().__init__()
 
         self.rsrc_dir = resource_directory
+        self.config = config
+        self.options = config.options
         
         # Set up multithreading; MaxThreadCount limited to 1 as checks don't run properly if multiple run concurrently
         self.threadpool = QThreadPool()
         self.threadpool.setMaxThreadCount(1)
 
-        # Load app config from config.toml
-        with open(self.rsrc_dir / "config.toml", "rb") as f:
-            self.app_config = tomllib.load(f)
-
         # Set path to mora
-        self.mora_path = Path(self.app_config["paths"][platform.system()])
+        self.mora_path = Path(config.paths[platform.system()])
 
         # Define paths to spectrometers based on loaded mora_path
         self.path_300er = self.mora_path / "300er"
@@ -107,21 +104,7 @@ class MainWindow(QMainWindow):
         }
 
         # Check for updates
-        self.update_check(Path(self.app_config["paths"]["update"]))
-
-        # Load user options from config.json, or make one if it doesn't exist yet
-        # platformdirs automatically saves the config file in the place appropriate to the os
-        self.user_config_file = (
-            Path(platformdirs.user_config_dir("mora_the_explorer", roaming=True)) / "config.json"
-        )
-        if self.user_config_file.exists() is True:
-            with open(self.user_config_file, encoding="utf-8") as f:
-                self.options = json.load(f)
-        else:
-            self.options = self.app_config["default_config"]
-            self.user_config_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.user_config_file, "w", encoding="utf-8") as f:
-                json.dump(self.options, f)
+        self.update_check(Path(config.paths["update"]))
 
         # Title and version info header
         self.setWindowTitle("Mora the Explorer")
@@ -168,8 +151,8 @@ class MainWindow(QMainWindow):
         group_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         options_layout.addWidget(group_label, 1, 0)
 
-        # Add radio button for each group in app_config["groups"] (loaded earlier)
-        self.AKlist = list(self.app_config["groups"].keys())
+        # Add radio button for each group in config.groups (loaded earlier)
+        self.AKlist = list(self.config.groups.keys())
         self.AK_button_group = QButtonGroup(layout_widget)
         self.button_list = []
         for AK in self.AKlist:
@@ -187,7 +170,7 @@ class MainWindow(QMainWindow):
         self.AK_button_group.buttonClicked.connect(self.group_changed)
 
         # Drop down list for further options that appears only when "other" radio button is clicked
-        self.AKlist_other = list(self.app_config["groups"]["other"].values())
+        self.AKlist_other = list(self.config.groups["other"].values())
         self.other_box = QComboBox()
         self.other_box.addItems(self.AKlist_other)
         if self.options["group"] in self.AKlist_other:
@@ -378,12 +361,10 @@ class MainWindow(QMainWindow):
         self.notification.clicked.connect(self.notification_clicked)
         self.notification.hide()
 
-        # Trigger function to adapt which spectrometers are shown to the user based on their selected group
-        self.refresh_visible_specs()
-        # Trigger function to adapt date selector and naming options to the selected spectrometer
+        # Trigger function to adapt available options and spectrometers to the user's group
+        self.adapt_to_group()
+        # Trigger functions to adapt date selector and naming options to the selected spectrometer
         self.adapt_to_spec()
-        # Trigger function that normally activates when the group is changed so that the hf path is generated
-        self.group_changed()
 
         # Set up window. macos spaces things out more than windows so give it a bigger window
         if platform.system() == "Windows":
@@ -481,18 +462,23 @@ The repeat function is also disabled as long as this option is selected.
 
     def group_changed(self):
         if self.AK_button_group.checkedButton().text() == "other":
-            self.other_box.show()
             self.options["group"] = self.other_box.currentText()
-            self.path_hf = (
-                self.mora_path / "500-600er" / self.app_config["groups"]["other"][self.options["group"]]
+        else:
+            self.options["group"] = self.AK_button_group.checkedButton().text()
+        self.adapt_to_group()
+        self.save_button.setEnabled(True)
+    
+    def adapt_to_group(self):
+        if self.options["group"] in self.config.groups["other"]:
+            self.other_box.show()
+            path_hf = (
+                self.mora_path / "500-600er" / self.config.groups["other"][self.options["group"]]
             )
         else:
             self.other_box.hide()
-            self.options["group"] = self.AK_button_group.checkedButton().text()
-            self.path_hf = self.mora_path / "500-600er" / self.app_config["groups"][self.options["group"]]
-        self.spectrometer_paths["hf"] = self.path_hf
-        self.refresh_visible_specs()
-        # If nmr group has been selected, disable the naming option checkboxes as they will be treated as selected anyway. Also make sure wild option is turned off
+            path_hf = self.mora_path / "500-600er" / self.config.groups[self.options["group"]]
+        self.spectrometer_paths["hf"] = path_hf
+        # If nmr group has been selected, disable the naming option checkboxes as they will be treated as selected anyway
         if self.options["group"] == "nmr":
             self.inc_init_checkbox.setEnabled(False)
             self.nmrcheck_style_checkbox.setEnabled(False)
@@ -500,12 +486,13 @@ The repeat function is also disabled as long as this option is selected.
             # Only enable initials checkbox if nmrcheck_style option is not selected, disable otherwise
             self.inc_init_checkbox.setEnabled(not self.options["nmrcheck_style"])
             self.nmrcheck_style_checkbox.setEnabled(True)
+            # Make sure wild option is turned off for normal users
             self.wild_group = False
         if self.options["group"] == "nmr" or self.options["spec"] == "hf":
             self.inc_solv_checkbox.setEnabled(False)
         else:
             self.inc_solv_checkbox.setEnabled(True)
-        self.save_button.setEnabled(True)
+        self.refresh_visible_specs()
 
     def dest_path_changed(self, new_path):
         formatted_path = new_path
@@ -579,8 +566,7 @@ The repeat function is also disabled as long as this option is selected.
         self.save_button.setEnabled(True)
 
     def save(self):
-        with open(self.user_config_file, "w", encoding="utf-8") as f:
-            json.dump(self.options, f)
+        self.config.save()
         self.save_button.setEnabled(False)
 
     def date_changed(self):

@@ -4,7 +4,7 @@ This is a fresh public version of the formerly private repo, without the commit 
 A small GUI program written for use at the Organic Chemistry department at the University of Münster.
 Mora the Explorer checks the central `\\mora` server for NMR data matching the user's details and automatically saves any new ones to a folder of the user's choosing (e.g. personal analytics folder).
 
-The app is written in Python (v3.12.0) using the PySide6 bindings for the Qt6 framework (used PyQt6 bindings until v1.3).
+The app is written in Python (v3.12) using the PySide6 bindings for the Qt6 framework (used PyQt6 bindings until v1.3).
 
 The app can be compiled to an .exe Windows executable using `pyinstaller` (installable via `pip install pyinstaller`). For this a .spec file is provided, and thus it is only required to use the command `pyinstaller .\mora_the_explorer.spec` within the directory of the files, and everything will be taken care of automatically.
 
