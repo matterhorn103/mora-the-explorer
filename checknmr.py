@@ -23,9 +23,9 @@ from datetime import date, datetime
 from pathlib import Path
 
 
-# Checks that two spectra with the same name are actually identical and not e.g. different
-# proton measurements
+
 def identical_spectra(mora_folder, dest_folder):
+    """Check that two spectra with the same name are actually identical and not e.g. different proton measurements"""
     # Read original folder path (i.e. the experiment no) of spectrum
     audit_path_mora = mora_folder / "audita.txt"
     try:
@@ -57,7 +57,6 @@ def identical_spectra(mora_folder, dest_folder):
         return False
 
 
-# Define main checking function for Mora the Explorer
 def check_nmr(
     fed_options,
     check_day,
@@ -67,6 +66,9 @@ def check_nmr(
     prog_bar,
     progress_callback,
 ):
+    """Main checking function for Mora the Explorer."""
+
+    # Some initial setup that is the same for all spectrometers
     logging.info(f"Beginning check of {check_day} with the options:")
     logging.info(fed_options)
     # Initialize list that will be returned as output
@@ -81,91 +83,67 @@ def check_nmr(
         output_list.append("the mora server could not be reached!")
         logging.info("the mora server could not be reached!")
         return output_list
-    # Format paths of spectrometer folders
     spectrometer = fed_options["spec"]
-    if spectrometer == "300er":
-        # For previous years other than the current
-        year = int(check_day[-4:])
-        if year != date.today().year:
-            primary_check_path = (
-                spec_paths[spectrometer] / f"{str(year)[-2:]}-av300_{year}" / check_day
-            )
-        else:
-            primary_check_path = spec_paths[spectrometer] / check_day
-        check_path_list = [primary_check_path]
-        # Account for different structure in 2019/start of 2020
-        if year <= 2020:
-            check_path_300er_old = (
-                spec_paths[spectrometer] / f"{str(year)[-2:]}-dpx300_{year}" / check_day
-            )
-            check_path_list.append(check_path_300er_old)
-        # Give message if folder for the given date doesn't exist yet
-        hit = False
-        for path in check_path_list:
-            if path.exists() is False:
-                logging.info(f"no folder exists at: {path}")
-            elif path.exists() is True:
-                hit = True
-        if hit is not True:
-            output_list.append("no folders exist for this date!")
-            return output_list
-        # If main folder exists, check if other folders are available for same day (generated
-        # on mora when two samples are submitted with same exp. no.)
-        for num in range(2, 10):
-            alt_path = primary_check_path.with_name(primary_check_path.name + "_" + str(num))
-            if alt_path.exists() is True:
-                check_path_list.append(alt_path)
-        logging.info("The following paths will be checked:")
-        logging.info(check_path_list)
-    elif spectrometer == "400er":
-        check_day_a = "neo400a_" + check_day
-        check_day_b = "neo400b_" + check_day
-        check_day_c = "neo400c_" + check_day
-        # For previous years other than the current
-        year = int(check_day[-4:])
-        if year != date.today().year:
-            check_path_a = (
-                spec_paths[spectrometer] / f"{str(year)[-2:]}-neo400a_{year}" / check_day_a
-            )
-            check_path_b = (
-                spec_paths[spectrometer] / f"{str(year)[-2:]}-neo400b_{year}" / check_day_b
-            )
-            check_path_c = (
-                spec_paths[spectrometer] / f"{str(year)[-2:]}-neo400c_{year}" / check_day_c
-            )
-            check_path_300er = spec_paths["300er"] / f"{str(year)[-2:]}-av300_{year}" / check_day
-        else:
-            check_path_a = spec_paths[spectrometer] / check_day_a
-            check_path_b = spec_paths[spectrometer] / check_day_b
-            check_path_c = spec_paths[spectrometer] / check_day_c
-            check_path_300er = spec_paths["300er"] / check_day
-        check_path_list = [check_path_a, check_path_b, check_path_c, check_path_300er]
-        # Account for different structure in 2019/start of 2020
-        if year <= 2020:
-            check_path_400er_old = (
-                spec_paths[spectrometer] / f"{str(year)[-2:]}-av400_{year}" / check_day
-            )
-            check_path_300er_old = spec_paths["300er"] / f"{str(year)[-2:]}-dpx300_{year}" / check_day
-            check_path_list.extend([check_path_400er_old, check_path_300er_old])
-        # Give message if folder for the given date doesn't exist yet
-        hit = False
-        for path in check_path_list:
-            if path.exists() is False:
-                logging.info(f"no folder exists at: {path}")
-            elif path.exists() is True:
-                hit = True
-        if hit is not True:
-            output_list.append("no folders exist for this date!")
-            return output_list
-        # Add any extra folders for this date beyond the expected four to check list
-        unchanging_check_path_list = check_path_list
-        for entry in unchanging_check_path_list:
+
+    # Format paths of spectrometer folders, different for each spectrometer
+    if spectrometer == "300er" or spectrometer == "400er":
+        if spectrometer == "300er":
+            # Start with default, normal folder path
+            check_path_list = [spec_paths[spectrometer] / check_day]
+            # Add archives for previous years other than the current if requested
+            year = int(check_day[-4:])
+            if year != date.today().year:
+                check_path_list.append(
+                    spec_paths[spectrometer] / f"{str(year)[-2:]}-av300_{year}" / check_day
+                )
+            # Account for different structure in 2019/start of 2020
+            if year <= 2020:
+                check_path_list.append(
+                    spec_paths[spectrometer] / f"{str(year)[-2:]}-dpx300_{year}" / check_day
+                )
+
+        elif spectrometer == "400er":
+            check_day_a = "neo400a_" + check_day
+            check_day_b = "neo400b_" + check_day
+            check_day_c = "neo400c_" + check_day
+            # Start with default, normal folder paths
+            check_path_list = [
+                spec_paths[spectrometer] / check_day_a,
+                spec_paths[spectrometer] / check_day_b,
+                spec_paths[spectrometer] / check_day_c,
+                spec_paths["300er"] / check_day,
+            ]
+            # Add archives for previous years other than the current if requested
+            year = int(check_day[-4:])
+            if year != date.today().year:
+                check_path_list.extend([
+                    spec_paths[spectrometer] / f"{str(year)[-2:]}-neo400a_{year}" / check_day_a,
+                    spec_paths[spectrometer] / f"{str(year)[-2:]}-neo400b_{year}" / check_day_b,
+                    spec_paths[spectrometer] / f"{str(year)[-2:]}-neo400c_{year}" / check_day_c,
+                    spec_paths["300er"] / f"{str(year)[-2:]}-av300_{year}" / check_day,
+                ])
+            # Account for different structure in 2019/start of 2020
+            if year <= 2020:
+                check_path_list.extend([
+                    spec_paths[spectrometer] / f"{str(year)[-2:]}-av400_{year}" / check_day,
+                    spec_paths["300er"] / f"{str(year)[-2:]}-dpx300_{year}" / check_day,
+                ])
+
+        # This stuff applies to paths on both the 300er and 400er
+        # Add potential overflow folders for same day (these are generated on mora when two samples
+        # are submitted with same exp. no.)
+        for entry in list(check_path_list):
             for num in range(2, 20):
-                alt_path = entry.with_name(entry.name + "_" + str(num))
-                if alt_path.exists() is True:
-                    check_path_list.append(alt_path)
+                check_path_list.append(entry.with_name(entry.name + "_" + str(num)))
+        # Go over the list to make sure we only bother checking paths that exist
+        check_path_list = [path for path in check_path_list if path.exists()]
+        # Give message if no folders for the given date exist yet
+        if len(check_path_list) == 0:
+            output_list.append("no folders exist for this date!")
+            return output_list
         logging.info("The following paths will be checked:")
         logging.info(check_path_list)
+
     elif spectrometer == "hf":
         # Code to check folders of all groups when the nmr group is chosen and the wild group
         # option is invoked
@@ -196,7 +174,9 @@ def check_nmr(
                 output_list.append("no folder exists for this date!")
                 logging.info("no folder exists for this date!")
                 return output_list
-    # Now process needs to be slightly different depending on the spectrometer, as the directory
+    
+    # Now we have a list of directories to check, start the actual checking process
+    # Needs to be slightly different depending on the spectrometer, as the directory
     # structures are different
     if spectrometer == "300er" or spectrometer == "400er":
         # Initialize progress bar
@@ -362,6 +342,7 @@ def check_nmr(
                 # Update progress bar
                 prog_state += 100 / len(check_list)
                 progress_callback.emit(round(prog_state))
+
     elif spectrometer == "hf":
         # Initialize progress bar
         max_progress = len(check_list)
@@ -456,6 +437,7 @@ def check_nmr(
             # Update progress bar
             prog_state += 1
             progress_callback.emit(prog_state)
+
     now = datetime.now().strftime("%H:%M:%S")
     completed_statement = f"check of {check_day} completed at " + now
     output_list.append(completed_statement)
