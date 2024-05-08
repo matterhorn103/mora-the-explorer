@@ -94,6 +94,7 @@ class MainWindow(QMainWindow):
 
         # Set path to mora
         self.mora_path = Path(config.paths[platform.system()])
+        self.update_path = Path(config.paths["update"])
 
         # Define paths to spectrometers based on loaded mora_path
         self.path_300er = self.mora_path / "300er"
@@ -388,9 +389,9 @@ class MainWindow(QMainWindow):
                     newest_version_no = version_file_info[2].rstrip()
                     changelog = "".join(version_file_info[5:]).rstrip()
                 if version_no != newest_version_no:
-                    self.notify_update()
+                    self.notify_update(version_no, newest_version_no, changelog)
                 if version_no == "v1.6.0" and not (self.rsrc_dir / "notified.txt").exists():
-                    self.notify_changelog()
+                    self.notify_changelog(changelog)
                     with open((self.rsrc_dir / "notified.txt"), "w") as f:
                         # Save empty file so that the user is not notified next time
                         pass
@@ -409,12 +410,12 @@ The program will now close.
             sys.exit()
 
     # Popup to notify user that an update is available, with version info
-    def notify_update(self):
+    def notify_update(self, current, available, changelog):
         update_dialog = QMessageBox(self)
         update_dialog.setWindowTitle("Update available")
         update_dialog.setText(f"There appears to be a new update available at:\n{self.update_path}")
         update_dialog.setInformativeText(
-            f"Your version is {self.version_no}\nThe version on the server is {self.newest_version_no}\n{self.changelog}"
+            f"Your version is {current}\nThe version on the server is {available}\n{changelog}"
         )
         update_dialog.setStandardButtons(QMessageBox.Ignore | QMessageBox.Open)
         update_dialog.setDefaultButton(QMessageBox.Ignore)
@@ -425,8 +426,8 @@ The program will now close.
                 os.system(f'start "" "{self.update_path}"')
 
     # Popup to show changelog for current version upon upgrade to v1.6.0
-    def notify_changelog(self):
-        QMessageBox.information(self, "Changes in v1.6.0", self.changelog)
+    def notify_changelog(self, changelog):
+        QMessageBox.information(self, "Changes in v1.6.0", changelog)
 
     # Spawn popup dialog that dissuades user from using the "since" function regularly, unless the nmr group has been selected
     def since_function_activated(self):
