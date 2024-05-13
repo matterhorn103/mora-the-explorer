@@ -6,6 +6,7 @@ Please report any bugs to milner@uni-muenster.de!
 Changes in this version:
 - Spectra measured in 2023 can be found again
 - Any spectra measured in previous years that haven't been archived will be found correctly in future
-- Various files for program configuration (groups.json, mora_path.txt, update_path.txt) now collected together in config.toml
+- User config now contained in a config.toml
+- Various files used for default program configuration (groups.json, mora_path.txt, update_path.txt) now collected together
 - Lots of internal restructuring
 - Removal of deprecated (<v1.5.2) things
