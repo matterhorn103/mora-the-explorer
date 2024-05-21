@@ -369,7 +369,7 @@ class MainWindow(QMainWindow):
 
         # Set up window. macos spaces things out more than windows so give it a bigger window
         if platform.system() == "Windows":
-            self.setMinimumSize(QSize(380, 650))
+            self.setMinimumSize(QSize(420, 680))
         else:
             self.setMinimumSize(QSize(450, 780))
 
