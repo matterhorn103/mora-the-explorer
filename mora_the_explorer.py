@@ -92,5 +92,5 @@ if __name__ == "__main__":
     window.show()
 
 
-    app.setWindowIcon(QIcon("explorer.ico"))
+    app.setWindowIcon(QIcon(str(rsrc_dir / "explorer.ico")))
     app.exec()
