@@ -344,6 +344,9 @@ class MainWindow(QMainWindow):
         # Progress bar for check
         self.prog_bar = QProgressBar()
         self.prog_bar.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+        if platform.system() == "Windows" and platform.release() == "11":
+            # Looks bad (with initial Qt Win11 theme at least) so disable text
+            self.prog_bar.setTextVisible(False)
         layout.addWidget(self.prog_bar)
 
         # Box to display output of check function (list of copied spectra)
