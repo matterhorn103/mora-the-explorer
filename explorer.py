@@ -202,7 +202,7 @@ class Explorer:
             self.mora_path,
             self.spectrometer_paths,
             self.wild_group,
-            self.prog_bar,
+            self.ui.prog_bar,
         )
         worker.signals.progress.connect(self.update_progress)
         worker.signals.result.connect(self.handle_output)
@@ -236,26 +236,22 @@ class Explorer:
             # At least one spectrum was found
             if self.copied_list[1][:5] == "spect":
                 self.copied_list.pop(0)
-                self.notify(self.copied_list)
+                self.main_window.notify_spectra(self.copied_list)
             # No spectra were found but check completed successfully
             elif self.copied_list[1][:5] == "check":
                 pass
             # Known error occurred
             else:
                 self.copied_list.pop(0)
-                self.notify(self.copied_list)
+                self.main_window.notify_spectra(self.copied_list)
         else:
             # Unknown error occurred, output of check function was returned without appending anything to copied_list
             self.copied_list.pop(0)
-            self.notify(self.copied_list)
+            self.main_window.notify_spectra(self.copied_list)
         # Display output
         for entry in self.copied_list:
             entry_label = QLabel(entry)
             self.ui.display.add_entry(entry_label)
-            # Move scroll area so that the user sees immediately which spectra were found or what the error was - but only the first time this happens (haven't been able to make this work)
-            # if entry == self.copied_list[0] and self.copied_list[0][:5] != "check":
-            # QApplication.processEvents()
-            # self.display_scroll.ensureWidgetVisible(entry_label, ymargin=50)
         # Behaviour for repeat check function. Deactivate for hf spectrometer. See also self.timer in init function
         if (self.config.options["repeat_switch"] is True) and (self.config.options["spec"] != "hf"):
             self.ui.start_check_button.hide()

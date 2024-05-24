@@ -77,7 +77,7 @@ class MainWindow(QMainWindow):
                 notification_text = "Unknown error occurred."
             self.ui.notification.setText(notification_text + " Click to dismiss")
         self.ui.notification.show()
-        if self.since_button.isChecked() is False and platform.system() != "Darwin":
+        if self.opts.since_button.isChecked() is False and platform.system() != "Darwin":
             # Display system notification - doesn't seem to be implemented for macOS currently
             # Only if a single date is checked, because with the since function the system notifications get annoying
             try:
