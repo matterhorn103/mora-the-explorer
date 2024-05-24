@@ -28,7 +28,8 @@ from PySide6.QtGui import QIcon, QPalette, QColor
 from PySide6.QtWidgets import QApplication
 
 from config import Config
-from main_window import MainWindow
+from explorer import Explorer
+from ui.main_window import MainWindow
 
 
 def get_rsrc_dir():
@@ -79,18 +80,30 @@ if __name__ == "__main__":
     )
 
     # Load configuration
+    logging.info(f"Program resources located at {rsrc_dir}")
+    logging.info("Loading program settings...")
     config = Config(rsrc_dir)
+    logging.info("...complete")
 
-    logging.info("Initializing program")
+    logging.info("Initializing program...")
     app = QApplication(sys.argv)
 
     if darkdetect.isDark() is True and platform.system() == "Windows":
         set_dark_mode(app)
 
-    # Create instance of MainWindow, then show it
+    # Create instance of MainWindow (front-end), then show it
+    logging.info("Initializing user interface...")
     window = MainWindow(rsrc_dir, config)
     window.show()
+    logging.info("...complete")
 
+    # Create instance of Explorer (back-end)
+    # Give it our MainWindow so it can read things directly from the UI
+    logging.info("Initializing explorer...")
+    explorer = Explorer(window, rsrc_dir, config)
+    logging.info("...complete")
 
     app.setWindowIcon(QIcon(str(rsrc_dir / "explorer.ico")))
+
+    logging.info("Initialization complete")
     app.exec()
