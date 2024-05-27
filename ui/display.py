@@ -1,11 +1,6 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (
-    QScrollArea,
-    QVBoxLayout,
-    QWidget,
-    QLabel,
-    QSizePolicy,
-)
+from PySide6.QtWidgets import QScrollArea, QVBoxLayout, QWidget, QLabel, QSizePolicy
+
 
 class Display(QScrollArea):
     """Box to display output of check function (list of copied spectra)"""

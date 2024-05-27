@@ -44,7 +44,7 @@ def get_rsrc_dir():
 
 def set_dark_mode(app):
     """Manually set a dark mode in Windows.
-    
+
     Make dark mode less black than default because Windows dark mode looks bad."""
     dark_palette = QPalette()
     dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))

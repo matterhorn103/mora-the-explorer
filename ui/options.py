@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QGridLayout,
 )
 
+
 class AKButtons(QButtonGroup):
     def __init__(self, parent, ak_list, selected_ak):
         super().__init__(parent)
@@ -26,9 +27,7 @@ class AKButtons(QButtonGroup):
         for ak in ak_list:
             ak_button = QRadioButton(ak)
             self.button_list.append(ak_button)
-            if (ak == selected_ak) or (
-                ak == "other" and self.checkedButton() is None
-            ):
+            if (ak == selected_ak) or (ak == "other" and self.checkedButton() is None):
                 ak_button.setChecked(True)
             self.addButton(ak_button)
             if len(ak_list) <= 4 or ak_list.index(ak) < (len(ak_list) / 2):
@@ -70,13 +69,14 @@ class SpecButtons(QButtonGroup):
 
 class OptionsLayout(QGridLayout):
     """Layout containing all user-configurable options.
-    
+
     Widgets with more complicated code are defined in custom classes, while simple ones
     are defined in-line.
 
     We define the layout, content, and appearance here, but not the behaviour (e.g. what
     happens when something is clicked or changed.)
     """
+
     def __init__(self, config):
         super().__init__()
 
@@ -94,18 +94,18 @@ class OptionsLayout(QGridLayout):
         self.addWidget(self.initials_label, 0, 0)
         self.addWidget(self.initials_entry, 0, 1)
         self.addWidget(self.initials_hint, 0, 2)
-        
-        
+
         # Row 1, research group selection buttons
         self.group_label = QLabel("group:")
         self.group_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
-        self.AK_buttons = AKButtons(self, list(config.groups.keys()), config.options["group"])
+        self.AK_buttons = AKButtons(
+            self, list(config.groups.keys()), config.options["group"]
+        )
 
         self.addWidget(self.group_label, 1, 0)
         self.addLayout(self.AK_buttons.main_layout, 1, 1)
         self.addLayout(self.AK_buttons.overflow_layout, 2, 1)
-
 
         # Row 2, drop down list for further options that appears only when "other"
         # radio button is clicked
@@ -117,7 +117,6 @@ class OptionsLayout(QGridLayout):
             self.other_box.hide()
 
         self.addWidget(self.other_box, 2, 2)
-
 
         # Row 3, destination path entry box
         self.dest_path_label = QLabel("save in:")
@@ -131,11 +130,10 @@ class OptionsLayout(QGridLayout):
         # Disable button if path hasn't yet been specified to stop new users thinking it should be used to select a folder
         if config.options["dest_path"] == "copy full path here":
             self.open_button.hide()
-        
+
         self.addWidget(self.dest_path_label, 3, 0)
         self.addWidget(self.dest_path_input, 3, 1)
         self.addWidget(self.open_button, 3, 2)
-
 
         # Row 4, file naming options
         self.include_label = QLabel("include:")
@@ -157,18 +155,16 @@ class OptionsLayout(QGridLayout):
 
         self.in_filename_label = QLabel("...in filename")
         self.in_filename_label.setAlignment(Qt.AlignCenter)
-        
+
         self.addWidget(self.include_label, 4, 0)
         self.addLayout(init_solv_layout, 4, 1)
         self.addWidget(self.in_filename_label, 4, 2)
 
-
         # Row 5, option to use NMRCheck-style formatting of folder names
         self.nmrcheck_style_checkbox = QCheckBox("use comprehensive (NMRCheck) style")
         self.nmrcheck_style_checkbox.setChecked(config.options["nmrcheck_style"])
-        
-        self.addWidget(self.nmrcheck_style_checkbox, 5, 1, 1, 2)
 
+        self.addWidget(self.nmrcheck_style_checkbox, 5, 1, 1, 2)
 
         # Row 6, spectrometer selection buttons
         self.spec_label = QLabel("search:")
@@ -178,7 +174,6 @@ class OptionsLayout(QGridLayout):
 
         self.addWidget(self.spec_label, 6, 0)
         self.addLayout(self.spec_buttons.layout, 6, 1, 1, 2)
-
 
         # Row 7, checkbox to instruct to repeat after chosen interval
         self.repeat_label = QLabel("repeat:")
@@ -199,13 +194,11 @@ class OptionsLayout(QGridLayout):
         self.addWidget(self.repeat_label, 7, 0)
         self.addLayout(repeat_layout, 7, 1)
 
-
         # Row 8, button to save all options for future
         self.save_button = QPushButton("save options as defaults for next time")
         self.save_button.setEnabled(False)
 
         self.addWidget(self.save_button, 8, 0, 1, 3)
-
 
         # Row 9, date selection tool
         self.date_label = QLabel("when?")
@@ -236,7 +229,7 @@ class OptionsLayout(QGridLayout):
         date_layout.addWidget(self.date_selector, 2)
 
         self.addLayout(date_layout, 9, 1)
-        
+
         # Date selection tool for hf (only needs year)
         self.hf_date_selector = QDateEdit()
         self.hf_date_selector.setDisplayFormat("yyyy")

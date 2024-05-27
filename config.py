@@ -10,20 +10,24 @@ import platformdirs
 
 class Config:
     """Returns a container for the combined app and user configuration data."""
+
     def __init__(self, resource_directory):
         self.rsrc_dir = resource_directory
 
         # Load app config from config.toml
         with open(self.rsrc_dir / "config.toml", "rb") as f:
             self.app_config = tomllib.load(f)
-            logging.info(f"App configuration loaded from: {self.rsrc_dir / "config.toml"}")
+            logging.info(
+                f"App configuration loaded from: {self.rsrc_dir / "config.toml"}"
+            )
 
         # Load user config from config.toml in user's config directory
         # Make one if it doesn't exist yet
         # User options used to be stored in config.json pre v1.7, so also check for that
         # platformdirs automatically saves the config file in the place appropriate to the os
         self.user_config_file = (
-            Path(platformdirs.user_config_dir("mora_the_explorer", roaming=True)) / "config.toml"
+            Path(platformdirs.user_config_dir("mora_the_explorer", roaming=True))
+            / "config.toml"
         )
         user_config_json = self.user_config_file.with_name("config.json")
         if self.user_config_file.exists() is True:
@@ -38,7 +42,7 @@ class Config:
             self.user_config = {
                 "options": old_options,
                 "paths": {"Linux": "overwrite with default mount point"},
-                }
+            }
             with open(self.user_config_file, "wb") as f:
                 tomli_w.dump(self.user_config, f)
             user_config_json.unlink()
@@ -54,27 +58,31 @@ class Config:
             with open(self.user_config_file, "wb") as f:
                 tomli_w.dump(self.user_config, f)
             logging.info("New default user config created with default options")
-        
+
         # Overwrite any app config settings that have been specified in the user config
         # Only works properly for a couple of nesting levels
         for table in self.user_config.keys():
             if table in self.app_config:
                 for k, v in self.user_config[table].items():
-                    logging.info(f"Updating default app_config option `[{table}] {k} = {repr(self.app_config[table][k])}` with value {repr(v)} from user's config.toml")
+                    logging.info(
+                        f"Updating default app_config option `[{table}] {k} = {repr(self.app_config[table][k])}` with value {repr(v)} from user's config.toml"
+                    )
                     # Make sure tables within tables are only updated, not overwritten
                     if isinstance(v, dict):
                         self.app_config[table][k].update(v)
                     else:
                         self.app_config[table][k] = v
-        
+
         # Expose some parts of user and app configs at top level
         self.options = self.user_config["options"]
         self.paths = self.app_config["paths"]
         self.groups = self.app_config["groups"]
-    
+
     def save(self):
         # Save user config to file
         with open(self.user_config_file, "wb") as f:
             tomli_w.dump(self.user_config, f)
-        logging.info(f"The following user options were saved to {self.user_config_file}:")
+        logging.info(
+            f"The following user options were saved to {self.user_config_file}:"
+        )
         logging.info(self.user_config)

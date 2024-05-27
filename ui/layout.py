@@ -1,12 +1,8 @@
 import platform
 
-from PySide6.QtCore import QTimer, Qt
-from PySide6.QtWidgets import (
-    QPushButton,
-    QLabel,
-    QProgressBar,
-    QVBoxLayout,
-)
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QPushButton, QLabel, QProgressBar, QVBoxLayout
+
 
 from ui.options import OptionsLayout
 from ui.display import Display
@@ -14,7 +10,7 @@ from ui.display import Display
 
 class Layout(QVBoxLayout):
     """Main layout, which is a simple vertical stack.
-    
+
     Only the layout, content, and appearance are defined here and in the various custom
     objects the layout contains, but not the behaviour (e.g. what happens when something
     is clicked or changed.)
@@ -23,7 +19,6 @@ class Layout(QVBoxLayout):
     def __init__(self, resource_directory, config):
         super().__init__()
         self.add_elements(resource_directory, config)
-
 
     def add_elements(self, resource_directory, config):
         # Title and version info header
