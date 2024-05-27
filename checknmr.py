@@ -441,8 +441,9 @@ def check_nmr(
 
             # Update progress bar if a callback object has been given
             prog_state += 1
+            print(prog_state)
             if progress_callback is not None:
-                print(prog_state)
+                print("callback")
                 progress_callback.emit(prog_state)
             else:
                 print(f"Spectra checked: {prog_state}")
