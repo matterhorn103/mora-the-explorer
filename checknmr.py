@@ -415,6 +415,14 @@ def check_nmr(
                 hit = True
 
             if not hit:
+                # Update progress bar if a callback object has been given
+                prog_state += 1
+                print(prog_state)
+                if progress_callback is not None:
+                    print("callback")
+                    progress_callback.emit(prog_state)
+                else:
+                    print(f"Spectra checked: {prog_state}")
                 continue
             else:
                 logging.info("Spectrum matches search query!")
