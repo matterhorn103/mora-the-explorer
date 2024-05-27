@@ -225,6 +225,7 @@ class Explorer:
             date_to_check += timedelta(days=1)
 
     def update_progress(self, prog_state):
+        print(prog_state)
         self.ui.prog_bar.setValue(prog_state)
 
     def handle_output(self, final_output):
