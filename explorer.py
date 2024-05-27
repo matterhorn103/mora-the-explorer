@@ -73,7 +73,7 @@ class Explorer:
                     changelog = "".join(version_file_info[5:]).rstrip()
                 if version_no != newest_version_no:
                     self.main_window.notify_update(
-                        version_no, newest_version_no, changelog
+                        version_no, newest_version_no, changelog, self.update_path
                     )
         except PermissionError:
             self.main_window.notify_failed_permissions()

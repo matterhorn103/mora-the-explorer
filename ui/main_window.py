@@ -90,13 +90,13 @@ class MainWindow(QMainWindow):
     def notification_clicked(self):
         self.ui.notification.hide()
 
-    def notify_update(self, current, available, changelog):
+    def notify_update(self, current, available, changelog, path):
         """Spawn popup to notify user that an update is available, with version info."""
 
         update_dialog = QMessageBox(self)
         update_dialog.setWindowTitle("Update available")
         update_dialog.setText(
-            f"There appears to be a new update available at:\n{self.update_path}"
+            f"There appears to be a new update available at:\n{path}"
         )
         update_dialog.setInformativeText(
             f"Your version is {current}\nThe version on the server is {available}\n{changelog}"
@@ -105,9 +105,9 @@ class MainWindow(QMainWindow):
         update_dialog.setDefaultButton(QMessageBox.Ignore)
         choice = update_dialog.exec()
         if choice == QMessageBox.Open:
-            if self.update_path.exists() is True:
+            if path.exists() is True:
                 # Extra quotes necessary because cmd.exe can't handle spaces in path names otherwise
-                os.system(f'start "" "{self.update_path}"')
+                os.system(f'start "" "{path}"')
 
     def notify_failed_permissions(self):
         """Spawn popup to notify user that accessing the mora server failed."""
