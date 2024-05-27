@@ -434,7 +434,7 @@ def check_nmr(
 
             # Copy, add output messages to main output list
             output_list.extend(
-                copy_folder(folder, fed_options["dest_path"] / new_folder_name)
+                copy_folder(folder, Path(fed_options["dest_path"]) / new_folder_name)
             )
 
             # Update progress bar if a callback object has been given
