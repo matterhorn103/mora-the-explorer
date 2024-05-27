@@ -362,7 +362,6 @@ def check_nmr(
     prog_state = 0
     n_spectra = get_number_spectra(paths=check_path_list)
     print(n_spectra)
-    print(prog_bar.maximum())
     logging.info(f"Total spectra in these paths: {n_spectra}")
     try:
         prog_bar.setMaximum(n_spectra)
@@ -373,6 +372,7 @@ def check_nmr(
     except Exception:
         # This stops Python from hanging when the program is closed, no idea why
         exit()
+    print(prog_bar.maximum())
 
     # Now we have a list of directories to check, start the actual search process
     # Needs to be slightly different depending on the spectrometer, as the contents of
