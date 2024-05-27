@@ -361,6 +361,7 @@ def check_nmr(
     # Initialize progress bar
     prog_state = 0
     n_spectra = get_number_spectra(paths=check_path_list)
+    print(n_spectra)
     logging.info(f"Total spectra in these paths: {n_spectra}")
     try:
         prog_bar.setMaximum(n_spectra)
@@ -440,7 +441,8 @@ def check_nmr(
             # Update progress bar if a callback object has been given
             prog_state += 1
             if progress_callback is not None:
-                progress_callback.emit(round(prog_state))
+                print(prog_state)
+                progress_callback.emit(prog_state)
             else:
                 print(f"Spectra checked: {prog_state}")
 
