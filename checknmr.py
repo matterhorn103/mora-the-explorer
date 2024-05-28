@@ -1,6 +1,7 @@
 import filecmp
 import logging
 import shutil
+import sys
 from datetime import date, datetime
 from pathlib import Path
 
@@ -370,7 +371,7 @@ def check_nmr(
             print(f"Total spectra to check: {n_spectra}")
     except Exception:
         # This stops Python from hanging when the program is closed, no idea why
-        exit()
+        sys.exit()
 
     # Now we have a list of directories to check, start the actual search process
     # Needs to be slightly different depending on the spectrometer, as the contents of
