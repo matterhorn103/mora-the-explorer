@@ -217,11 +217,12 @@ def format_name(
                 if x is not None
             ]
         )
-    # Apply user choices
-    if inc_init is True and metadata["initials"] is not None:
-        name = metadata["initials"] + "-" + name
-    if inc_group is True and metadata["group"] is not None:
-        name = metadata["group"] + "-" + name
+    # Apply user choices, some only if NMRCheck style wasn't chosen
+    if nmrcheck_style is False:
+        if inc_init is True and metadata["initials"] is not None:
+            name = metadata["initials"] + "-" + name
+        if inc_group is True and metadata["group"] is not None:
+            name = metadata["group"] + "-" + name
     if inc_solv is True and metadata["solvent"] is not None:
         name = name + "-" + metadata["solvent"]
     # Add frequency info if available
@@ -445,7 +446,10 @@ def check_nmr(
             )
 
             # Update progress bar if a callback object has been given
-            prog_state += 1
+            # Make sure there's a noticeable movement after copying a spectrum,
+            # otherwise it looks frozen
+            prog_bar.setMaximum(prog_bar.maximum() + 5)
+            prog_state += 5
             if progress_callback is not None:
                 progress_callback.emit(prog_state)
             else:
