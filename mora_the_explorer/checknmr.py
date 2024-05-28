@@ -158,14 +158,16 @@ def get_metadata_bruker(folder: Path, mora_path) -> dict:
 
 def get_metadata_agilent(folder: Path, mora_path) -> dict:
     # Find out magnet strength, set to initial false value as flag
-    magnet_freq = "x"
-    while magnet_freq == "x":
+    magnet_freq = None
+    while magnet_freq is None:
         for subfolder in folder.iterdir():
             text_file = subfolder / "text"
-            with open(text_file, encoding="utf-8") as f:
-                spectrum_info = f.readlines()
-                line_with_freq_split = spectrum_info[3].split(",")
-                magnet_freq = line_with_freq_split[0]
+            if text_file.exists():
+                with open(text_file, encoding="utf-8") as f:
+                    spectrum_info = f.readlines()
+                    line_with_freq_split = spectrum_info[3].split(",")
+                    magnet_freq = line_with_freq_split[0]
+        break
 
     metadata = {
         "server_location": str(folder.relative_to(mora_path)),
