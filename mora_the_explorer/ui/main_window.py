@@ -214,6 +214,8 @@ The repeat function is also disabled as long as this option is selected.
             self.opts.inc_solv_checkbox.setEnabled(False)
             self.opts.repeat_check_checkbox.setEnabled(False)
             self.opts.date_selector.hide()
+            self.opts.only_button.hide()
+            self.opts.since_button.hide()
             self.opts.today_button.setEnabled(False)
             self.opts.hf_date_selector.show()
         else:
@@ -225,6 +227,8 @@ The repeat function is also disabled as long as this option is selected.
             self.opts.repeat_check_checkbox.setEnabled(True)
             self.opts.hf_date_selector.hide()
             self.opts.date_selector.show()
+            self.opts.only_button.show()
+            self.opts.since_button.show()
             self.opts.today_button.setEnabled(True)
 
     def repeat_switched(self):

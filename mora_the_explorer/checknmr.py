@@ -61,13 +61,12 @@ def get_hf_paths(spec_paths, check_year, wild_group):
     # Check folders of all groups when group `nmr` uses the group wildcard
     if wild_group is True:
         group_folders = [
-            x
-            for x in spec_paths["hf"].parent.iterdir()
+            x for x in spec_paths["hf"].parent.iterdir()
             if x.is_dir() and (x.name[0] != ".")
         ]
         check_path_list = [group_folder / check_year for group_folder in group_folders]
     else:
-        check_path_list = spec_paths["hf"] / check_year
+        check_path_list = [spec_paths["hf"] / check_year]
     return check_path_list
 
 
