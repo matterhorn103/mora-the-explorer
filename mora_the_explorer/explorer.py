@@ -30,6 +30,11 @@ class Explorer:
         self.threadpool = QThreadPool()
         self.threadpool.setMaxThreadCount(1)
 
+        # Initialize some variables for later
+        self.wild_group = False
+        self.copied_list = []
+        self.date_selected = date.today()
+
         # Set path to mora
         self.mora_path = Path(config.paths[platform.system()])
         self.update_path = Path(config.paths["update"])
@@ -41,14 +46,10 @@ class Explorer:
             "300er": self.path_300er,
             "400er": self.path_400er,
         }
+        self.adapt_paths_to_group(self.config.options["group"])
 
         # Check for updates
         self.update_check(Path(config.paths["update"]))
-
-        # Initialize some other variables for later
-        self.wild_group = False
-        self.copied_list = []
-        self.date_selected = date.today()
 
         # Timer for repeat check, starts checking function when timer runs out
         self.timer = QTimer()
