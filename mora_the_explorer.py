@@ -17,59 +17,37 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
-import platform
+import platformdirs
 import sys
 from pathlib import Path
 
-import darkdetect
-
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QIcon, QPalette, QColor
-from PySide6.QtWidgets import QApplication
-
-from config import Config
-from main_window import MainWindow
+import mora_the_explorer
 
 
 def get_rsrc_dir():
     """Gets the location of the program's resources, which is platform-dependent."""
     # For whatever reason __file__ doesn't give the right location on a mac when a .app has
     # been generated with pyinstaller
-    if platform.system() == "Darwin" and getattr(sys, "frozen", False):
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
         return Path(sys._MEIPASS)
     else:
         return Path(__file__).parent
 
 
-def set_dark_mode(app):
-    """Manually set a dark mode in Windows.
-    
-    Make dark mode less black than default because Windows dark mode looks bad."""
-    dark_palette = QPalette()
-    dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
-    dark_palette.setColor(QPalette.WindowText, Qt.white)
-    dark_palette.setColor(QPalette.Base, QColor(25, 25, 25))
-    dark_palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
-    dark_palette.setColor(QPalette.ToolTipBase, Qt.black)
-    dark_palette.setColor(QPalette.ToolTipText, Qt.white)
-    dark_palette.setColor(QPalette.Text, Qt.white)
-    dark_palette.setColor(QPalette.Button, QColor(53, 53, 53))
-    dark_palette.setColor(QPalette.ButtonText, Qt.white)
-    dark_palette.setColor(QPalette.BrightText, Qt.red)
-    dark_palette.setColor(QPalette.Link, QColor(42, 130, 218))
-    dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
-    dark_palette.setColor(QPalette.HighlightedText, Qt.black)
-    app.setStyle("Fusion")
-    app.setPalette(dark_palette)
-
-
 if __name__ == "__main__":
-    # Assign directory containing the various supporting files to a variable so we can pass
-    # it to our MainWindow and use it whenever necessary.
-    rsrc_dir = get_rsrc_dir()
 
-    # Set up logging
-    log = rsrc_dir / "log.log"
+    # Logs should be saved to:
+    # Windows:  c:/Users/<user>/AppData/Local/mora_the_explorer/log.log
+    # macOS:    /Users/<user>/Library/Logs/mora_the_explorer/log.log
+    # Linux:    /home/<user>/.local/state/mora_the_explorer/log.log
+    log = Path(
+        platformdirs.user_log_dir(
+            "mora_the_explorer",
+            opinion=False,
+            ensure_exists=True,
+        )
+    ) / "log.log"
+
     logging.basicConfig(
         filename=log,
         filemode="w",
@@ -77,20 +55,7 @@ if __name__ == "__main__":
         encoding="utf-8",
         level=logging.INFO,
     )
+    
+    rsrc_dir = get_rsrc_dir()
 
-    # Load configuration
-    config = Config(rsrc_dir)
-
-    logging.info("Initializing program")
-    app = QApplication(sys.argv)
-
-    if darkdetect.isDark() is True and platform.system() == "Windows":
-        set_dark_mode(app)
-
-    # Create instance of MainWindow, then show it
-    window = MainWindow(rsrc_dir, config)
-    window.show()
-
-
-    app.setWindowIcon(QIcon(str(rsrc_dir / "explorer.ico")))
-    app.exec()
+    mora_the_explorer.run(rsrc_dir)
