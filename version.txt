@@ -1,11 +1,13 @@
 Mora the Explorer
 Matt Milner
-v1.7.0
+v1.7.1
 License: GPLv3
 Please report any bugs to milner@uni-muenster.de!
 Changes in this version:
 - Spectra measured in 2023 can be found again
 - Any spectra measured in previous years that haven't been archived will be found correctly in future
+- Progress bar now more accurately shows progress for 400 MHz spectrometers
+- Results display automatically scrolls down when new messages arrive
 - User config now contained in a config.toml
 - Internal restructuring to make future maintenance easier
 - Removal of deprecated (<v1.5.2) things
