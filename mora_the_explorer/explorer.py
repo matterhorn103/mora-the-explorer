@@ -8,10 +8,10 @@ from pathlib import Path
 from PySide6.QtCore import QTimer, QThreadPool
 from PySide6.QtWidgets import QLabel
 
-from worker import Worker
-from checknmr import check_nmr
-from config import Config
-from ui.main_window import MainWindow
+from .worker import Worker
+from .checknmr import check_nmr
+from .config import Config
+from .ui.main_window import MainWindow
 
 
 class Explorer:

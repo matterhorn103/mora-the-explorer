@@ -4,7 +4,6 @@ import logging
 from pathlib import Path
 import tomllib
 import tomli_w
-
 import platformdirs
 
 
@@ -23,12 +22,20 @@ class Config:
 
         # Load user config from config.toml in user's config directory
         # Make one if it doesn't exist yet
+
+        # Config should be saved to:
+        # Windows:  c:/Users/<user>/AppData/Roaming/mora_the_explorer/config.toml
+        # macOS:    /Users/<user>/Library/Application Support/mora_the_explorer/config.toml
+        # Linux:    /home/<user>/.config/mora_the_explorer/config.toml
+
         # User options used to be stored in config.json pre v1.7, so also check for that
         # platformdirs automatically saves the config file in the place appropriate to the os
-        self.user_config_file = (
-            Path(platformdirs.user_config_dir("mora_the_explorer", roaming=True))
-            / "config.toml"
-        )
+        self.user_config_file = Path(platformdirs.user_config_dir(
+                "mora_the_explorer",
+                roaming=True,
+                ensure_exists=True,
+            )
+        ) / "config.toml"
         user_config_json = self.user_config_file.with_name("config.json")
         if self.user_config_file.exists() is True:
             with open(self.user_config_file, "rb") as f:

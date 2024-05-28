@@ -10,8 +10,8 @@ import plyer
 from PySide6.QtCore import QSize
 from PySide6.QtWidgets import QMainWindow, QWidget, QMessageBox
 
-from config import Config
-from ui.layout import Layout
+from ..config import Config
+from .layout import Layout
 
 
 class MainWindow(QMainWindow):

@@ -4,8 +4,8 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QPushButton, QLabel, QProgressBar, QVBoxLayout
 
 
-from ui.options import OptionsLayout
-from ui.display import Display
+from .options import OptionsLayout
+from .display import Display
 
 
 class Layout(QVBoxLayout):
