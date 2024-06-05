@@ -1,5 +1,6 @@
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel
 
 from .spinner import WaitingSpinner
 
@@ -9,9 +10,13 @@ class StatusBar(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.layout = QHBoxLayout()
+        self.layout = QVBoxLayout()
         self.setLayout(self.layout)
+
         self.label = QLabel("checking...")
+        self.label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+        self.layout.addWidget(self.label)
+
         self.spinner = WaitingSpinner(
             self,
             roundness=100.0,
@@ -24,20 +29,20 @@ class StatusBar(QWidget):
             speed=1.5707963267948966,
             color=QColor(184, 140, 206)
         )
-        self.layout.addWidget(self.label)
+        self.spinner.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         self.layout.addWidget(self.spinner)
 
     def setText(self, text):
         self.label.setText(text)
 
     def hide(self):
-        super().hide()
+        #super().hide()
         self.label.hide()
         self.spinner.hide()
         self.spinner.stop()
 
     def show(self):
-        super().show()
+        #super().show()
         self.label.show()
         self.spinner.show()
         self.spinner.start()
