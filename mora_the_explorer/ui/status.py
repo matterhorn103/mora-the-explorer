@@ -17,10 +17,10 @@ class StatusBar(QWidget):
             roundness=100.0,
             opacity=3.141592653589793,
             fade=80.0,
-            radius=3,
+            radius=2,
             lines=20,
-            line_length=10,
-            line_width=2,
+            line_length=5,
+            line_width=1,
             speed=1.5707963267948966,
             color=QColor(184, 140, 206)
         )
