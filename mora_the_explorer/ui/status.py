@@ -18,8 +18,8 @@ class StatusBar(QWidget):
         self.layout.addWidget(self.label)
 
         self.spinner = WaitingSpinner(
-            self,
-            center_on_parent=False,
+            self.label,
+            center_on_parent=True,
             roundness=100.0,
             opacity=3.141592653589793,
             fade=80.0,
