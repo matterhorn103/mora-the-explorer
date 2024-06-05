@@ -35,7 +35,6 @@ class Layout(QVBoxLayout):
 
         # Status bar to inform user of the current stage of a check
         self.status_bar = StatusBar()
-        self.status_bar.hide()
         self.addWidget(self.status_bar)
 
         # Alias start and cancel buttons to save changing many references to them
