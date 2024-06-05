@@ -31,11 +31,13 @@ class StatusBar(QWidget):
         self.label.setText(text)
 
     def hide(self):
+        super().hide()
         self.label.hide()
         self.spinner.hide()
         self.spinner.stop()
 
     def show(self):
+        super().show()
         self.label.show()
         self.spinner.show()
         self.spinner.start()
