@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
 
 from .spinner import WaitingSpinner
 
@@ -13,6 +13,12 @@ class StatusBar(QWidget):
         self.layout = QHBoxLayout()
         self.setLayout(self.layout)
 
+        # Button to begin check
+        self.start_button = QPushButton("start check now")
+        self.start_button.setStyleSheet("background-color : #b88cce")
+        self.layout.addWidget(self.start_button)
+
+        # Information for when check is in progress
         self.label = QLabel("checking...")
         self.label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         self.layout.addWidget(self.label)
@@ -32,18 +38,33 @@ class StatusBar(QWidget):
         )
         self.layout.addWidget(self.spinner)
 
+        # Button to cancel pending repeat check
+        self.cancel_button = QPushButton("cancel repeat check")
+        self.cancel_button.setStyleSheet("background-color : #cc0010; color : white")
+        self.layout.addWidget(self.cancel_button)
+
+        self.show_start()
+
     def setText(self, text):
         self.label.setText(text)
 
-    def hide(self):
-        #super().hide()
+    def show_start(self):
+        self.start_button.show()
         self.label.hide()
         self.spinner.hide()
         self.spinner.stop()
-
-    def show(self):
-        #super().show()
+        self.cancel_button.hide()
+    
+    def show_status(self):
+        self.start_button.hide()
         self.label.show()
         self.spinner.show()
         self.spinner.start()
+        self.cancel_button.hide()
 
+    def show_cancel(self):
+        self.start_button.hide()
+        self.label.hide()
+        self.spinner.hide()
+        self.spinner.stop()
+        self.cancel_button.show()

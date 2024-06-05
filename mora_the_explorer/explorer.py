@@ -202,8 +202,7 @@ class Explorer:
     def single_check(self, date):
         # Hide start button, show status bar
         self.ui.start_check_button.setEnabled(False)
-        self.ui.start_check_button.hide()
-        self.ui.status_bar.show()
+        self.ui.status_bar.show_status()
         formatted_date = self.format_date(date)
         # Start main checking function in worker thread
         worker = Worker(
@@ -240,7 +239,7 @@ class Explorer:
 
     def check_ended(self):
         # Stop showing checking status
-        self.ui.status_bar.hide()
+        self.ui.status_bar.show_start()
         # Set progress to 100% just in case it didn't reach it for whatever reason
         self.ui.prog_bar.setMaximum(1)
         self.ui.prog_bar.setValue(1)
@@ -269,17 +268,16 @@ class Explorer:
         if (self.config.options["repeat_switch"] is True) and (
             self.config.options["spec"] != "hf"
         ):
-            self.ui.interrupt_button.show()
+            self.ui.status_bar.show_cancel()
             # Start new timer that will trigger started() once it runs out
             self.timer.start(int(self.config.options["repeat_delay"]) * 60 * 1000)
         # Enable start check button again, but only if all queued checks have finished
         self.queued_checks -= 1
         if self.queued_checks == 0:
             self.ui.start_check_button.setEnabled(True)
-            self.ui.start_check_button.show()
+            self.ui.status_bar.show_start()
             logging.info("Task complete")
 
     def interrupted(self):
         self.timer.stop()
-        self.ui.start_check_button.show()
-        self.ui.interrupt_button.hide()
+        self.ui.status_bar.show_start()
