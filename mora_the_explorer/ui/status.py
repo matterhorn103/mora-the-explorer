@@ -33,8 +33,10 @@ class StatusBar(QWidget):
     def hide(self):
         self.label.hide()
         self.spinner.hide()
+        self.spinner.stop()
 
     def show(self):
         self.label.show()
         self.spinner.show()
+        self.spinner.start()
 
