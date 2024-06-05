@@ -29,7 +29,6 @@ class StatusBar(QWidget):
             speed=1.5707963267948966,
             color=QColor(184, 140, 206)
         )
-        self.spinner.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         self.layout.addWidget(self.spinner)
 
     def setText(self, text):
