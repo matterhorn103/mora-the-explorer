@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QColor
 
 from .spinner import WaitingSpinner
 
@@ -21,7 +21,7 @@ class StatusBar(QWidget):
             line_length=10,
             line_width=2,
             speed=1.5707963267948966,
-            color=(184, 140, 206)
+            color=QColor(184, 140, 206)
         )
         self.layout.addWidget(self.label)
         self.layout.addWidget(self.spinner)
