@@ -242,22 +242,29 @@ def format_name_klaus(folder, metadata) -> str:
 
 
 def compare_spectra(mora_folder, dest_folder) -> int:
-    """Check that two spectra with the same name are actually identical and not e.g. different proton measurements.
+    """Check that two spectra with the same name are actually the same measurement and not e.g. different proton measurements.
 
     In the event that the spectra are the same, a check is made to see if everything has
     been copied; if not, `incomplete` is returned as `True`.
-    Result is a tuple with the result in the form `(identical, incomplete)`.
+    Result is a tuple with the result in the form `(same, incomplete)`.
     """
 
     comparison = filecmp.dircmp(mora_folder, dest_folder)
-    if len(comparison.right_only) > 0:
-        identical, incomplete = False, False
-    elif len(comparison.left_only) == 0:
-        identical, incomplete = True, False
-    elif len(comparison.left_only) > 0:
-        identical, incomplete = True, True
 
-    return identical, incomplete
+    # There needs to be at least one file in the top level of the spectrum folder for
+    # this comparison to work - there are many for Bruker, only `studypar` for Agilent
+    if len(comparison.same_files) > 0:
+        same = True
+        # See if there are any subdirectories or files that we are missing
+        # Note that this doesn't look within subfolders
+        if len(comparison.left_only) > 0:
+            incomplete = True
+        else:
+            incomplete = False
+    else:
+        same, incomplete = False, False
+
+    return same, incomplete
 
 
 def copy_folder(src: Path, target: Path):
@@ -277,7 +284,7 @@ def copy_folder(src: Path, target: Path):
     output = []
 
     # Check that spectrum hasn't been copied before
-    identical_spectrum_found = False
+    same_spectrum_found = False
     incomplete_copy = False
     if target.exists() is True:
         logging.info("Spectrum with this name exists in destination")
@@ -285,20 +292,24 @@ def copy_folder(src: Path, target: Path):
         # proton measurements
         # If confirmed to be unique spectra, need to extend spectrum name with
         # -2, -3 etc. to avoid conflict with spectra already in dest
-        identical_spectrum_found, incomplete_copy = compare_spectra(src, target)
+        same_spectrum_found, incomplete_copy = compare_spectra(src, target)
         num = 1
-        while target.exists() is True and identical_spectrum_found is False:
+        while target.exists() is True and same_spectrum_found is False:
             num += 1
             target = target.with_name(target.name + "-" + str(num))
-            identical_spectrum_found, incomplete_copy = compare_spectra(src, target)
+            same_spectrum_found, incomplete_copy = compare_spectra(src, target)
 
     # Try and fix only partially copied spectra
-    if identical_spectrum_found is True and incomplete_copy is True:
+    if same_spectrum_found is True and incomplete_copy is True:
         logging.info("The existing copy is only partial")
-        for subfolder in src.iterdir():
-            if not (target / subfolder.name).exists():
+        for x in src.iterdir():
+            # Copy any file or subdirectory that isn't already in destination
+            if not (target / x.name).exists():
                 try:
-                    shutil.copytree(subfolder, target / subfolder.name)
+                    if x.is_dir():
+                        shutil.copytree(x, target / x.name)
+                    elif x.is_file():
+                        shutil.copy2(x, target / x.name)
                 except PermissionError:
                     output.append(
                         "you do not have permission to write to the given folder"
@@ -307,7 +318,7 @@ def copy_folder(src: Path, target: Path):
         text_to_add = "new files found for: " + target.name
         output.append(text_to_add)
 
-    elif identical_spectrum_found is False:
+    elif same_spectrum_found is False:
         try:
             shutil.copytree(src, target)
         except PermissionError:
