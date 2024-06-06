@@ -1,11 +1,12 @@
 import platform
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QPushButton, QLabel, QProgressBar, QVBoxLayout
+from PySide6.QtWidgets import QPushButton, QLabel, QProgressBar, QVBoxLayout, QSizePolicy
 
 
 from .options import OptionsLayout
 from .display import Display
+from .status import StatusBar
 
 
 class Layout(QVBoxLayout):
@@ -32,16 +33,13 @@ class Layout(QVBoxLayout):
         self.opts = OptionsLayout(config)
         self.addLayout(self.opts)
 
-        # Button to begin check
-        self.start_check_button = QPushButton("start check now")
-        self.start_check_button.setStyleSheet("background-color : #b88cce")
-        self.addWidget(self.start_check_button)
+        # Status bar to inform user of the current stage of a check
+        self.status_bar = StatusBar()
+        self.addWidget(self.status_bar)
 
-        # Button to cancel pending repeat check
-        self.interrupt_button = QPushButton("cancel repeat check")
-        self.interrupt_button.setStyleSheet("background-color : #cc0010; color : white")
-        self.interrupt_button.hide()
-        self.addWidget(self.interrupt_button)
+        # Alias start and cancel buttons to save changing many references to them
+        self.start_check_button = self.status_bar.start_button
+        self.interrupt_button = self.status_bar.cancel_button
 
         # Progress bar for check
         self.prog_bar = QProgressBar()

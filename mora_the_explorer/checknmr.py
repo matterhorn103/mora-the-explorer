@@ -328,7 +328,8 @@ def check_nmr(
     check_date,
     wild_group,
     prog_bar,
-    progress_callback,
+    progress_callback=None,
+    status_callback=None,
 ):
     """Main checking function for Mora the Explorer."""
 
@@ -442,9 +443,13 @@ def check_nmr(
                 )
 
             # Copy, add output messages to main output list
+            if status_callback is not None:
+                status_callback.emit("copying...")
             output_list.extend(
                 copy_folder(folder, Path(fed_options["dest_path"]) / new_folder_name)
             )
+            if status_callback is not None:
+                status_callback.emit("searching...")
 
             # Update progress bar if a callback object has been given
             # Make sure there's a noticeable movement after copying a spectrum,
