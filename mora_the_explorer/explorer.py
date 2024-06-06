@@ -2,11 +2,13 @@ import logging
 import os
 import platform
 import subprocess
+import webbrowser
 from datetime import date, timedelta
 from pathlib import Path
 
-from PySide6.QtCore import QTimer, QThreadPool
+from PySide6.QtCore import QTimer, QThreadPool, QUrl
 from PySide6.QtWidgets import QLabel
+from PySide6.QtGui import QDesktopServices
 
 from .worker import Worker
 from .checknmr import check_nmr
@@ -96,7 +98,7 @@ class Explorer:
         self.opts.dest_path_input.textChanged.connect(
             self.main_window.dest_path_changed
         )
-        self.opts.open_button.clicked.connect(self.open_path)
+        self.opts.open_button.clicked.connect(self.open_destination)
         self.opts.inc_init_checkbox.stateChanged.connect(
             self.main_window.inc_init_switched
         )
@@ -165,15 +167,11 @@ class Explorer:
             # Make sure wild option is turned off for normal users
             self.wild_group = False
 
-    def open_path(self):
+    def open_destination(self):
+        """Show the destination folder for spectra in the system file browser."""
         if Path(self.config.options["dest_path"]).exists() is True:
-            if platform.system() == "Windows":
-                # Extra quotes necessary because cmd.exe can't handle spaces in path names otherwise
-                os.system(f'start "" "{self.config.options["dest_path"]}"')
-            elif platform.system() == "Darwin":
-                subprocess.Popen(["open", self.config.options["dest_path"]])
-            elif platform.system() == "Linux":
-                subprocess.Popen(["xdg-open", self.config.options["dest_path"]])
+            url = QUrl.fromLocalFile(self.config.options["dest_path"])
+            QDesktopServices.openUrl(url)
 
     def date_changed(self):
         self.date_selected = self.opts.date_selector.date().toPython()
