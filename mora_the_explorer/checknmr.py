@@ -449,7 +449,7 @@ def check_nmr(
                 copy_folder(folder, Path(fed_options["dest_path"]) / new_folder_name)
             )
             if status_callback is not None:
-                status_callback.emit("searching...")
+                status_callback.emit("checking...")
 
             # Update progress bar if a callback object has been given
             # Make sure there's a noticeable movement after copying a spectrum,
