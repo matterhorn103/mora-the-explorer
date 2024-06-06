@@ -196,7 +196,6 @@ class Explorer:
 
     def single_check(self, date):
         # Hide start button, show status bar
-        self.ui.start_check_button.setEnabled(False)
         self.ui.status_bar.show_status()
         formatted_date = self.format_date(date)
         # Start main checking function in worker thread
@@ -233,12 +232,14 @@ class Explorer:
         self.copied_list = final_output
 
     def check_ended(self):
+        self.queued_checks -= 1
         # Stop showing checking status
         self.ui.status_bar.show_start()
         # Set progress to 100% just in case it didn't reach it for whatever reason
         self.ui.prog_bar.setMaximum(1)
         self.ui.prog_bar.setValue(1)
-        # Will only not be true if an unknown error occurred, in all cases len will be at least 2
+        # Will only not be true if an unknown error occurred
+        # In all other cases len will be at least 2
         if len(self.copied_list) > 1:
             # At least one spectrum was found
             if self.copied_list[1][:5] == "spect":
@@ -252,24 +253,25 @@ class Explorer:
                 self.copied_list.pop(0)
                 self.main_window.notify_spectra(self.copied_list)
         else:
-            # Unknown error occurred, output of check function was returned without appending anything to copied_list
+            # Unknown error occurred, output of check function was returned without
+            # appending anything to copied_list
             self.copied_list.pop(0)
             self.main_window.notify_spectra(self.copied_list)
         # Display output
         for entry in self.copied_list:
             entry_label = QLabel(entry)
             self.ui.display.add_entry(entry_label)
-        # Behaviour for repeat check function. Deactivate for hf spectrometer. See also self.timer in init function
+        # Behaviour for repeat check function, deactivate for hf spectrometer
+        # See also self.timer in init function
         if (self.config.options["repeat_switch"] is True) and (
             self.config.options["spec"] != "hf"
         ):
+            self.queued_checks += 1
             self.ui.status_bar.show_cancel()
             # Start new timer that will trigger started() once it runs out
             self.timer.start(int(self.config.options["repeat_delay"]) * 60 * 1000)
         # Enable start check button again, but only if all queued checks have finished
-        self.queued_checks -= 1
         if self.queued_checks == 0:
-            self.ui.start_check_button.setEnabled(True)
             self.ui.status_bar.show_start()
             logging.info("Task complete")
 
