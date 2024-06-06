@@ -321,6 +321,16 @@ def copy_folder(src: Path, target: Path):
     return output
 
 
+def iterate_progress(prog_state, n, progress_callback):
+    """Update progress state and signal to progress bar if a callback object has been given"""
+    prog_state += n
+    if progress_callback is not None:
+        progress_callback.emit(prog_state)
+    else:
+        print(f"Spectra checked: {prog_state}")
+    return prog_state
+
+
 def check_nmr(
     fed_options,
     mora_path,
@@ -386,7 +396,9 @@ def check_nmr(
         # Iterate through spectra
         for folder in check_path.iterdir():
             logging.info(folder)
-
+            
+            hit = False
+            
             # Extract title and experiment details from title file in spectrum folder
             try:
                 if spectrometer == "300er" or spectrometer == "400er":
@@ -394,18 +406,21 @@ def check_nmr(
                 # Save a step by not extracting metadata unless initials in folder name
                 # as folders are given the name of the sample on 500 and 600 MHz specs
                 elif fed_options["initials"] in folder.name:
+                    hit = True
                     metadata = get_metadata_agilent(folder, mora_path)
                 else:
+                    prog_state = iterate_progress(prog_state, 1, progress_callback)
                     continue
             except FileNotFoundError:
                 output_list.append(f"No metadata could be found for {folder}!")
                 logging.info("No metadata found")
+                prog_state = iterate_progress(prog_state, 1, progress_callback)
                 continue
             except IndexError:  # Due to title not being long enough
+                prog_state = iterate_progress(prog_state, 1, progress_callback)
                 continue
 
             # Look for search string
-            hit = False
             if metadata["initials"] == fed_options["initials"]:
                 hit = True
             # Klaus can give a group initialism as the initials and download all spectra
@@ -417,12 +432,8 @@ def check_nmr(
                 hit = True
 
             if not hit:
-                # Update progress bar if a callback object has been given
-                prog_state += 1
-                if progress_callback is not None:
-                    progress_callback.emit(prog_state)
-                else:
-                    print(f"Spectra checked: {prog_state}")
+                # Update progress bar
+                prog_state = iterate_progress(prog_state, 1, progress_callback)
                 continue
             else:
                 logging.info("Spectrum matches search query!")
@@ -455,11 +466,7 @@ def check_nmr(
             # Make sure there's a noticeable movement after copying a spectrum,
             # otherwise it looks frozen
             prog_bar.setMaximum(prog_bar.maximum() + 5)
-            prog_state += 5
-            if progress_callback is not None:
-                progress_callback.emit(prog_state)
-            else:
-                print(f"Spectra checked: {prog_state}")
+            prog_state = iterate_progress(prog_state, 5, progress_callback)
 
     now = datetime.now().strftime("%H:%M:%S")
     completed_statement = f"check of {check_date} completed at " + now
