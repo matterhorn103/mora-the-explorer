@@ -1,12 +1,14 @@
 Mora the Explorer
 Matt Milner
-v1.7.1
+v1.7.2
 License: GPLv3
 Please report any bugs to milner@uni-muenster.de!
 Changes in this version:
 - Spectra measured in 2023 can be found again
 - Any spectra measured in previous years that haven't been archived will be found correctly in future
+- Go To button works on Windows when the destination folder is a network path (\\nwz.uni-muenster.de\...)
 - Progress bar now more accurately shows progress for 400 MHz spectrometers
+- A spinner shows when checking and copying is in progress
 - Results display automatically scrolls down when new messages arrive
 - User config now contained in a config.toml
 - Internal restructuring to make future maintenance easier
