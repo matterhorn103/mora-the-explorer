@@ -2,11 +2,13 @@ import logging
 import os
 import platform
 import subprocess
+import webbrowser
 from datetime import date, timedelta
 from pathlib import Path
 
-from PySide6.QtCore import QTimer, QThreadPool
+from PySide6.QtCore import QTimer, QThreadPool, QUrl
 from PySide6.QtWidgets import QLabel
+from PySide6.QtGui import QDesktopServices
 
 from .worker import Worker
 from .checknmr import check_nmr
@@ -167,13 +169,22 @@ class Explorer:
 
     def open_path(self):
         if Path(self.config.options["dest_path"]).exists() is True:
-            if platform.system() == "Windows":
-                # Extra quotes necessary because cmd.exe can't handle spaces in path names otherwise
-                os.system(f'start "" "{self.config.options["dest_path"]}"')
-            elif platform.system() == "Darwin":
-                subprocess.Popen(["open", self.config.options["dest_path"]])
-            elif platform.system() == "Linux":
-                subprocess.Popen(["xdg-open", self.config.options["dest_path"]])
+            #path = self.config.options["dest_path"]
+            path = "file://" + self.config.options["dest_path"]
+            
+            #url = QUrl.fromLocalFile(path)
+            #QDesktopServices.openUrl(url)
+            
+            webbrowser.open(path)
+            
+            return
+            #if platform.system() == "Windows":
+            #    # Extra quotes necessary because cmd.exe can't handle spaces in path names otherwise
+            #    os.system(f'start "" "{self.config.options["dest_path"]}"')
+            #elif platform.system() == "Darwin":
+            #    subprocess.Popen(["open", self.config.options["dest_path"]])
+            #elif platform.system() == "Linux":
+            #    subprocess.Popen(["xdg-open", self.config.options["dest_path"]])
 
     def date_changed(self):
         self.date_selected = self.opts.date_selector.date().toPython()
