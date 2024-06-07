@@ -203,7 +203,7 @@ The repeat function is also disabled as long as this option is selected.
 
     def refresh_visible_specs(self):
         for spec in self.config.specs.keys():
-            allowed = self.config.specs[self.config.options["spec"]].get("restrict_to")
+            allowed = self.config.specs[spec].get("restrict_to")
             if allowed is None:
                 # No list of groups provided in config so will always be shown to all
                 continue
