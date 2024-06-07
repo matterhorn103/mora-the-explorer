@@ -70,30 +70,82 @@ def get_hf_paths(spec_paths, check_year, wild_group):
     return check_path_list
 
 
-def get_check_paths(spec_paths, spectrometer, check_date, wild_group):
+def get_check_paths(
+        spec_info: dict,
+        mora_path: Path,
+        check_date: datetime.date,
+        groups: dict,
+        group: str,
+        wild_group: bool = False,
+    ):
     """Get list of folders that may contain spectra, appropriate for the spectrometer."""
-
-    if spectrometer == "300er" or spectrometer == "400er":
-        if spectrometer == "300er":
-            check_path_list = get_300er_paths(spec_paths, check_day=check_date)
-        elif spectrometer == "400er":
-            check_path_list = get_400er_paths(spec_paths, check_day=check_date)
-        # Add potential overflow folders for same day (these are generated on mora when two samples
-        # are submitted with same exp. no.)
-        for entry in list(check_path_list):
-            for num in range(2, 20):
-                check_path_list.append(entry.with_name(entry.name + "_" + str(num)))
-
-    elif spectrometer == "hf":
-        check_path_list = get_hf_paths(
-            spec_paths,
-            check_year=check_date,
-            wild_group=wild_group,
-        )
-
+    # Start with default, normal folder paths
+    check_path_list = spec_info["check_paths"]
+    # Add archives for previous years other than the current if requested
+    if check_date.year != date.today().year:
+        check_path_list.extend(spec_info["archives"])
+    if "date" in spec_info:
+        formatted_date = check_date.strftime(spec_info["date"])
+    # Replace the variable fields enclosed in <> angle brackets
+    for path in check_path_list:
+        path = path.replace("<spec_dir>", spec_info["spec_dir"])
+        path = path.replace("<date>", formatted_date)
+        if "<group>" in path:
+            if wild_group is True:
+                wild_check_path_list = []
+                for group in groups.keys():
+                    wild_check_path_list.append(path.replace("<group>"), group)
+                check_path_list = wild_check_path_list
+            else:
+                path = path.replace("<group>", group)
+        if "<group name>" in path:
+            if wild_group is True:
+                wild_check_path_list = []
+                for group_name in groups.values():
+                    wild_check_path_list.append(path.replace("<group name>"), group_name)
+                check_path_list = wild_check_path_list
+            else:
+                path = path.replace("<group name>", groups[group])
+        # Any remaining <> fields are for datetime format strings, can sub all at once
+        path = check_date.strftime(path)
+        path = path.replace("<", "").replace(">", "")
+    # Add potential overflow folders for same day (these are generated on mora when two
+    # samples are submitted with same exp. no.)
+    for path in check_path_list:
+        for num in range(2, 20):
+            check_path_list.append(path.with_name(path.name + "_" + str(num)))
     # Go over the list to make sure we only bother checking paths that exist
-    check_path_list = [path for path in check_path_list if path.exists()]
+    # Turn into Path objects at the same time
+    check_path_list = [mora_path / p for p in check_path_list if (mora_path / p).exists()]
     return check_path_list
+
+
+#def get_check_paths(spec_paths, spectrometer, check_date, wild_group):
+#    """Get list of folders that may contain spectra, appropriate for the spectrometer."""
+#
+#    if spectrometer == "300er" or spectrometer == "400er":
+#        formatted_date = check_date.strftime("%b%d-%Y")
+#        if spectrometer == "300er":
+#            check_path_list = get_300er_paths(spec_paths, check_day=formatted_date)
+#        elif spectrometer == "400er":
+#            check_path_list = get_400er_paths(spec_paths, check_day=formatted_date)
+#        # Add potential overflow folders for same day (these are generated on mora when two samples
+#        # are submitted with same exp. no.)
+#        for entry in list(check_path_list):
+#            for num in range(2, 20):
+#                check_path_list.append(entry.with_name(entry.name + "_" + str(num)))
+#
+#    elif spectrometer == "hf":
+#        formatted_date = check_date.strftime("%Y")
+#        check_path_list = get_hf_paths(
+#            spec_paths,
+#            check_year=formatted_date,
+#            wild_group=wild_group,
+#        )
+#
+#    # Go over the list to make sure we only bother checking paths that exist
+#    check_path_list = [path for path in check_path_list if path.exists()]
+#    return check_path_list
 
 
 def get_number_spectra(path: Path | None = None, paths: list[Path] | None = None):
@@ -399,11 +451,12 @@ def iterate_progress(prog_state, n, progress_callback):
 
 
 def check_nmr(
-    fed_options,
-    mora_path,
-    spec_paths,
-    check_date,
-    wild_group,
+    fed_options: dict,
+    mora_path: Path,
+    specs_info: dict,
+    check_date: datetime.date,
+    groups: dict,
+    wild_group: bool,
     prog_bar,
     progress_callback=None,
     status_callback=None,
@@ -426,9 +479,17 @@ def check_nmr(
         output_list.append("the mora server could not be reached!")
         return output_list
     spectrometer = fed_options["spec"]
+    spec_info = specs_info[spectrometer]
 
     # Directory discovery
-    check_path_list = get_check_paths(spec_paths, spectrometer, check_date, wild_group)
+    check_path_list = get_check_paths(
+        spec_info,
+        mora_path,
+        check_date,
+        groups=groups,
+        group=fed_options["group"],
+        wild_group=wild_group,
+    )
 
     # Give message if no directories for the given date exist yet
     if len(check_path_list) == 0:
@@ -468,16 +529,21 @@ def check_nmr(
             
             # Extract title and experiment details from title file in spectrum folder
             try:
-                if spectrometer == "300er" or spectrometer == "400er":
+                if spec_info["manufacturer"] == "bruker":
                     metadata = get_metadata_bruker(folder, mora_path)
-                # Save a step by not extracting metadata unless initials in folder name
-                # as folders are given the name of the sample on 500 and 600 MHz specs
-                elif fed_options["initials"] in folder.name:
-                    hit = True
-                    metadata = get_metadata_agilent(folder, mora_path)
+                elif spec_info["manufacturer"] == "agilent":
+                    # Save a step by not extracting metadata unless initials in folder
+                    # name as folders are given the name of the sample on Agilent specs
+                    if fed_options["initials"] in folder.name:
+                        hit = True
+                        metadata = get_metadata_agilent(folder, mora_path)
+                    else:
+                        prog_state = iterate_progress(prog_state, 1, progress_callback)
+                        continue
                 else:
-                    prog_state = iterate_progress(prog_state, 1, progress_callback)
-                    continue
+                    raise ValueError(
+                        f"Manufacturer {spec_info["manufacturer"]} is not supported!"
+                    )
             except FileNotFoundError:
                 output_list.append(f"No metadata could be found for {folder}!")
                 logging.info("No metadata found")
