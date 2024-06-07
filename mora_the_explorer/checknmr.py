@@ -249,20 +249,70 @@ def compare_spectra(mora_folder, dest_folder) -> int:
     Result is a tuple with the result in the form `(same, incomplete)`.
     """
 
-    comparison = filecmp.dircmp(mora_folder, dest_folder)
-
-    # There needs to be at least one file in the top level of the spectrum folder for
-    # this comparison to work - there are many for Bruker, only `studypar` for Agilent
-    if len(comparison.same_files) > 0:
+    # These are files which can be used to assess if two folders are the same sample
+    # On Agilent spectrometers, various files seem to be good candidates for this job
+    # but actually often they change after each individual experiment
+    diagnostic_files = [
+        "fid",  # The actual spectrum
+        "audita.txt",  # On Bruker
+    ]
+    
+    # Start with the assumption that they are not the same spectrum/spectra and try
+    # to prove otherwise
+    same = False
+    
+    # Compares the list of files between the two directories provided and returns a
+    # tuple of three lists (matches, mismatches, errors) - any files not in both
+    # directories gets put into errors
+    # By setting `shallow = False`, we don't compare metadata but rather the size and
+    # content of the files themselves
+    top_level_cmp = filecmp.cmpfiles(
+        mora_folder, dest_folder, diagnostic_files, shallow=False,
+    )
+    if len(top_level_cmp[0]) > 0:
         same = True
+        logging.info(f"Determined to be the same based on {top_level_cmp[0]} being identical")
+    
+    # If don't seem to be same so far, check any subfolders (which are each spectra
+    # on Agilent specs) to see if they are identical spectra
+    if not same:
+        for x in [x for x in mora_folder.iterdir() if x.is_dir()]:
+            subdir_cmp = filecmp.cmpfiles(
+                x, dest_folder / x.name, diagnostic_files, shallow=False,
+            )
+            if len(subdir_cmp[0]) > 0:
+                same = True
+                logging.info(
+                    f"Determined to be the same based on {x.name}/{subdir_cmp[0]} being identical"
+                )
+                # Stop as soon as we find a single hint that they are the same folder
+                break
+    
+    # This compares the contents of the two folders but on metadata only
+    comparison = filecmp.dircmp(mora_folder, dest_folder)
+    
+    # One final check
+    # This compares just the metadata of any top-level files including modified time,
+    # which means even the same spectra might give a false negative, so we can't use it
+    # as the main test, but it is unlikely to give a false positive
+    if not same:
+        if len(comparison.same_files) > 0:
+            same = True
+            logging.info(
+                f"Determined to be the same based on the metadata of {comparison.same_files} being identical"
+            )
+        
+    if same:
         # See if there are any subdirectories or files that we are missing
         # Note that this doesn't look within subfolders
         if len(comparison.left_only) > 0:
             incomplete = True
+            logging.info(f"but {comparison.left_only} are missing in copied folder")
         else:
             incomplete = False
     else:
-        same, incomplete = False, False
+        logging.info("The folders are for different measurements/samples")
+        incomplete = False
 
     return same, incomplete
 
@@ -286,7 +336,7 @@ def copy_folder(src: Path, target: Path):
     # Check that spectrum hasn't been copied before
     same_spectrum_found = False
     incomplete_copy = False
-    if target.exists() is True:
+    if target.exists():
         logging.info("Spectrum with this name exists in destination")
         # Check that the spectra are actually identical and not e.g. different
         # proton measurements
@@ -294,10 +344,16 @@ def copy_folder(src: Path, target: Path):
         # -2, -3 etc. to avoid conflict with spectra already in dest
         same_spectrum_found, incomplete_copy = compare_spectra(src, target)
         num = 1
-        while target.exists() is True and same_spectrum_found is False:
+        while not same_spectrum_found:
             num += 1
             target = target.with_name(target.name + "-" + str(num))
-            same_spectrum_found, incomplete_copy = compare_spectra(src, target)
+            if target.exists():
+                same_spectrum_found, incomplete_copy = compare_spectra(src, target)
+            else:
+                # We have exhausted all possible candidates for the same spectrum
+                # and have arrived at a new unique name, so we need to copy the
+                # spectrum and use this unique name
+                break
 
     # Try and fix only partially copied spectra
     if same_spectrum_found is True and incomplete_copy is True:
