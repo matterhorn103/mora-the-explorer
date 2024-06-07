@@ -71,7 +71,8 @@ def get_hf_paths(spec_paths, check_year, wild_group):
 
 
 def get_check_paths(
-        spec_info: dict,
+        specs_info: dict,
+        spec: str,
         mora_path: Path,
         check_date: datetime.date,
         groups: dict,
@@ -79,8 +80,13 @@ def get_check_paths(
         wild_group: bool = False,
     ):
     """Get list of folders that may contain spectra, appropriate for the spectrometer."""
+    spec_info = specs_info[spec]
     # Start with default, normal folder paths
     check_path_list = spec_info["check_paths"]
+    # Include other spectrometers if indicated in `config.toml`
+    if "include" in spec_info:
+        for included_spec in spec_info["include"]:
+            check_path_list.extend(specs_info[included_spec]["check_paths"])
     # Add archives for previous years other than the current if requested
     if check_date.year != date.today().year:
         check_path_list.extend(spec_info["archives"])
@@ -483,7 +489,8 @@ def check_nmr(
 
     # Directory discovery
     check_path_list = get_check_paths(
-        spec_info,
+        specs_info,
+        spectrometer,
         mora_path,
         check_date,
         groups=groups,

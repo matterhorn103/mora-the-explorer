@@ -88,7 +88,7 @@ class Explorer:
         # Remember that self.ui = self.main_window.ui
         # and self.opts = self.main_window.ui.opts
         self.opts.initials_entry.textChanged.connect(self.initials_changed)
-        self.opts.AK_buttons.buttonClicked.connect(self.group_changed)
+        self.opts.group_buttons.buttonClicked.connect(self.group_changed)
         self.opts.other_box.currentTextChanged.connect(self.group_changed)
         self.opts.dest_path_input.textChanged.connect(
             self.main_window.dest_path_changed
@@ -116,7 +116,6 @@ class Explorer:
         )
         self.opts.date_selector.dateChanged.connect(self.date_changed)
         self.opts.today_button.clicked.connect(self.main_window.set_date_as_today)
-        self.opts.hf_date_selector.dateChanged.connect(self.hf_date_changed)
         self.ui.start_check_button.clicked.connect(self.started)
         self.ui.interrupt_button.clicked.connect(self.interrupted)
         self.ui.notification.clicked.connect(self.main_window.notification_clicked)
@@ -165,9 +164,6 @@ class Explorer:
 
     def date_changed(self):
         self.date_selected = self.opts.date_selector.date().toPython()
-
-    def hf_date_changed(self):
-        self.date_selected = self.opts.hf_date_selector.date().toPython()
 
     def started(self):
         self.queued_checks = 0

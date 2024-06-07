@@ -1,13 +1,15 @@
-# This file configures mora_the_explorer's *default* internal settings and should not be changed
+# This file configures mora_the_explorer's *default* internal settings and should not be
+# changed by anyone other than the NMR department
 
-# If you are looking for your user configuration, it is stored in the user's own config.toml, at:
+# If you are looking for your user configuration, it is stored in the user's own
+# config.toml, at:
 # Windows:  %USERPROFILE%\AppData\Roaming\mora_the_explorer
 # macOS:    ~/Library/Application Support/mora_the_explorer
 # Linux:    $XDG_CONFIG_HOME/mora_the_explorer or ~/.config/mora_the_explorer
 
-# The user version of config.toml is primarily used to store the set of search options saved by the
-# user, however if that file contains key-value pairs for anything else e.g. paths.Linux, those take
-# precedence over those specified here
+# The user version of config.toml is primarily used to store the set of search options
+# saved by the user, however if that file contains key-value pairs for anything else
+# e.g. paths.Linux, those take precedence over those specified here
 
 [default_options]
 initials = "mjm"
@@ -30,8 +32,9 @@ Linux = "will be overwritten"   # Specify in user config, not here!
 
 [groups]
 # Available groups in the style `initialism = full_name`
-# The initialism is the standard one used for each group's experiments and data institute-wide and
-# is used in the search for Bruker spectra (as it must be included in the measurement title)
+# The initialism is the standard one used for each group's experiments and data
+# institute-wide and is used in the search for Bruker spectra (as it must be included in
+# the measurement title)
 # The full name is the name used for folders of the group e.g. at //mora/nmr/500-600er
 fer = "fernandez"
 gar = "garcia"
@@ -66,8 +69,11 @@ pharmazie = "pharmazie"
 #   manufacturer: the manufacturer of the spectrometer(s)
 #   display_name: the text shown next to the button in the user interface
 #                 (note that some characters need escaping, e.g. write && for &)
+#   date_entry: whether the user selects the full date "dd MMM yyyy" or just year "yyyy"
+#   allow_solvent: whether to enable the folder naming option to include the solvent
 #   single_check_only: whether users may use multiday and repeat checks for this spec
-#   intern_only: if set to true, will only be available for the "nmr" group
+#   restrict_to: the list of groups that should be able to see the spectrometer - if
+#                this key is not used, the spectrometer will be visible to all
 #
 # Possible variable fields are:
 # - <spec_dir>      (the value of `spec_dir`)
@@ -76,60 +82,76 @@ pharmazie = "pharmazie"
 # - <group name>    (the chosen group's name)
 # - any strftime formatting string, with % characters, enclosed in <>
 
-dpx.spec_dir = "dpx300"
-dpx.date = "%b%d-%Y"
-dpx.check_paths = [
+[spectrometers.dpx]
+spec_dir = "dpx300"
+date = "%b%d-%Y"
+check_paths = [
     "<spec_dir>/<%y>-dpx300_<%Y>/<date>",
 ]
-dpx.manufacturer = "bruker"
-dpx.display_name = "Old dpx spectrometer (300 MHz)"
-dpx.single_check_only = false
-dpx.intern_only = true
+manufacturer = "bruker"
+display_name = "Old dpx spectrometer (300 MHz)"
+date_entry = "dd MMM yyyy"
+allow_solvent = true
+single_check_only = false
+restrict_to = [
+    "nmr",
+]
 
 
-300er.spec_dir = "300er"
-300er.date = "%b%d-%Y"
-300er.check_paths = [
+[spectrometers.300er]
+spec_dir = "300er"
+date = "%b%d-%Y"
+check_paths = [
     "<spec_dir>/<date>",
 ]
-300er.archives = [
+archives = [
     "<spec_dir>/<%y>-av300_<%Y>/<date>",
     "<spec_dir>/<%y>-dpx300_<%Y>/<date>",
 ]
-300er.manufacturer = "bruker"
-300er.display_name = "Studer group NMR only (300 MHz)"
-300er.single_check_only = false
-300er.intern_only = false
+manufacturer = "bruker"
+display_name = "Studer group NMR only (300 MHz)"
+date_entry = "dd MMM yyyy"
+allow_solvent = true
+single_check_only = false
+restrict_to = [
+    "nmr",
+    "stu",
+    "nae",
+]
 
 
-400er.spec_dir = "400er"
-400er.date = "%b%d-%Y"
-400er.check_paths = [
+[spectrometers.400er]
+spec_dir = "400er"
+date = "%b%d-%Y"
+check_paths = [
     "<spec_dir>/neo400a_<date>",
     "<spec_dir>/neo400b_<date>",
     "<spec_dir>/neo400c_<date>",
 ]
-400er.archives = [
+archives = [
     "<spec_dir>/<%y>-av400_<%Y>/<date>",
     "<spec_dir>/<%y>-neo400a_<%Y>/<date>",
     "<spec_dir>/<%y>-neo400b_<%Y>/<date>",
     "<spec_dir>/<%y>-neo400c_<%Y>/<date>",
 ]
-400er.manufacturer = "bruker"
-400er.include = [
+manufacturer = "bruker"
+include = [
     "300er",
 ]
-400er.display_name = "routine NMR (300 && 400 MHz)"
-400er.single_check_only = false
-400er.intern_only = false
+display_name = "routine NMR (300 && 400 MHz)"
+date_entry = "dd MMM yyyy"
+allow_solvent = true
+single_check_only = false
 
 
-hf.spec_dir = "500-600er"
-hf.date = "%Y"
-hf.check_paths = [
+[spectrometers.hf]
+spec_dir = "500-600er"
+date = "%Y"
+check_paths = [
     "<spec_dir>/<group name>/<date>",
 ]
-hf.manufacturer = "agilent"
-hf.display_name = "high-field spectrometers (500 && 600 MHz)"
-hf.single_check_only = true
-hf.intern_only = false
+manufacturer = "agilent"
+display_name = "high-field spectrometers (500 && 600 MHz)"
+date_entry = "yyyy"
+allow_solvent = false
+single_check_only = true

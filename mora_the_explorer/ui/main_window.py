@@ -41,10 +41,14 @@ class MainWindow(QMainWindow):
         layout_widget.setLayout(self.ui)
         self.setCentralWidget(layout_widget)
 
+        # Generate group and spectrometer buttons
+        self.opts.add_group_buttons(self.config.groups, self.config.options["group"])
+        self.opts.add_spec_buttons(self.config.specs, self.config.options["spec"])
+
         # Trigger function to adapt available options and spectrometers to the user's group
-        self.adapt_to_group()
+        self.adapt_to_group(self.config.options["group"])
         # Trigger functions to adapt date selector and naming options to the selected spectrometer
-        self.adapt_to_spec()
+        self.adapt_to_spec(self.config.options["spec"])
 
         # Set up window. macos spaces things out more than Windows so give it a bigger window
         if platform.system() == "Windows":
@@ -134,10 +138,10 @@ The repeat function is also disabled as long as this option is selected.
 
     def group_changed(self):
         """Find out what the new group is, save it to config, make necessary adjustments."""
-        if self.opts.AK_buttons.checkedButton().text() == "other":
+        if self.opts.group_buttons.checkedButton().text() == "other":
             new_group = self.opts.other_box.currentText()
         else:
-            new_group = self.opts.AK_buttons.checkedButton().text()
+            new_group = self.opts.group_buttons.checkedButton().text()
         self.config.options["group"] = new_group
         self.adapt_to_group(new_group)
         self.opts.save_button.setEnabled(True)
@@ -195,41 +199,55 @@ The repeat function is also disabled as long as this option is selected.
         self.opts.inc_init_checkbox.setEnabled(
             not self.opts.nmrcheck_style_checkbox.isChecked()
         )
-        self.adapt_to_spec()
+        self.adapt_to_spec(self.config.options["spec"])
 
     def refresh_visible_specs(self):
-        if self.config.options["group"] in ["stu", "nae", "nmr"]:
-            self.opts.spec_buttons.buttons["300er"].show()
-        else:
-            self.opts.spec_buttons.buttons["300er"].hide()
+        for spec in self.config.specs.keys():
+            allowed = self.config.specs[self.config.options["spec"]].get("restrict_to")
+            if allowed is None:
+                # No list of groups provided in config so will always be shown to all
+                continue
+            elif self.config.options["group"] in allowed:
+                self.opts.spec_buttons.buttons[spec].show()
+            else:
+                self.opts.spec_buttons.buttons[spec].hide()
 
     def spec_changed(self):
         self.config.options["spec"] = self.opts.spec_buttons.checkedButton().name
-        self.adapt_to_spec()
+        self.adapt_to_spec(self.config.options["spec"])
         self.opts.save_button.setEnabled(True)
 
-    def adapt_to_spec(self):
-        if self.config.options["spec"] == "hf":
-            # Including the solvent in the title is not supported for high-field measurements so disable option
-            self.opts.inc_solv_checkbox.setEnabled(False)
-            self.opts.repeat_check_checkbox.setEnabled(False)
-            self.opts.date_selector.hide()
+    def adapt_to_spec(self, spec: str):
+        self.opts.inc_solv_checkbox.setEnabled(self.config.specs[spec]["allow_solvent"])
+        self.opts.repeat_check_checkbox.setEnabled(
+            not self.config.specs[spec]["single_check_only"]
+        )
+        self.opts.date_selector.setDisplayFormat(self.config.specs[spec]["date_entry"])
+        if self.config.specs[spec]["single_check_only"]:
             self.opts.only_button.hide()
             self.opts.since_button.hide()
-            self.opts.today_button.setEnabled(False)
-            self.opts.hf_date_selector.show()
         else:
-            if (
-                self.config.options["group"] != "nmr"
-                and self.config.options["nmrcheck_style"] is False
-            ):
-                self.opts.inc_solv_checkbox.setEnabled(True)
-            self.opts.repeat_check_checkbox.setEnabled(True)
-            self.opts.hf_date_selector.hide()
-            self.opts.date_selector.show()
             self.opts.only_button.show()
             self.opts.since_button.show()
-            self.opts.today_button.setEnabled(True)
+        #if self.config.options["spec"] == "hf":
+        #    # Including the solvent in the title is not supported for high-field measurements so disable option
+        #    self.opts.inc_solv_checkbox.setEnabled(False)
+        #    self.opts.repeat_check_checkbox.setEnabled(False)
+        #    self.opts.date_selector.setDisplayFormat("yyyy")
+        #    self.opts.only_button.hide()
+        #    self.opts.since_button.hide()
+        #    self.opts.today_button.setEnabled(False)
+        #else:
+        #    if (
+        #        self.config.options["group"] != "nmr"
+        #        and self.config.options["nmrcheck_style"] is False
+        #    ):
+        #        self.opts.inc_solv_checkbox.setEnabled(True)
+        #    self.opts.repeat_check_checkbox.setEnabled(True)
+        #    self.opts.date_selector.setDisplayFormat("dd MMM yyyy")
+        #    self.opts.only_button.show()
+        #    self.opts.since_button.show()
+        #    self.opts.today_button.setEnabled(True)
 
     def repeat_switched(self):
         self.config.options["repeat_switch"] = (
