@@ -6,70 +6,6 @@ from datetime import date, datetime
 from pathlib import Path
 
 
-def get_300er_paths(spec_paths, check_day):
-    # Start with default, normal folder path
-    check_path_list = [spec_paths["300er"] / check_day]
-    # Add archives for previous years other than the current if requested
-    year = int(check_day[-4:])
-    if year != date.today().year:
-        check_path_list.append(
-            spec_paths["300er"] / f"{str(year)[-2:]}-av300_{year}" / check_day
-        )
-    # Account for different structure in 2019/start of 2020
-    if year <= 2020:
-        check_path_list.append(
-            spec_paths["300er"] / f"{str(year)[-2:]}-dpx300_{year}" / check_day
-        )
-    return check_path_list
-
-
-def get_400er_paths(spec_paths, check_day):
-    check_day_a = "neo400a_" + check_day
-    check_day_b = "neo400b_" + check_day
-    check_day_c = "neo400c_" + check_day
-    # Start with default, normal folder paths
-    check_path_list = [
-        spec_paths["400er"] / check_day_a,
-        spec_paths["400er"] / check_day_b,
-        spec_paths["400er"] / check_day_c,
-        spec_paths["300er"] / check_day,
-    ]
-    # Add archives for previous years other than the current if requested
-    year = int(check_day[-4:])
-    if year != date.today().year:
-        check_path_list.extend(
-            [
-                spec_paths["400er"] / f"{str(year)[-2:]}-neo400a_{year}" / check_day_a,
-                spec_paths["400er"] / f"{str(year)[-2:]}-neo400b_{year}" / check_day_b,
-                spec_paths["400er"] / f"{str(year)[-2:]}-neo400c_{year}" / check_day_c,
-                spec_paths["300er"] / f"{str(year)[-2:]}-av300_{year}" / check_day,
-            ]
-        )
-    # Account for different structure in 2019/start of 2020
-    if year <= 2020:
-        check_path_list.extend(
-            [
-                spec_paths["400er"] / f"{str(year)[-2:]}-av400_{year}" / check_day,
-                spec_paths["300er"] / f"{str(year)[-2:]}-dpx300_{year}" / check_day,
-            ]
-        )
-    return check_path_list
-
-
-def get_hf_paths(spec_paths, check_year, wild_group):
-    # At the moment there is just one folder per group
-    # Check folders of all groups when group `nmr` uses the group wildcard
-    if wild_group is True:
-        group_folders = [
-            x for x in spec_paths["hf"].parent.iterdir()
-            if x.is_dir() and (x.name[0] != ".")
-        ]
-        check_path_list = [group_folder / check_year for group_folder in group_folders]
-    else:
-        check_path_list = [spec_paths["hf"] / check_year]
-    return check_path_list
-
-
 def get_check_paths(
         specs_info: dict,
         spec: str,
@@ -124,34 +60,6 @@ def get_check_paths(
     # Turn into Path objects at the same time
     check_path_list = [mora_path / p for p in check_path_list if (mora_path / p).exists()]
     return check_path_list
-
-
-#def get_check_paths(spec_paths, spectrometer, check_date, wild_group):
-#    """Get list of folders that may contain spectra, appropriate for the spectrometer."""
-#
-#    if spectrometer == "300er" or spectrometer == "400er":
-#        formatted_date = check_date.strftime("%b%d-%Y")
-#        if spectrometer == "300er":
-#            check_path_list = get_300er_paths(spec_paths, check_day=formatted_date)
-#        elif spectrometer == "400er":
-#            check_path_list = get_400er_paths(spec_paths, check_day=formatted_date)
-#        # Add potential overflow folders for same day (these are generated on mora when two samples
-#        # are submitted with same exp. no.)
-#        for entry in list(check_path_list):
-#            for num in range(2, 20):
-#                check_path_list.append(entry.with_name(entry.name + "_" + str(num)))
-#
-#    elif spectrometer == "hf":
-#        formatted_date = check_date.strftime("%Y")
-#        check_path_list = get_hf_paths(
-#            spec_paths,
-#            check_year=formatted_date,
-#            wild_group=wild_group,
-#        )
-#
-#    # Go over the list to make sure we only bother checking paths that exist
-#    check_path_list = [path for path in check_path_list if path.exists()]
-#    return check_path_list
 
 
 def get_number_spectra(path: Path | None = None, paths: list[Path] | None = None):
@@ -290,7 +198,7 @@ def format_name(
     return name
 
 
-def format_name_klaus(folder, metadata) -> str:
+def format_name_admin(folder, metadata) -> str:
     """Format folder name in Klaus' desired fashion."""
     # First do normally but with everything included
     name = format_name(folder, metadata, inc_group=True, inc_init=True, inc_solv=True)
@@ -580,7 +488,7 @@ def check_nmr(
 
             # Formatting
             if fed_options["group"] == "nmr":
-                new_folder_name = format_name_klaus(
+                new_folder_name = format_name_admin(
                     folder,
                     metadata,
                 )
