@@ -60,7 +60,7 @@ pharmazie = "pharmazie"
 [spectrometers]
 # Provide the following information for each spectrometer category:
 #   spec_dir: the name of the folder for the spectrometer in \\mora\nmr
-#   date: the way dates are formatted, defining <date> (for the format codes see
+#   date: the way dates are formatted, defining <date> - for the format codes see
 #       https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
 #   check_paths: the paths that should be searched for new spectra
 #   archives: if spectra from previous years can't be found under check_paths, give the
@@ -89,7 +89,7 @@ check_paths = [
     "<spec_dir>/<%y>-dpx300_<%Y>/<date>",
 ]
 manufacturer = "bruker"
-display_name = "Old dpx spectrometer (300 MHz)"
+display_name = "old dpx spectrometer (300 MHz)"
 date_entry = "dd MMM yyyy"
 allow_solvent = true
 single_check_only = false

@@ -7,8 +7,9 @@ from pathlib import Path
 
 import plyer
 
-from PySide6.QtCore import QSize
+from PySide6.QtCore import QSize, QUrl
 from PySide6.QtWidgets import QMainWindow, QWidget, QMessageBox
+from PySide6.QtGui import QDesktopServices
 
 from ..config import Config
 from .layout import Layout
@@ -71,7 +72,7 @@ class MainWindow(QMainWindow):
             )
             try:
                 notification_text = "Error: " + copied_list[0]
-            except:
+            except IndexError:
                 notification_text = "Unknown error occurred."
             self.ui.notification.setText(notification_text + " Click to dismiss")
         self.ui.notification.show()
@@ -111,7 +112,8 @@ class MainWindow(QMainWindow):
         if choice == QMessageBox.Open:
             if path.exists() is True:
                 # Extra quotes necessary because cmd.exe can't handle spaces in path names otherwise
-                os.system(f'start "" "{path}"')
+                url = QUrl.fromLocalFile(path)
+                QDesktopServices.openUrl(url)
 
     def notify_failed_permissions(self):
         """Spawn popup to notify user that accessing the mora server failed."""

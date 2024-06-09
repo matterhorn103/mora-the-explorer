@@ -18,44 +18,52 @@ def get_check_paths(
     """Get list of folders that may contain spectra, appropriate for the spectrometer."""
     spec_info = specs_info[spec]
     # Start with default, normal folder paths
-    check_path_list = spec_info["check_paths"]
+    raw_path_list = spec_info["check_paths"]
     # Include other spectrometers if indicated in `config.toml`
     if "include" in spec_info:
         for included_spec in spec_info["include"]:
-            check_path_list.extend(specs_info[included_spec]["check_paths"])
+            raw_path_list.extend(specs_info[included_spec]["check_paths"])
     # Add archives for previous years other than the current if requested
     if check_date.year != date.today().year:
-        check_path_list.extend(spec_info["archives"])
+        if "archives" in spec_info:
+            raw_path_list.extend(spec_info["archives"])
     if "date" in spec_info:
         formatted_date = check_date.strftime(spec_info["date"])
     # Replace the variable fields enclosed in <> angle brackets
-    for path in check_path_list:
-        path = path.replace("<spec_dir>", spec_info["spec_dir"])
-        path = path.replace("<date>", formatted_date)
-        if "<group>" in path:
-            if wild_group is True:
-                wild_check_path_list = []
-                for group in groups.keys():
-                    wild_check_path_list.append(path.replace("<group>"), group)
-                check_path_list = wild_check_path_list
-            else:
-                path = path.replace("<group>", group)
-        if "<group name>" in path:
-            if wild_group is True:
-                wild_check_path_list = []
-                for group_name in groups.values():
-                    wild_check_path_list.append(path.replace("<group name>"), group_name)
-                check_path_list = wild_check_path_list
-            else:
-                path = path.replace("<group name>", groups[group])
-        # Any remaining <> fields are for datetime format strings, can sub all at once
+    check_path_list = []
+    for path in raw_path_list:
+        path = (
+            path
+            .replace("<spec_dir>", spec_info["spec_dir"])
+            .replace("<date>", formatted_date)
+        )
+        # <> fields for datetime format strings can be subbed all at once
         path = check_date.strftime(path)
-        path = path.replace("<", "").replace(">", "")
+        if wild_group is False:
+            path = (
+                path
+                .replace("<group>", group)
+                .replace("<group name>", groups[group])
+                .replace("<", "")
+                .replace(">", "")
+            )
+            check_path_list.append(path)
+        elif wild_group is True:
+            wild_check_path_list = []
+            for group, group_name in groups.items():
+                wild_check_path_list.append(
+                        path
+                        .replace("<group>", group)
+                        .replace("<group name>", group_name)
+                        .replace("<", "")
+                        .replace(">", "")
+                    )
+                check_path_list.extend(wild_check_path_list)
     # Add potential overflow folders for same day (these are generated on mora when two
     # samples are submitted with same exp. no.)
-    for path in check_path_list:
+    for path in check_path_list.copy():
         for num in range(2, 20):
-            check_path_list.append(path.with_name(path.name + "_" + str(num)))
+            check_path_list.append(path + "_" + str(num))
     # Go over the list to make sure we only bother checking paths that exist
     # Turn into Path objects at the same time
     check_path_list = [mora_path / p for p in check_path_list if (mora_path / p).exists()]
@@ -334,20 +342,20 @@ def copy_folder(src: Path, target: Path):
                         shutil.copy2(x, target / x.name)
                 except PermissionError:
                     output.append(
-                        "you do not have permission to write to the given folder"
+                        "You do not have permission to write to the given folder"
                     )
                     return output
-        text_to_add = "new files found for: " + target.name
+        text_to_add = "New files found for: " + target.name
         output.append(text_to_add)
 
     elif same_spectrum_found is False:
         try:
             shutil.copytree(src, target)
         except PermissionError:
-            output.append("you do not have permission to write to the given folder")
+            output.append("You do not have permission to write to the given folder")
             logging.info("No write permission for destination")
             return output
-        text_to_add = "spectrum found: " + target.name
+        text_to_add = "Spectrum found: " + target.name
         logging.info(f"Spectrum saved to {target.name}")
         output.append(text_to_add)
 
@@ -363,6 +371,8 @@ def iterate_progress(prog_state, n, progress_callback):
         print(f"Spectra checked: {prog_state}")
     return prog_state
 
+cache = tuple()
+cached_paths = []
 
 def check_nmr(
     fed_options: dict,
@@ -377,20 +387,23 @@ def check_nmr(
 ):
     """Main checking function for Mora the Explorer."""
 
+    if status_callback is not None:
+        status_callback.emit("preparing...")
+    
     # Some initial setup that is the same for all spectrometers
     logging.info(f"Beginning check of {check_date} with the options:")
     logging.info(fed_options)
     # Initialize list that will be returned as output
-    output_list = ["no new spectra"]
+    output_list = ["No new spectra"]
     # Confirm destination directory exists
     if Path(fed_options["dest_path"]).exists() is False:
         logging.info("Given destination folder not found!")
-        output_list.append("given destination folder not found!")
+        output_list.append("Given destination folder not found!")
         return output_list
     # Confirm mora can be reached
     if mora_path.exists() is False:
         logging.info("The mora server could not be reached!")
-        output_list.append("the mora server could not be reached!")
+        output_list.append("The mora server could not be reached!")
         return output_list
     spectrometer = fed_options["spec"]
     spec_info = specs_info[spectrometer]
@@ -409,7 +422,7 @@ def check_nmr(
     # Give message if no directories for the given date exist yet
     if len(check_path_list) == 0:
         logging.info("No folders exist for this date!")
-        output_list.append("no folders exist for this date!")
+        output_list.append("No folders exist for this date!")
         return output_list
     else:
         logging.info("The following paths will be checked for spectra:")
@@ -428,6 +441,9 @@ def check_nmr(
     except Exception:
         # This stops Python from hanging when the program is closed, no idea why
         sys.exit()
+    
+    if status_callback is not None:
+        status_callback.emit("checking...")
 
     # Now we have a list of directories to check, start the actual search process
     # Needs to be slightly different depending on the spectrometer, as the contents of
@@ -517,7 +533,7 @@ def check_nmr(
             prog_state = iterate_progress(prog_state, 5, progress_callback)
 
     now = datetime.now().strftime("%H:%M:%S")
-    completed_statement = f"check of {check_date} completed at " + now
+    completed_statement = f"Check of {check_date} completed at " + now
     output_list.append(completed_statement)
     logging.info(completed_statement)
     return output_list

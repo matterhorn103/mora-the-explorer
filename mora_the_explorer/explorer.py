@@ -39,10 +39,9 @@ class Explorer:
         self.update_path = Path(config.paths["update"])
 
         # Load group and spectrometer info
-        self.all_groups = (
-            {k: v for k, v in config.groups.items() if isinstance(v, str)}
-            .update({k: v for k, v in config.groups["other"].items()})
-        )
+        # Need to flatten groups dict (as some are in an "other" subdict)
+        self.all_groups = {k: v for k, v in config.groups.items() if isinstance(v, str)}
+        self.all_groups.update({k: v for k, v in config.groups["other"].items()})
         self.specs = config.specs
 
         # Check for updates
@@ -185,6 +184,7 @@ class Explorer:
             mora_path=self.mora_path,
             specs_info=self.specs,
             check_date=date,
+            groups=self.all_groups,
             wild_group=self.wild_group,
             prog_bar=self.ui.prog_bar,
         )
@@ -222,11 +222,11 @@ class Explorer:
         # In all other cases len will be at least 2
         if len(self.copied_list) > 1:
             # At least one spectrum was found
-            if self.copied_list[1][:5] == "spect":
+            if self.copied_list[1][:5] == "Spect":
                 self.copied_list.pop(0)
                 self.main_window.notify_spectra(self.copied_list)
             # No spectra were found but check completed successfully
-            elif self.copied_list[1][:5] == "check":
+            elif self.copied_list[1][:5] == "Check":
                 pass
             # Known error occurred
             else:
