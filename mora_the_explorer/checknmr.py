@@ -59,14 +59,19 @@ def get_check_paths(
                         .replace(">", "")
                     )
                 check_path_list.extend(wild_check_path_list)
+    # Turn into Path objects
+    check_path_list = [mora_path / p for p in check_path_list]
+    # Go over the list to make sure we only bother checking paths that exist
+    check_path_list = [p for p in check_path_list if p.exists()]
     # Add potential overflow folders for same day (these are generated on mora when two
     # samples are submitted with same exp. no.)
     for path in check_path_list.copy():
         for num in range(2, 20):
-            check_path_list.append(path + "_" + str(num))
-    # Go over the list to make sure we only bother checking paths that exist
-    # Turn into Path objects at the same time
-    check_path_list = [mora_path / p for p in check_path_list if (mora_path / p).exists()]
+            overflow_path = path.with_name(path.name + "_" + str(num))
+            if overflow_path.exists():
+                check_path_list.append(overflow_path)
+            else:
+                break
     return check_path_list
 
 
