@@ -38,14 +38,11 @@ class Explorer:
         self.mora_path = Path(config.paths[platform.system()])
         self.update_path = Path(config.paths["update"])
 
-        # Define paths to spectrometers based on loaded mora_path
-        self.path_300er = self.mora_path / "300er"
-        self.path_400er = self.mora_path / "400er"
-        self.spectrometer_paths = {
-            "300er": self.path_300er,
-            "400er": self.path_400er,
-        }
-        self.adapt_paths_to_group(self.config.options["group"])
+        # Load group and spectrometer info
+        # Need to flatten groups dict (as some are in an "other" subdict)
+        self.all_groups = {k: v for k, v in config.groups.items() if isinstance(v, str)}
+        self.all_groups.update({k: v for k, v in config.groups["other"].items()})
+        self.specs = config.specs
 
         # Check for updates
         self.update_check(Path(config.paths["update"]))
@@ -90,7 +87,7 @@ class Explorer:
         # Remember that self.ui = self.main_window.ui
         # and self.opts = self.main_window.ui.opts
         self.opts.initials_entry.textChanged.connect(self.initials_changed)
-        self.opts.AK_buttons.buttonClicked.connect(self.group_changed)
+        self.opts.group_buttons.buttonClicked.connect(self.group_changed)
         self.opts.other_box.currentTextChanged.connect(self.group_changed)
         self.opts.dest_path_input.textChanged.connect(
             self.main_window.dest_path_changed
@@ -118,7 +115,6 @@ class Explorer:
         )
         self.opts.date_selector.dateChanged.connect(self.date_changed)
         self.opts.today_button.clicked.connect(self.main_window.set_date_as_today)
-        self.opts.hf_date_selector.dateChanged.connect(self.hf_date_changed)
         self.ui.start_check_button.clicked.connect(self.started)
         self.ui.interrupt_button.clicked.connect(self.interrupted)
         self.ui.notification.clicked.connect(self.main_window.notification_clicked)
@@ -155,11 +151,6 @@ class Explorer:
         self.adapt_paths_to_group(self.config.options["group"])
 
     def adapt_paths_to_group(self, group):
-        if group in self.config.groups["other"]:
-            path_hf = self.mora_path / "500-600er" / self.config.groups["other"][group]
-        else:
-            path_hf = self.mora_path / "500-600er" / self.config.groups[group]
-        self.spectrometer_paths["hf"] = path_hf
         if group != "nmr":
             # Make sure wild option is turned off for normal users
             self.wild_group = False
@@ -173,22 +164,11 @@ class Explorer:
     def date_changed(self):
         self.date_selected = self.opts.date_selector.date().toPython()
 
-    def hf_date_changed(self):
-        self.date_selected = self.opts.hf_date_selector.date().toPython()
-
-    def format_date(self, input_date):
-        """Convert Python datetime.date object to the same format used in the folder names on Mora."""
-        if self.config.options["spec"] == "hf":
-            formatted_date = input_date.strftime("%Y")
-        else:
-            formatted_date = input_date.strftime("%b%d-%Y")
-        return formatted_date
-
     def started(self):
         self.queued_checks = 0
         if (
             self.opts.only_button.isChecked() is True
-            or self.config.options["spec"] == "hf"
+            or self.specs[self.config.options["spec"]]["single_check_only"] is True
         ):
             self.single_check(self.date_selected)
         elif self.opts.since_button.isChecked() is True:
@@ -197,14 +177,14 @@ class Explorer:
     def single_check(self, date):
         # Hide start button, show status bar
         self.ui.status_bar.show_status()
-        formatted_date = self.format_date(date)
         # Start main checking function in worker thread
         worker = Worker(
             check_nmr,
             fed_options=self.config.options,
             mora_path=self.mora_path,
-            spec_paths=self.spectrometer_paths,
-            check_date=formatted_date,
+            specs_info=self.specs,
+            check_date=date,
+            groups=self.all_groups,
             wild_group=self.wild_group,
             prog_bar=self.ui.prog_bar,
         )
@@ -242,11 +222,11 @@ class Explorer:
         # In all other cases len will be at least 2
         if len(self.copied_list) > 1:
             # At least one spectrum was found
-            if self.copied_list[1][:5] == "spect":
+            if self.copied_list[1][:5] == "Spect":
                 self.copied_list.pop(0)
                 self.main_window.notify_spectra(self.copied_list)
             # No spectra were found but check completed successfully
-            elif self.copied_list[1][:5] == "check":
+            elif self.copied_list[1][:5] == "Check":
                 pass
             # Known error occurred
             else:
@@ -264,7 +244,7 @@ class Explorer:
         # Behaviour for repeat check function, deactivate for hf spectrometer
         # See also self.timer in init function
         if (self.config.options["repeat_switch"] is True) and (
-            self.config.options["spec"] != "hf"
+            self.specs[self.config.options["spec"]]["single_check_only"] is False
         ):
             self.queued_checks += 1
             self.ui.status_bar.show_cancel()

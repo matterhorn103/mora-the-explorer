@@ -84,6 +84,7 @@ class Config:
         self.options = self.user_config["options"]
         self.paths = self.app_config["paths"]
         self.groups = self.app_config["groups"]
+        self.specs = self.app_config["spectrometers"]
 
     def save(self):
         # Save user config to file
