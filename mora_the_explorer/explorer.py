@@ -213,8 +213,6 @@ class Explorer:
 
     def check_ended(self):
         self.queued_checks -= 1
-        # Stop showing checking status
-        self.ui.status_bar.show_start()
         # Set progress to 100% just in case it didn't reach it for whatever reason
         self.ui.prog_bar.setMaximum(1)
         self.ui.prog_bar.setValue(1)
