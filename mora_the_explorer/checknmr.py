@@ -1,3 +1,4 @@
+"""All UI-independent backend logic for checking the server and copying new spectra."""
 import filecmp
 import logging
 import shutil
@@ -386,7 +387,7 @@ def check_nmr(
     check_date: datetime.date,
     groups: dict,
     wild_group: bool,
-    prog_bar,
+    prog_bar=None,
     progress_callback=None,
     status_callback=None,
 ):
@@ -437,15 +438,16 @@ def check_nmr(
     prog_state = 0
     n_spectra = get_number_spectra(paths=check_path_list)
     logging.info(f"Total spectra in these paths: {n_spectra}")
-    try:
-        prog_bar.setMaximum(n_spectra)
-        if progress_callback is not None:
-            progress_callback.emit(0)  # Reset bar to 0
-        else:
-            print(f"Total spectra to check: {n_spectra}")
-    except Exception:
-        # This stops Python from hanging when the program is closed, no idea why
-        sys.exit()
+    if prog_bar is not None:
+        try:
+            prog_bar.setMaximum(n_spectra)
+            if progress_callback is not None:
+                progress_callback.emit(0)  # Reset bar to 0
+            else:
+                print(f"Total spectra to check: {n_spectra}")
+        except Exception:
+            # This stops Python from hanging when the program is closed, no idea why
+            sys.exit()
     
     if status_callback is not None:
         status_callback.emit("checking...")
@@ -534,8 +536,9 @@ def check_nmr(
             # Update progress bar if a callback object has been given
             # Make sure there's a noticeable movement after copying a spectrum,
             # otherwise it looks frozen
-            prog_bar.setMaximum(prog_bar.maximum() + 5)
-            prog_state = iterate_progress(prog_state, 5, progress_callback)
+            if prog_bar is not None:
+                prog_bar.setMaximum(prog_bar.maximum() + 5)
+                prog_state = iterate_progress(prog_state, 5, progress_callback)
 
     now = datetime.now().strftime("%H:%M:%S")
     completed_statement = f"Check of {check_date} completed at " + now
