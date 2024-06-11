@@ -54,13 +54,13 @@ def set_dark_mode(app):
     app.setPalette(dark_palette)
 
 
-def run(rsrc_dir):
+def run(rsrc_dir: Path):
     """Run Mora the Explorer."""
 
     # Load configuration
     logging.info(f"Program resources located at {rsrc_dir}")
     logging.info("Loading program settings...")
-    config = Config(rsrc_dir)
+    config = Config(rsrc_dir / "config.toml")
     logging.info("...complete")
 
     logging.info("Initializing program...")

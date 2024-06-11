@@ -212,12 +212,17 @@ def format_name(
     return name
 
 
-def format_name_admin(folder, metadata) -> str:
+def format_name_admin(folder, metadata, inc_path=False) -> str:
     """Format folder name in Klaus' desired fashion."""
     # First do normally but with everything included
     name = format_name(folder, metadata, inc_group=True, inc_init=True, inc_solv=True)
-    # Add location details in front
-    name = metadata["server_location"].replace("/", "_").replace("\\", "_") + "_" + name
+    # Add location details if requested
+    if inc_path:
+        location = metadata["server_location"].replace("/", "_").replace("\\", "_")
+        if inc_path == "before" or inc_path is True:
+            name = location + "_" + name
+        elif inc_path == "after":
+            name = name + "_" + location
     return name
 
 
@@ -514,6 +519,7 @@ def check_nmr(
                 new_folder_name = format_name_admin(
                     folder,
                     metadata,
+                    inc_path=fed_options["inc_path"]
                 )
             else:
                 new_folder_name = format_name(

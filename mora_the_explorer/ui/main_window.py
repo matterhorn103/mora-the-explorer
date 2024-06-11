@@ -155,22 +155,27 @@ The repeat function is also disabled as long as this option is selected.
             self.opts.other_box.show()
         else:
             self.opts.other_box.hide()
-        # If nmr group has been selected, disable the naming option checkboxes
-        # as they will be treated as selected anyway
+        # If nmr group has been selected, disable the initials/solvent naming option
+        # checkboxes as they will be treated as selected anyway, and show the options
+        # for prepending/appending the path
         if group == "nmr":
             self.opts.inc_init_checkbox.setEnabled(False)
-            self.opts.nmrcheck_style_checkbox.setEnabled(False)
+            self.opts.inc_solv_checkbox.setEnabled(False)
+            self.opts.nmrcheck_style_checkbox.hide()
+            self.opts.inc_path_checkbox.show()
+            self.opts.inc_path_box.show()
         else:
             # Only enable initials checkbox if nmrcheck_style option is not selected,
             # disable otherwise
             self.opts.inc_init_checkbox.setEnabled(
                 not self.config.options["nmrcheck_style"]
             )
-            self.opts.nmrcheck_style_checkbox.setEnabled(True)
-        if group == "nmr" or self.config.options["spec"] == "hf":
-            self.opts.inc_solv_checkbox.setEnabled(False)
-        else:
-            self.opts.inc_solv_checkbox.setEnabled(True)
+            self.opts.inc_solv_checkbox.setEnabled(
+                self.config.specs[self.config.options["spec"]]["allow_solvent"]
+            )
+            self.opts.nmrcheck_style_checkbox.show()
+            self.opts.inc_path_checkbox.hide()
+            self.opts.inc_path_box.hide()
         self.refresh_visible_specs()
 
     def dest_path_changed(self, new_path):
@@ -192,6 +197,12 @@ The repeat function is also disabled as long as this option is selected.
     def inc_solv_switched(self):
         self.config.options["inc_solv"] = self.opts.inc_solv_checkbox.isChecked()
         self.opts.save_button.setEnabled(True)
+
+    def inc_path_changed(self):
+        if self.opts.inc_path_checkbox.isChecked():
+            self.config.options["inc_path"] = self.opts.inc_path_box.currentText()
+        else:
+            self.config.options["inc_path"] = False
 
     def nmrcheck_style_switched(self):
         self.config.options["nmrcheck_style"] = (
@@ -231,25 +242,6 @@ The repeat function is also disabled as long as this option is selected.
         else:
             self.opts.only_button.show()
             self.opts.since_button.show()
-        #if self.config.options["spec"] == "hf":
-        #    # Including the solvent in the title is not supported for high-field measurements so disable option
-        #    self.opts.inc_solv_checkbox.setEnabled(False)
-        #    self.opts.repeat_check_checkbox.setEnabled(False)
-        #    self.opts.date_selector.setDisplayFormat("yyyy")
-        #    self.opts.only_button.hide()
-        #    self.opts.since_button.hide()
-        #    self.opts.today_button.setEnabled(False)
-        #else:
-        #    if (
-        #        self.config.options["group"] != "nmr"
-        #        and self.config.options["nmrcheck_style"] is False
-        #    ):
-        #        self.opts.inc_solv_checkbox.setEnabled(True)
-        #    self.opts.repeat_check_checkbox.setEnabled(True)
-        #    self.opts.date_selector.setDisplayFormat("dd MMM yyyy")
-        #    self.opts.only_button.show()
-        #    self.opts.since_button.show()
-        #    self.opts.today_button.setEnabled(True)
 
     def repeat_switched(self):
         self.config.options["repeat_switch"] = (

@@ -102,6 +102,12 @@ class Explorer:
         self.opts.nmrcheck_style_checkbox.stateChanged.connect(
             self.main_window.nmrcheck_style_switched
         )
+        self.opts.inc_path_checkbox.stateChanged.connect(
+            self.main_window.inc_path_changed
+        )
+        self.opts.inc_path_box.currentTextChanged.connect(
+            self.main_window.inc_path_changed
+        )
         self.opts.spec_buttons.buttonClicked.connect(self.main_window.spec_changed)
         self.opts.repeat_check_checkbox.stateChanged.connect(
             self.main_window.repeat_switched
