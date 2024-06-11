@@ -15,6 +15,7 @@ The app can be "compiled" to an `.exe` Windows executable using `pyinstaller` (i
 * Looks (and is) much more modern, which makes option selection much less ambiguous (it is clear which has been selected), improving the UX. Also supports dark mode
 * Can check for spectra from any chosen date, and only from this date, so won't download hundreds of spectra at once
 * Can be used to get spectra even months or years after measurement
+* Can identify if previously copied spectra are missing files and add the new ones (useful if some error occurred or e.g. when only the proton spectrum of a sample submitted on the high-field spectra was completed on the last check but carbon, COSY etc. have been measured since) 
 * Whether spectra are copied depends on whether one with the same name exists in the target folder, not on whether they were measured before/after the last check
 * Saves spectra with a sensible name including experiment (proton, 13C etc) so you don't have to rename them yourself - I save directly to my analytics NMR folder
 * Can save with solvent in name if desired
