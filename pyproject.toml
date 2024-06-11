@@ -1,7 +1,7 @@
 [project]
 name = "mora-the-explorer"
 version = "1.7.3"
-description = "A small GUI program for downloading NMR spectra at the Organic Chemistry department at the University of Münster"
+description = "A small program for downloading NMR spectra at the Organic Chemistry department at the University of Münster"
 authors = [
     { name = "Matthew J. Milner", email = "matterhorn103@proton.me" }
 ]
@@ -20,14 +20,5 @@ requires-python = ">= 3.12"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.rye]
-managed = true
-dev-dependencies = [
-    "pyinstaller>=6.6.0",
-]
-
-#[tool.hatch.metadata]
-#allow-direct-references = true
-
-#[tool.hatch.build.targets.wheel]
-#packages = ["mora_the_explorer"]
+[tool.uv]
+#dev-dependencies = ["pyinstaller>=6.6.0"]
