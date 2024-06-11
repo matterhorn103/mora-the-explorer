@@ -519,7 +519,7 @@ def check_nmr(
                 new_folder_name = format_name_admin(
                     folder,
                     metadata,
-                    append_path=fed_options["append_path"]
+                    inc_path=fed_options["inc_path"]
                 )
             else:
                 new_folder_name = format_name(
