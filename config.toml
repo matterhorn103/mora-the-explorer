@@ -17,6 +17,7 @@ group = "gil"
 dest_path = "copy full path here"
 inc_init = false
 inc_solv = false
+inc_path = false  # Only for nmr - set to "after" to append path, "before" to prepend
 nmrcheck_style = false
 spec = "400er"
 repeat_switch = false
