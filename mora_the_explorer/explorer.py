@@ -36,7 +36,7 @@ class Explorer:
 
         # Set path to mora
         self.mora_path = Path(config.paths[platform.system()])
-        self.update_path = Path(config.paths["update"])
+        self.update_path = self.mora_path / config.paths["update"]
 
         # Load group and spectrometer info
         # Need to flatten groups dict (as some are in an "other" subdict)
@@ -45,7 +45,7 @@ class Explorer:
         self.specs = config.specs
 
         # Check for updates
-        self.update_check(Path(config.paths["update"]))
+        self.update_check(self.update_path)
 
         # Timer for repeat check, starts checking function when timer runs out
         self.timer = QTimer()

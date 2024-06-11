@@ -25,7 +25,7 @@ repeat_delay = 5
 
 
 [paths]
-update = "//mora/nmr/mnova/mora_the_explorer"
+update = "mnova/mora_the_explorer"
 Windows = "//mora/nmr"
 Darwin = "/Volumes/nmr"         # Darwin = macOS
 Linux = "will be overwritten"   # Specify in user config, not here!
