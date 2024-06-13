@@ -57,35 +57,43 @@ class MainWindow(QMainWindow):
         else:
             self.setMinimumSize(QSize(450, 780))
 
-    def notify_spectra(self, copied_list):
+    def notify_spectra(self):
         """Tell the user that spectra were found, both in the app and with a system toast."""
-        # If spectra were found, the list will have len > 1, if a known error occurred, the list will have len 1, if an unknown error occurred, the list will be empty
-        if len(copied_list) > 1:
-            notification_text = "Spectra have been found!"
-            self.ui.notification.setText(
-                notification_text + " Ctrl+G to go to. Click to dismiss"
-            )
-            self.ui.notification.setStyleSheet("background-color : limegreen")
-        else:
-            self.ui.notification.setStyleSheet(
-                "background-color : #cc0010; color : white"
-            )
-            try:
-                notification_text = "Error: " + copied_list[0]
-            except IndexError:
-                notification_text = "Unknown error occurred."
-            self.ui.notification.setText(notification_text + " Click to dismiss")
+        notification_text = "Spectra have been found!"
+        self.ui.notification.setText(
+            notification_text + " Ctrl+G to go to. Click to dismiss"
+        )
+        self.ui.notification.setStyleSheet("background-color : limegreen")
         self.ui.notification.show()
+
+    def notify_error(self, copied_list):
+        """Tell the user that an error occurred, both in the app and with a system toast."""
+        self.ui.notification.setStyleSheet(
+            "background-color : #cc0010; color : white"
+        )
+        try:
+            if "Error" in copied_list[0]:
+                notification_text = "Error: Python " + copied_list[0]
+            else:
+                notification_text = "Error: " + copied_list[0]
+        except IndexError:
+            notification_text = "Unknown error occurred."
+        self.ui.notification.setText(notification_text + " Click to dismiss")
+        self.ui.notification.show()
+
+    def send_toast(self, text):
+        """Spawn a system toast notification."""
         if (
             self.opts.since_button.isChecked() is False
             and platform.system() != "Darwin"
         ):
-            # Display system notification - doesn't seem to be implemented for macOS currently
-            # Only if a single date is checked, because with the since function the system notifications get annoying
+            # Display system notification - doesn't seem to be implemented for macOS
+            # Only if a single date is checked, because with the since function the
+            # system notifications get annoying
             try:
                 plyer.notification.notify(
                     title="Hola!",
-                    message=notification_text,
+                    message=text,
                     app_name="Mora the Explorer",
                     timeout=2,
                 )

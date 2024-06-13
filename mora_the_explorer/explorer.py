@@ -232,15 +232,19 @@ class Explorer:
             # No spectra were found but check completed successfully
             elif self.copied_list[1][:5] == "Check":
                 pass
+            # Some exception was raised
+            elif self.copied_list[0] == "Exception":
+                self.copied_list.pop(0)
+                self.main_window.notify_error(self.copied_list)
             # Known error occurred
             else:
                 self.copied_list.pop(0)
-                self.main_window.notify_spectra(self.copied_list)
+                self.main_window.notify_error(self.copied_list)
         else:
-            # Unknown error occurred, output of check function was returned without
-            # appending anything to copied_list
+            # Unknown error occurred but exception wasn't raised, output of check
+            # function was returned without appending anything to copied_list
             self.copied_list.pop(0)
-            self.main_window.notify_spectra(self.copied_list)
+            self.main_window.notify_error(self.copied_list)
         # Display output
         for entry in self.copied_list:
             entry_label = QLabel(entry)

@@ -1,10 +1,12 @@
+import logging
+
 from PySide6.QtCore import QRunnable, Signal, Slot, QObject
 
 
 class WorkerSignals(QObject):
     progress = Signal(int)
     status = Signal(str)
-    result = Signal(object)
+    result = Signal(list)
     completed = Signal()
 
 
@@ -27,8 +29,19 @@ class Worker(QRunnable):
     @Slot()
     def run(self):
         # Run the Worker's function with passed args, kwargs, including the callbacks
-        output = self.fn(*self.args, **self.kwargs)
-        # After completion of the function, emit the output as the result signal so that
-        # it can be picked up by anything connected to the signal
-        self.signals.result.emit(output)
+        try:
+            output = self.fn(*self.args, **self.kwargs)
+            # After completion of the function, emit the output as the result signal so that
+            # it can be picked up by anything connected to the signal
+            self.signals.result.emit(output)
+        except Exception as error:
+            logging.exception("Exception raised by check_nmr")
+            self.signals.result.emit([
+                "Exception",
+                type(error).__name__,
+                *(error.args),
+                "See log file at:",
+                str(logging.getLogger().handlers[0].baseFilename),
+                "for further details",
+            ])
         self.signals.completed.emit()
