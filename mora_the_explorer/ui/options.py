@@ -148,13 +148,12 @@ class OptionsLayout(QGridLayout):
         inc_path_layout = QHBoxLayout()
         inc_path_layout.addWidget(self.inc_path_checkbox)
         inc_path_layout.addWidget(self.inc_path_box)
-        inc_path_layout.addWidget(QLabel())
 
         filename_layout = QGridLayout()
         filename_layout.addWidget(self.inc_init_checkbox, 0, 0)
         filename_layout.addWidget(self.inc_solv_checkbox, 0, 1)
-        filename_layout.addWidget(self.nmrcheck_style_checkbox, 1, 0, 1, 2)
         filename_layout.addLayout(inc_path_layout, 1, 0)
+        filename_layout.addWidget(self.nmrcheck_style_checkbox, 2, 0, 1, 2)
 
         self.addWidget(self.include_label, 4, 0)
         self.addLayout(filename_layout, 4, 1, 2, 1)
