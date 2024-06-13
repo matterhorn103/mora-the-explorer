@@ -3,6 +3,9 @@ Matt Milner
 v1.7.4
 License: GPLv3
 Please report any bugs to milner@uni-muenster.de!
+
+Reminder: only use a-z, 0-9, "-", "_", and spaces in titles when submitting spectra!
+
 Changes in version 1.7.4:
 - Characters in spectrum titles other than a-z, 0-9, "-", "_", and space, are replaced instead of causing crash
 - The "NMRCheck style" checkbox is clickable again
