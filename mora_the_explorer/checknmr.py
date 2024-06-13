@@ -209,6 +209,17 @@ def format_name(
     # Add frequency info if available
     if metadata["frequency"] is not None:
         name = name + "_" + metadata["frequency"]
+    # Make sure there are no special characters in the name, and if so, replace them
+    # with the Unicode hexadecimal code points
+    # Otherwise Windows will likely reject them
+    # Replacing rather than just removing ensures the name is still unique compared to
+    # other spectra
+    # alphanumeric characters, space, hyphen, underscore are allowed
+    allowed_symbols = ["-", "_", " "]
+    special = set([x for x in name if not x.isalnum() and x not in allowed_symbols])
+    for x in special:
+        logging.info(f"Char {x} not permitted in spectrum names, replaced with {str(hex(ord(x)))}")
+        name = name.replace(x, str(hex(ord(x))))
     return name
 
 

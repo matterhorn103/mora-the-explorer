@@ -57,7 +57,7 @@ class MainWindow(QMainWindow):
         else:
             self.setMinimumSize(QSize(450, 780))
 
-    def notify_spectra(self):
+    def notify_spectra(self, copied_list):
         """Tell the user that spectra were found, both in the app and with a system toast."""
         notification_text = "Spectra have been found!"
         self.ui.notification.setText(
