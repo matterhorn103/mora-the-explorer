@@ -247,8 +247,7 @@ class Explorer:
             self.main_window.notify_error(self.copied_list)
         # Display output
         for entry in self.copied_list:
-            entry_label = QLabel(entry)
-            self.ui.display.add_entry(entry_label)
+            self.ui.display.add_entry(entry)
         # Behaviour for repeat check function, deactivate for hf spectrometer
         # See also self.timer in init function
         if (self.config.options["repeat_switch"] is True) and (

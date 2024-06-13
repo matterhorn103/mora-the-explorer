@@ -3,7 +3,12 @@ Matt Milner
 v1.7.3
 License: GPLv3
 Please report any bugs to milner@uni-muenster.de!
-Changes in this version:
+Changes in version 1.7.4:
+- Characters in spectrum titles other than a-z, 0-9, "-", "_", and space, are replaced instead of causing crash
+- The "NMRCheck style" checkbox is clickable again
+- Entries in the output list are now selectable and can be copied to the clipboard with Ctrl+C
+- Errors during checking are now reported in detail, and very rarely cause the whole program to crash
+Changes in versions 1.7.0-1.7.3:
 - Spectra measured in 2023 can be found again
 - Any spectra measured in previous years that haven't been archived will be found correctly in future
 - Go To button works on Windows when the destination folder is a network path (\\nwz.uni-muenster.de\...)

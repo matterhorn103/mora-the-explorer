@@ -30,7 +30,10 @@ class Display(QScrollArea):
         self.scrollbar.setPageStep(3 * line_height)
 
     def add_entry(self, entry):
-        self.layout.addWidget(entry, alignment=Qt.AlignTop)
+        """Add a line of text to the display."""
+        entry_label = QLabel(entry)
+        entry_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.layout.addWidget(entry_label, alignment=Qt.AlignTop)
 
     def scroll_down(self):
         self.scrollbar.setSliderPosition(self.scrollbar.maximum())
