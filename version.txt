@@ -1,6 +1,6 @@
 Mora the Explorer
 Matt Milner
-v1.7.3
+v1.7.4
 License: GPLv3
 Please report any bugs to milner@uni-muenster.de!
 Changes in version 1.7.4:
