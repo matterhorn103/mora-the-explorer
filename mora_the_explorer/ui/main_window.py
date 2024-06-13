@@ -65,6 +65,7 @@ class MainWindow(QMainWindow):
         )
         self.ui.notification.setStyleSheet("background-color : limegreen")
         self.ui.notification.show()
+        self.send_toast(notification_text)
 
     def notify_error(self, copied_list):
         """Tell the user that an error occurred, both in the app and with a system toast."""
@@ -80,6 +81,7 @@ class MainWindow(QMainWindow):
             notification_text = "Unknown error occurred."
         self.ui.notification.setText(notification_text + " Click to dismiss")
         self.ui.notification.show()
+        self.send_toast(notification_text)
 
     def send_toast(self, text):
         """Spawn a system toast notification."""
