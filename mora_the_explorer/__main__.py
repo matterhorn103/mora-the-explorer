@@ -31,16 +31,14 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
-# Always create an instance of the "app", even if imported for use as package or via CLI
-# Otherwise some Qt things don't work properly
-logging.info("Initializing app...")
-app = QCoreApplication(sys.argv)
-#app.exec()
-logging.info("...complete")
 
-
-if __name__ == "__main__":
+def main():
     """Run Mora the Explorer as an executable."""
+    # Always create an instance of the "app", even if imported for use as package or via CLI
+    # Otherwise some Qt things don't work properly
+    logging.info("Initializing app...")
+    app = QCoreApplication(sys.argv)
+    logging.info("...complete")
     rsrc_dir = Path.cwd()
     explorer = cli.setup_command_line_explorer(rsrc_dir)
     prog_bar = cli.TerminalProgress()
@@ -141,6 +139,8 @@ if __name__ == "__main__":
     
     # Launch desktop app if requested
     if args.command == "launch":
+        logging.info("Launching GUI from command line")
+        app.shutdown()
         from . import run_desktop_app
         run_desktop_app(rsrc_dir, explorer)
     
@@ -197,3 +197,7 @@ if __name__ == "__main__":
             )
         
         app.exec()
+
+
+if __name__ == "__main__":
+    main()
