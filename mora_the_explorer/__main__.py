@@ -163,13 +163,13 @@ def main():
         if args.dest:
             explorer.config.options["dest_path"] = args.dest
         if args.initials:
-            explorer.config.options["inc_initials"] = True
+            explorer.config.options["inc_init"] = True
         if args.no_initials:
-            explorer.config.options["inc_initials"] = False
+            explorer.config.options["inc_init"] = False
         if args.solvent:
-            explorer.config.options["inc_solvent"] = True
+            explorer.config.options["inc_solv"] = True
         if args.no_solvent:
-            explorer.config.options["inc_solvent"] = False
+            explorer.config.options["inc_solv"] = False
 
         # Have to make sure explorer is passed as an argument to the handler even though
         # the completed signal only sends one argument (copied_list)
