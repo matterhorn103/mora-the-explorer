@@ -58,4 +58,4 @@ if __name__ == "__main__":
     
     rsrc_dir = get_rsrc_dir()
 
-    mora_the_explorer.run(rsrc_dir)
+    mora_the_explorer.run_desktop_app(rsrc_dir)

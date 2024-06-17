@@ -23,51 +23,28 @@ from pathlib import Path
 
 import darkdetect
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QIcon, QPalette, QColor
-from PySide6.QtWidgets import QApplication
+from PySide6.QtGui import QIcon
 
-from .config import Config
-from .explorer import Explorer
-from .ui.main_window import MainWindow
-
-
-def set_dark_mode(app):
-    """Manually set a dark mode in Windows.
-
-    Make dark mode less black than default because Windows dark mode looks bad."""
-    dark_palette = QPalette()
-    dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
-    dark_palette.setColor(QPalette.WindowText, Qt.white)
-    dark_palette.setColor(QPalette.Base, QColor(25, 25, 25))
-    dark_palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
-    dark_palette.setColor(QPalette.ToolTipBase, Qt.black)
-    dark_palette.setColor(QPalette.ToolTipText, Qt.white)
-    dark_palette.setColor(QPalette.Text, Qt.white)
-    dark_palette.setColor(QPalette.Button, QColor(53, 53, 53))
-    dark_palette.setColor(QPalette.ButtonText, Qt.white)
-    dark_palette.setColor(QPalette.BrightText, Qt.red)
-    dark_palette.setColor(QPalette.Link, QColor(42, 130, 218))
-    dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
-    dark_palette.setColor(QPalette.HighlightedText, Qt.black)
-    app.setStyle("Fusion")
-    app.setPalette(dark_palette)
+from .app import App
+from .desktop.controller import Controller
+from .desktop.ui.main_window import MainWindow
+from .explorer.config import Config
+from .explorer.explorer import Explorer
 
 
-def run(rsrc_dir: Path):
-    """Run Mora the Explorer."""
+def run_desktop_app(rsrc_dir: Path):
+    """Run Mora the Explorer as a desktop application with a GUI."""
 
-    # Load configuration
+    # Load configuration - both MainWindow and Explorer need it
     logging.info(f"Program resources located at {rsrc_dir}")
     logging.info("Loading program settings...")
     config = Config(rsrc_dir / "config.toml")
     logging.info("...complete")
 
-    logging.info("Initializing program...")
-    app = QApplication(sys.argv)
-
-    if darkdetect.isDark() is True and platform.system() == "Windows":
-        set_dark_mode(app)
+    # Create a QApplication instance
+    logging.info("Initializing app...")
+    app = App(sys.argv)
+    logging.info("...complete")
 
     # Create instance of MainWindow (front-end), then show it
     logging.info("Initializing user interface...")
@@ -75,11 +52,16 @@ def run(rsrc_dir: Path):
     window.show()
     logging.info("...complete")
 
+    if darkdetect.isDark() is True and platform.system() == "Windows":
+        app.set_dark_mode()
+
     # Create instance of Explorer (back-end)
-    # Give it our MainWindow so it can read things directly from the UI
     logging.info("Initializing explorer...")
-    explorer = Explorer(window, rsrc_dir, config)
+    explorer = Explorer(rsrc_dir, config)
     logging.info("...complete")
+
+    # Create instance of Controller to handle communication between the two
+    controller = Controller(explorer, window, rsrc_dir, config)
 
     app.setWindowIcon(QIcon(str(rsrc_dir / "explorer.ico")))
 

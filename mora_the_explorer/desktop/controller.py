@@ -1,22 +1,25 @@
 import logging
 import platform
-from datetime import date, timedelta
+from datetime import date
 from pathlib import Path
 
-from PySide6.QtCore import QTimer, QThreadPool, QUrl
-from PySide6.QtWidgets import QLabel
-from PySide6.QtGui import QDesktopServices
+from PySide6.QtCore import QTimer
 
-from .worker import Worker
-from .checknmr import check_nmr
-from .config import Config
-from .ui.main_window import MainWindow
+from ..explorer.explorer import Explorer
+from ..explorer.config import Config
+from ..desktop.ui.main_window import MainWindow
 
 
-class Explorer:
+class Controller:
+    """The bridge between the desktop app's GUI and the background Explorer instance."""
     def __init__(
-        self, main_window: MainWindow, resource_directory: Path, config: Config
+        self,
+        explorer: Explorer,
+        main_window: MainWindow,
+        resource_directory: Path,
+        config: Config,
     ):
+        self.explorer = explorer
         self.main_window = main_window
         self.rsrc_dir = resource_directory
         self.config = config
@@ -25,18 +28,13 @@ class Explorer:
         self.ui = self.main_window.ui
         self.opts = self.main_window.ui.opts
 
-        # Set up multithreading; MaxThreadCount limited to 1 as checks don't run properly if multiple run concurrently
-        self.threadpool = QThreadPool()
-        self.threadpool.setMaxThreadCount(1)
-
-        # Initialize some variables for later
-        self.wild_group = False
-        self.copied_list = []
-        self.date_selected = date.today()
-
         # Set path to mora
         self.mora_path = Path(config.paths[platform.system()])
         self.update_path = self.mora_path / config.paths["update"]
+
+        # Initialize some variables for later
+        self.wild_group = False
+        self.date_selected = date.today()
 
         # Load group and spectrometer info
         # Need to flatten groups dict (as some are in an "other" subdict)
@@ -44,15 +42,16 @@ class Explorer:
         self.all_groups.update({k: v for k, v in config.groups["other"].items()})
         self.specs = config.specs
 
-        # Check for updates
-        self.update_check(self.update_path)
-
         # Timer for repeat check, starts checking function when timer runs out
         self.timer = QTimer()
         self.timer.setSingleShot(True)
         self.timer.timeout.connect(self.started)
 
+        # Check for updates
+        self.update_check(self.update_path)
+
         self.connect_signals()
+
 
     def update_check(self, update_path):
         """Check for updates at location specified."""
@@ -92,7 +91,7 @@ class Explorer:
         self.opts.dest_path_input.textChanged.connect(
             self.main_window.dest_path_changed
         )
-        self.opts.open_button.clicked.connect(self.open_destination)
+        self.opts.open_button.clicked.connect(self.explorer.open_destination)
         self.opts.inc_init_checkbox.stateChanged.connect(
             self.main_window.inc_init_switched
         )
@@ -161,104 +160,73 @@ class Explorer:
             # Make sure wild option is turned off for normal users
             self.wild_group = False
 
-    def open_destination(self):
-        """Show the destination folder for spectra in the system file browser."""
-        if Path(self.config.options["dest_path"]).exists() is True:
-            url = QUrl.fromLocalFile(self.config.options["dest_path"])
-            QDesktopServices.openUrl(url)
-
     def date_changed(self):
         self.date_selected = self.opts.date_selector.date().toPython()
 
     def started(self):
-        self.queued_checks = 0
+        self.explorer.queued_checks = 0
         if (
             self.opts.only_button.isChecked() is True
             or self.specs[self.config.options["spec"]]["single_check_only"] is True
         ):
-            self.single_check(self.date_selected)
+            self.explorer.single_check(
+                self.date_selected,
+                self.wild_group,
+                prog_bar=self.ui.prog_bar,
+                status_bar=self.ui.status_bar,
+                completion_handler=self.check_ended,
+            )
         elif self.opts.since_button.isChecked() is True:
-            self.multiday_check(self.date_selected)
+            self.explorer.multiday_check(
+                self.date_selected,
+                self.wild_group,
+                prog_bar=self.ui.prog_bar,
+                status_bar=self.ui.status_bar,
+                completion_handler=self.check_ended,
+            )
 
-    def single_check(self, date):
-        # Hide start button, show status bar
-        self.ui.status_bar.show_status()
-        # Start main checking function in worker thread
-        worker = Worker(
-            check_nmr,
-            fed_options=self.config.options,
-            mora_path=self.mora_path,
-            specs_info=self.specs,
-            check_date=date,
-            groups=self.all_groups,
-            wild_group=self.wild_group,
-            prog_bar=self.ui.prog_bar,
-        )
-        worker.signals.progress.connect(self.update_progress)
-        worker.signals.status.connect(self.update_status)
-        worker.signals.result.connect(self.handle_output)
-        worker.signals.completed.connect(self.check_ended)
-        self.threadpool.start(worker)
-        self.queued_checks += 1
-
-    def multiday_check(self, initial_date):
-        end_date = date.today() + timedelta(days=1)
-        date_to_check = initial_date
-        while date_to_check != end_date:
-            self.single_check(date_to_check)
-            date_to_check += timedelta(days=1)
-
-    def update_progress(self, prog_state):
-        self.ui.prog_bar.setValue(prog_state)
-    
-    def update_status(self, status):
-        self.ui.status_bar.setText(status)
-
-    def handle_output(self, final_output):
-        self.copied_list = final_output
-
-    def check_ended(self):
-        self.queued_checks -= 1
+    def check_ended(self, copied_list):
+        self.explorer.queued_checks -= 1
         # Set progress to 100% just in case it didn't reach it for whatever reason
         self.ui.prog_bar.setMaximum(1)
         self.ui.prog_bar.setValue(1)
         # Will only not be true if an unknown error occurred
         # In all other cases len will be at least 2
-        if len(self.copied_list) > 1:
+        if len(copied_list) > 1:
             # At least one spectrum was found
-            if self.copied_list[1][:5] == "Spect":
-                self.copied_list.pop(0)
-                self.main_window.notify_spectra(self.copied_list)
+            if copied_list[1][:5] == "Spect":
+                copied_list.pop(0)
+                self.main_window.notify_spectra(copied_list)
             # No spectra were found but check completed successfully
-            elif self.copied_list[1][:5] == "Check":
+            elif copied_list[1][:5] == "Check":
                 pass
             # Some exception was raised
-            elif self.copied_list[0] == "Exception":
-                self.copied_list.pop(0)
-                self.main_window.notify_error(self.copied_list)
+            elif copied_list[0] == "Exception":
+                copied_list.pop(0)
+                self.main_window.notify_error(copied_list)
             # Known error occurred
             else:
-                self.copied_list.pop(0)
-                self.main_window.notify_error(self.copied_list)
+                copied_list.pop(0)
+                self.main_window.notify_error(copied_list)
         else:
             # Unknown error occurred but exception wasn't raised, output of check
             # function was returned without appending anything to copied_list
-            self.copied_list.pop(0)
-            self.main_window.notify_error(self.copied_list)
+            copied_list.pop(0)
+            self.main_window.notify_error(copied_list)
         # Display output
-        for entry in self.copied_list:
+        for entry in copied_list:
             self.ui.display.add_entry(entry)
         # Behaviour for repeat check function, deactivate for hf spectrometer
         # See also self.timer in init function
         if (self.config.options["repeat_switch"] is True) and (
             self.specs[self.config.options["spec"]]["single_check_only"] is False
         ):
-            self.queued_checks += 1
+            self.explorer.queued_checks += 1
             self.ui.status_bar.show_cancel()
             # Start new timer that will trigger started() once it runs out
             self.timer.start(int(self.config.options["repeat_delay"]) * 60 * 1000)
         # Enable start check button again, but only if all queued checks have finished
-        if self.queued_checks == 0:
+        if self.explorer.queued_checks == 0:
             self.ui.status_bar.show_start()
             logging.info("Task complete")
 
