@@ -5,13 +5,13 @@ from pathlib import Path
 
 from PySide6.QtCore import QTimer
 
-from ..explorer.explorer import Explorer
-from ..explorer.config import Config
-from ..desktop.ui.main_window import MainWindow
+from ..explorer import Config, Explorer
+from .ui.main_window import MainWindow
 
 
 class Controller:
     """The bridge between the desktop app's GUI and the background Explorer instance."""
+    
     def __init__(
         self,
         explorer: Explorer,
@@ -29,7 +29,7 @@ class Controller:
         self.opts = self.main_window.ui.opts
 
         # Set path to mora
-        self.mora_path = Path(config.paths[platform.system()])
+        self.mora_path = explorer.server_path
         self.update_path = self.mora_path / config.paths["update"]
 
         # Initialize some variables for later
@@ -38,9 +38,8 @@ class Controller:
 
         # Load group and spectrometer info
         # Need to flatten groups dict (as some are in an "other" subdict)
-        self.all_groups = {k: v for k, v in config.groups.items() if isinstance(v, str)}
-        self.all_groups.update({k: v for k, v in config.groups["other"].items()})
-        self.specs = config.specs
+        self.all_groups = explorer.all_groups
+        self.specs = explorer.specs
 
         # Timer for repeat check, starts checking function when timer runs out
         self.timer = QTimer()

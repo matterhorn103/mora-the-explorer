@@ -10,7 +10,7 @@ from pathlib import Path
 def get_check_paths(
         specs_info: dict,
         spec: str,
-        mora_path: Path,
+        server_path: Path,
         check_date: datetime.date,
         groups: dict,
         group: str,
@@ -61,7 +61,7 @@ def get_check_paths(
                     )
                 check_path_list.extend(wild_check_path_list)
     # Turn into Path objects
-    check_path_list = [mora_path / p for p in check_path_list]
+    check_path_list = [server_path / p for p in check_path_list]
     # Go over the list to make sure we only bother checking paths that exist
     check_path_list = [p for p in check_path_list if p.exists()]
     # Add potential overflow folders for same day (these are generated on mora when two
@@ -92,7 +92,7 @@ def get_number_spectra(path: Path | None = None, paths: list[Path] | None = None
     return n
 
 
-def get_metadata_bruker(folder: Path, mora_path) -> dict:
+def get_metadata_bruker(folder: Path, server_path) -> dict:
     # Extract title and experiment details from title file in spectrum folder
     title_file = folder / "pdata" / "1" / "title"
     with open(title_file, encoding="utf-8") as f:
@@ -125,7 +125,7 @@ def get_metadata_bruker(folder: Path, mora_path) -> dict:
         raise IndexError
 
     metadata = {
-        "server_location": str(folder.relative_to(mora_path)),
+        "server_location": str(folder.relative_to(server_path)),
         "group": group,
         "initials": initials,
         "sample_info": sample_info,  # All remaining parts of title
@@ -136,7 +136,7 @@ def get_metadata_bruker(folder: Path, mora_path) -> dict:
     return metadata
 
 
-def get_metadata_agilent(folder: Path, mora_path) -> dict:
+def get_metadata_agilent(folder: Path, server_path) -> dict:
     # Find out magnet strength, set to initial false value as flag
     magnet_freq = None
     while magnet_freq is None:
@@ -150,7 +150,7 @@ def get_metadata_agilent(folder: Path, mora_path) -> dict:
         break
 
     metadata = {
-        "server_location": str(folder.relative_to(mora_path)),
+        "server_location": str(folder.relative_to(server_path)),
         "group": None,
         "initials": folder.name[:3],
         "sample_info": [folder.name[3:]],  # A list so as to match the Bruker version
@@ -248,7 +248,7 @@ def format_name_admin(
     return name
 
 
-def compare_spectra(mora_folder, dest_folder) -> int:
+def compare_spectra(server_folder, dest_folder) -> int:
     """Check that two spectra with the same name are actually the same measurement and not e.g. different proton measurements.
 
     In the event that the spectra are the same, a check is made to see if everything has
@@ -274,7 +274,7 @@ def compare_spectra(mora_folder, dest_folder) -> int:
     # By setting `shallow = False`, we don't compare metadata but rather the size and
     # content of the files themselves
     top_level_cmp = filecmp.cmpfiles(
-        mora_folder, dest_folder, diagnostic_files, shallow=False,
+        server_folder, dest_folder, diagnostic_files, shallow=False,
     )
     if len(top_level_cmp[0]) > 0:
         same = True
@@ -283,7 +283,7 @@ def compare_spectra(mora_folder, dest_folder) -> int:
     # If don't seem to be same so far, check any subfolders (which are each spectra
     # on Agilent specs) to see if they are identical spectra
     if not same:
-        for x in [x for x in mora_folder.iterdir() if x.is_dir()]:
+        for x in [x for x in server_folder.iterdir() if x.is_dir()]:
             subdir_cmp = filecmp.cmpfiles(
                 x, dest_folder / x.name, diagnostic_files, shallow=False,
             )
@@ -296,7 +296,7 @@ def compare_spectra(mora_folder, dest_folder) -> int:
                 break
     
     # This compares the contents of the two folders but on metadata only
-    comparison = filecmp.dircmp(mora_folder, dest_folder)
+    comparison = filecmp.dircmp(server_folder, dest_folder)
     
     # One final check
     # This compares just the metadata of any top-level files including modified time,
@@ -409,7 +409,7 @@ cached_paths = []
 
 def check_nmr(
     fed_options: dict,
-    mora_path: Path,
+    server_path: Path,
     specs_info: dict,
     check_date: datetime.date,
     groups: dict,
@@ -433,10 +433,10 @@ def check_nmr(
         logging.info("Given destination folder not found!")
         output_list.append("Given destination folder not found!")
         return output_list
-    # Confirm mora can be reached
-    if mora_path.exists() is False:
-        logging.info("The mora server could not be reached!")
-        output_list.append("The mora server could not be reached!")
+    # Confirm server can be reached
+    if server_path.exists() is False:
+        logging.info("The NMR server could not be reached!")
+        output_list.append("The NMR server could not be reached!")
         return output_list
     spectrometer = fed_options["spec"]
     spec_info = specs_info[spectrometer]
@@ -445,7 +445,7 @@ def check_nmr(
     check_path_list = get_check_paths(
         specs_info,
         spectrometer,
-        mora_path,
+        server_path,
         check_date,
         groups=groups,
         group=fed_options["group"],
@@ -495,13 +495,13 @@ def check_nmr(
             # Extract title and experiment details from title file in spectrum folder
             try:
                 if spec_info["manufacturer"] == "bruker":
-                    metadata = get_metadata_bruker(folder, mora_path)
+                    metadata = get_metadata_bruker(folder, server_path)
                 elif spec_info["manufacturer"] == "agilent":
                     # Save a step by not extracting metadata unless initials in folder
                     # name as folders are given the name of the sample on Agilent specs
                     if fed_options["initials"] in folder.name:
                         hit = True
-                        metadata = get_metadata_agilent(folder, mora_path)
+                        metadata = get_metadata_agilent(folder, server_path)
                     else:
                         prog_state = iterate_progress(prog_state, 1, progress_callback)
                         continue

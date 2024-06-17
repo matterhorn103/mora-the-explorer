@@ -23,16 +23,46 @@ from pathlib import Path
 
 import darkdetect
 
-from PySide6.QtGui import QIcon
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QPalette, QColor, QIcon
+from PySide6.QtWidgets import QApplication
 
-from .app import App
-from .desktop.controller import Controller
-from .desktop.ui.main_window import MainWindow
-from .explorer.config import Config
-from .explorer.explorer import Explorer
+from .explorer import Config, Explorer
+from .desktop import Controller, MainWindow
 
 
-def run_desktop_app(rsrc_dir: Path):
+class App(QApplication):
+    """The overall Mora the Explorer graphical application class."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+    def set_dark_mode(self):
+        """Manually set a dark mode (intended for use on Windows).
+
+        Make dark mode less black than Windows default dark mode because it looks bad.
+        """
+
+        dark_palette = QPalette()
+        dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
+        dark_palette.setColor(QPalette.WindowText, Qt.white)
+        dark_palette.setColor(QPalette.Base, QColor(25, 25, 25))
+        dark_palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
+        dark_palette.setColor(QPalette.ToolTipBase, Qt.black)
+        dark_palette.setColor(QPalette.ToolTipText, Qt.white)
+        dark_palette.setColor(QPalette.Text, Qt.white)
+        dark_palette.setColor(QPalette.Button, QColor(53, 53, 53))
+        dark_palette.setColor(QPalette.ButtonText, Qt.white)
+        dark_palette.setColor(QPalette.BrightText, Qt.red)
+        dark_palette.setColor(QPalette.Link, QColor(42, 130, 218))
+        dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
+        dark_palette.setColor(QPalette.HighlightedText, Qt.black)
+        self.setStyle("Fusion")
+        self.setPalette(dark_palette)
+
+
+def run_desktop_app(rsrc_dir: Path, explorer: Explorer | None = None):
     """Run Mora the Explorer as a desktop application with a GUI."""
 
     # Load configuration - both MainWindow and Explorer need it
@@ -55,10 +85,11 @@ def run_desktop_app(rsrc_dir: Path):
     if darkdetect.isDark() is True and platform.system() == "Windows":
         app.set_dark_mode()
 
-    # Create instance of Explorer (back-end)
-    logging.info("Initializing explorer...")
-    explorer = Explorer(rsrc_dir, config)
-    logging.info("...complete")
+    # Create instance of Explorer (back-end), unless we were passed an existing one
+    if explorer is None:
+        logging.info("Initializing explorer...")
+        explorer = Explorer(config)
+        logging.info("...complete")
 
     # Create instance of Controller to handle communication between the two
     controller = Controller(explorer, window, rsrc_dir, config)
