@@ -170,7 +170,6 @@ The repeat function is also disabled as long as this option is selected.
         # for prepending/appending the path
         if group == "nmr":
             self.opts.inc_init_checkbox.setEnabled(False)
-            self.opts.inc_solv_checkbox.setEnabled(False)
             self.opts.nmrcheck_style_checkbox.hide()
             self.opts.inc_path_checkbox.show()
             self.opts.inc_path_box.show()
@@ -179,9 +178,6 @@ The repeat function is also disabled as long as this option is selected.
             # disable otherwise
             self.opts.inc_init_checkbox.setEnabled(
                 not self.config.options["nmrcheck_style"]
-            )
-            self.opts.inc_solv_checkbox.setEnabled(
-                self.config.specs[self.config.options["spec"]]["allow_solvent"]
             )
             self.opts.nmrcheck_style_checkbox.show()
             self.opts.inc_path_checkbox.hide()
