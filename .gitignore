@@ -166,3 +166,6 @@ cython_debug/
 
 # uv
 uv.lock
+
+# Testing
+tests/nmr

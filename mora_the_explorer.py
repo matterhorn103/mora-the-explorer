@@ -16,8 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import logging
-import platformdirs
 import sys
 from pathlib import Path
 
@@ -35,26 +33,6 @@ def get_rsrc_dir():
 
 
 if __name__ == "__main__":
-
-    # Logs should be saved to:
-    # Windows:  c:/Users/<user>/AppData/Local/mora_the_explorer/log.log
-    # macOS:    /Users/<user>/Library/Logs/mora_the_explorer/log.log
-    # Linux:    /home/<user>/.local/state/mora_the_explorer/log.log
-    log = Path(
-        platformdirs.user_log_dir(
-            "mora_the_explorer",
-            opinion=False,
-            ensure_exists=True,
-        )
-    ) / "log.log"
-
-    logging.basicConfig(
-        filename=log,
-        filemode="w",
-        format="%(asctime)s %(message)s",
-        encoding="utf-8",
-        level=logging.INFO,
-    )
     
     rsrc_dir = get_rsrc_dir()
 

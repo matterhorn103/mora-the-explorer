@@ -18,7 +18,7 @@ class Explorer:
     `check_nmr` function.
     """
 
-    def __init__(self, config: Config):
+    def __init__(self, config: Config | None = None):
         if config:
             self.configure(config)
         else:

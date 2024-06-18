@@ -6,39 +6,20 @@ import sys
 from datetime import date
 from pathlib import Path
 
-import platformdirs
-
-from PySide6.QtCore import QCoreApplication
-
-from . import cli
-
-
-# Logs should be saved to:
-# Windows:  c:/Users/<user>/AppData/Local/mora_the_explorer/log.log
-# macOS:    /Users/<user>/Library/Logs/mora_the_explorer/log.log
-# Linux:    /home/<user>/.local/state/mora_the_explorer/log.log
-log = Path(
-    platformdirs.user_log_dir(
-        "mora_the_explorer",
-        opinion=False,
-        ensure_exists=True,
-    )
-) / "log.log"
-logging.basicConfig(
-    stream=sys.stdout,
-    format="%(asctime)s %(message)s",
-    encoding="utf-8",
-    level=logging.INFO,
-)
+from . import app, cli
 
 
 def main():
-    """Run Mora the Explorer as an executable."""
-    # Always create an instance of the "app", even if imported for use as package or via CLI
-    # Otherwise some Qt things don't work properly
-    logging.info("Initializing app...")
-    app = QCoreApplication(sys.argv)
-    logging.info("...complete")
+    """Run Mora the Explorer as a CLI program."""
+
+    # Logs should be printed directly to stdout
+    logging.basicConfig(
+        stream=sys.stdout,
+        format="%(asctime)s %(message)s",
+        encoding="utf-8",
+        level=logging.INFO,
+    )
+
     rsrc_dir = Path.cwd()
     explorer = cli.setup_command_line_explorer(rsrc_dir)
     prog_bar = cli.TerminalProgress()
@@ -140,7 +121,6 @@ def main():
     # Launch desktop app if requested
     if args.command == "launch":
         logging.info("Launching GUI from command line")
-        app.shutdown()
         from . import run_desktop_app
         run_desktop_app(rsrc_dir, explorer)
     

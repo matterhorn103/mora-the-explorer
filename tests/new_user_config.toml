@@ -1,0 +1,14 @@
+[options]
+initials = "xyz"
+group = "abc"
+dest_path = "copy full path here"
+inc_init = false
+inc_solv = false
+inc_path = false
+nmrcheck_style = false
+spec = "spec1"
+repeat_switch = false
+repeat_delay = 5
+
+[paths]
+linux = "overwrite with default mount point"

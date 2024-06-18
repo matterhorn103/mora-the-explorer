@@ -22,6 +22,7 @@ import sys
 from pathlib import Path
 
 import darkdetect
+import platformdirs
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPalette, QColor, QIcon
@@ -62,18 +63,38 @@ class App(QApplication):
         self.setPalette(dark_palette)
 
 
+# Always create an instance of the "app", even if imported for use as package or via CLI
+# Otherwise some Qt things don't work properly
+app = App(sys.argv)
+
+
 def run_desktop_app(rsrc_dir: Path, explorer: Explorer | None = None):
     """Run Mora the Explorer as a desktop application with a GUI."""
+
+    # Logs should be saved to:
+    # Windows:  c:/Users/<user>/AppData/Local/mora_the_explorer/log.log
+    # macOS:    /Users/<user>/Library/Logs/mora_the_explorer/log.log
+    # Linux:    /home/<user>/.local/state/mora_the_explorer/log.log
+    log = Path(
+        platformdirs.user_log_dir(
+            "mora_the_explorer",
+            opinion=False,
+            ensure_exists=True,
+        )
+    ) / "log.log"
+
+    logging.basicConfig(
+        filename=log,
+        filemode="w",
+        format="%(asctime)s %(message)s",
+        encoding="utf-8",
+        level=logging.INFO,
+    )
 
     # Load configuration - both MainWindow and Explorer need it
     logging.info(f"Program resources located at {rsrc_dir}")
     logging.info("Loading program settings...")
     config = Config(rsrc_dir / "config.toml")
-    logging.info("...complete")
-
-    # Create a QApplication instance
-    logging.info("Initializing app...")
-    app = App(sys.argv)
     logging.info("...complete")
 
     # Create instance of MainWindow (front-end), then show it

@@ -25,3 +25,11 @@ build-backend = "hatchling.build"
 
 [tool.uv]
 #dev-dependencies = ["pyinstaller>=6.6.0"]
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+pythonpath = [
+  "."
+]

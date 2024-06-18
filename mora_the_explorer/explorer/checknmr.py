@@ -20,10 +20,6 @@ def get_check_paths(
     spec_info = specs_info[spec]
     # Start with default, normal folder paths
     raw_path_list = spec_info["check_paths"]
-    # Include other spectrometers if indicated in `config.toml`
-    if "include" in spec_info:
-        for included_spec in spec_info["include"]:
-            raw_path_list.extend(specs_info[included_spec]["check_paths"])
     # Add archives for previous years other than the current if requested
     if check_date.year != date.today().year:
         if "archives" in spec_info:
@@ -73,6 +69,19 @@ def get_check_paths(
                 check_path_list.append(overflow_path)
             else:
                 break
+    # Include other spectrometers if indicated in `config.toml`
+    if "include" in spec_info:
+        for included_spec in spec_info["include"]:
+            included_spec_paths = get_check_paths(
+                specs_info,
+                included_spec,
+                server_path,
+                check_date,
+                groups,
+                group,
+                wild_group,
+            )
+            check_path_list.extend(included_spec_paths)
     return check_path_list
 
 

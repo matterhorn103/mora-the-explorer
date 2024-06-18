@@ -1,0 +1,148 @@
+# This file configures mora_the_explorer's *default* internal settings and should not be
+# changed by anyone other than the NMR department
+
+# If you are looking for your user configuration, it is stored in the user's own
+# config.toml, at:
+# Windows:  %USERPROFILE%\AppData\Roaming\mora_the_explorer
+# macOS:    ~/Library/Application Support/mora_the_explorer
+# Linux:    $XDG_CONFIG_HOME/mora_the_explorer or ~/.config/mora_the_explorer
+
+# The user version of config.toml is primarily used to store the set of search options
+# saved by the user, however if that file contains key-value pairs for anything else
+# e.g. paths.linux, those take precedence over those specified here
+
+[default_options]
+initials = "xyz"
+group = "abc"
+dest_path = "copy full path here"
+inc_init = false
+inc_solv = false
+inc_path = false
+nmrcheck_style = false
+spec = "spec1"
+repeat_switch = false
+repeat_delay = 5
+
+
+[paths]
+update = "mnova/mora_the_explorer"
+windows = "//mora/nmr"
+darwin = "/Volumes/nmr"         # Darwin = macOS
+linux = "will be overwritten"   # Specify in user config, not here!
+
+
+[groups]
+# Available groups in the style `initialism = full_name`
+# The initialism is the standard one used for each group's experiments and data
+# institute-wide and is used in the search for Bruker spectra (as it must be included in
+# the measurement title)
+# The full name is the name used for folders of the group e.g. at //mora/nmr/500-600er
+abc = "groupabc"
+def = "groupdef"
+ghi = "groupghi"
+jkl = "groupjkl"
+
+
+[groups.other]
+mno = "groupmno"
+pqr = "grouppqr"
+nmr = "nmr"
+
+
+[spectrometers]
+# Provide the following information for each spectrometer category:
+#   spec_dir: the name of the folder for the spectrometer in \\mora\nmr
+#   date: the way dates are formatted, defining <date> - for the format codes see
+#       https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
+#   check_paths: the paths that should be searched for new spectra
+#   archives: if spectra from previous years can't be found under check_paths, give the
+#             names of archive folders for previous years, including the date format
+#   include: other spectrometer categories which should be searched at the same time
+#   manufacturer: the manufacturer of the spectrometer(s)
+#   display_name: the text shown next to the button in the user interface
+#                 (note that some characters need escaping, e.g. write && for &)
+#   date_entry: whether the user selects the full date "dd MMM yyyy" or just year "yyyy"
+#   allow_solvent: whether to enable the folder naming option to include the solvent
+#   single_check_only: whether users may use multiday and repeat checks for this spec
+#   restrict_to: the list of groups that should be able to see the spectrometer - if
+#                this key is not used, the spectrometer will be visible to all
+#
+# Possible variable fields are:
+# - <spec_dir>      (the value of `spec_dir`)
+# - <date>          (the value of `date`)
+# - <group>         (the chosen group's initialism)
+# - <group name>    (the chosen group's name)
+# - any strftime formatting string, with % characters, enclosed in <>
+
+[spectrometers.spec1]
+spec_dir = "spec1er"
+date = "%b%d-%Y"
+check_paths = [
+    "<spec_dir>/<%y>-dpx300_<%Y>/<date>",
+]
+manufacturer = "bruker"
+display_name = "spec1 (bruker, nmr only)"
+date_entry = "dd MMM yyyy"
+allow_solvent = true
+single_check_only = false
+restrict_to = [
+    "nmr",
+]
+
+
+[spectrometers.spec2]
+spec_dir = "spec2er"
+date = "%b%d-%Y"
+check_paths = [
+    "<spec_dir>/<date>",
+]
+archives = [
+    "<spec_dir>/<%y>-av300_<%Y>/<date>",
+    "<spec_dir>/<%y>-dpx300_<%Y>/<date>",
+]
+manufacturer = "bruker"
+display_name = "spec2 (bruker, abc/nmr only)"
+date_entry = "dd MMM yyyy"
+allow_solvent = true
+single_check_only = false
+restrict_to = [
+    "nmr",
+    "abc",
+]
+
+
+[spectrometers.spec3]
+spec_dir = "spec3er"
+date = "%b%d-%Y"
+check_paths = [
+    "<spec_dir>/neo400a_<date>",
+    "<spec_dir>/neo400b_<date>",
+    "<spec_dir>/neo400c_<date>",
+]
+archives = [
+    "<spec_dir>/<%y>-av400_<%Y>/<date>",
+    "<spec_dir>/<%y>-neo400a_<%Y>/<date>",
+    "<spec_dir>/<%y>-neo400b_<%Y>/<date>",
+    "<spec_dir>/<%y>-neo400c_<%Y>/<date>",
+]
+manufacturer = "bruker"
+include = [
+    "300er",
+]
+display_name = "spec3 (bruker, inc spec2)"
+date_entry = "dd MMM yyyy"
+allow_solvent = true
+single_check_only = false
+
+
+[spectrometers.spec4]
+spec_dir = "spec4er"
+date = "%Y"
+check_paths = [
+    "<spec_dir>/<group name>/<date>",
+]
+manufacturer = "agilent"
+display_name = "spec4 (agilent, year, single only)"
+date_entry = "yyyy"
+allow_solvent = false
+single_check_only = true

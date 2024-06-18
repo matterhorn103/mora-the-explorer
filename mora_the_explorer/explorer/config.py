@@ -48,24 +48,27 @@ class Config:
     Calling `Config.save()` saves `user_config` to file, not the `app_config`.
     """
 
-    def __init__(self, app_config_file: Path):
+    def __init__(self, app_config_file: Path, user_config_file: Path | None = None):
 
         # Load app config from config.toml
         self.app_config = self.load_config_toml(app_config_file)
         logging.info(f"App configuration loaded from: {app_config_file}")
         
         # Load or create user config
-        # platformdirs automatically saves the config file in the place appropriate to
-        # the os, which should be:
+        # By default check the place appropriate to the os for the config file, which
+        # should be:
         # Windows:  c:/Users/<user>/AppData/Roaming/mora_the_explorer/config.toml
         # macOS:    /Users/<user>/Library/Application Support/mora_the_explorer/config.toml
         # Linux:    /home/<user>/.config/mora_the_explorer/config.toml
-        self.user_config_file = Path(platformdirs.user_config_dir(
-                "mora_the_explorer",
-                roaming=True,
-                ensure_exists=True,
-            )
-        ) / "config.toml"
+        if user_config_file is None:
+            self.user_config_file = Path(platformdirs.user_config_dir(
+                    "mora_the_explorer",
+                    roaming=True,
+                    ensure_exists=True,
+                )
+            ) / "config.toml"
+        else:
+            self.user_config_file = user_config_file
 
         # Load user config from config.toml in user's config directory
         if self.user_config_file.exists() is True:
@@ -114,7 +117,7 @@ class Config:
         # Add new options
         config = {
             "options": old_options,
-            "paths": {"Linux": "overwrite with default mount point"},
+            "paths": {"linux": "overwrite with default mount point"},
         }
         with open(self.user_config_file, "wb") as f:
             tomli_w.dump(config, f)
@@ -136,6 +139,7 @@ class Config:
             if "linux" in user_config["paths"]:
                 pass
         else:
+            user_config["paths"] = {}
             user_config["paths"]["linux"] = "overwrite with default mount point"
 
     
@@ -146,7 +150,7 @@ class Config:
             if table in self.app_config:
                 for k, v in config[table].items():
                     logging.info(
-                        f"Updating default app config option `[{table}] {k} = {repr(self.app_config[table][k])}` with value {repr(v)} from provided config.toml"
+                        f"Updating default app config option `[{table}] {k} = {repr(self.app_config[table].get(k))}` with value {repr(v)} from provided config.toml"
                     )
                     # Make sure tables within tables are only updated, not overwritten
                     if isinstance(v, dict):

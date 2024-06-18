@@ -20,7 +20,10 @@ class TerminalProgress:
         return self._max
     
     def print_progress(self):
-        print(f"Progress: {int((self._value / self._max) * 100)}%")
+        try:
+            print(f"Progress: {int((self._value / self._max) * 100)}%")
+        except ZeroDivisionError:
+            print(f"Progress: 100%")
 
 
 def setup_command_line_explorer(rsrc_dir):
@@ -42,8 +45,13 @@ def setup_command_line_explorer(rsrc_dir):
 
 def cli_completion_handler(explorer, copied_list, prog_bar):
     """The handler for a completed check."""
+    from .. import app
 
     explorer.queued_checks -= 1
+    if len(copied_list) > 1:
+        # At least one spectrum was found
+        if copied_list[1][:5] == "Spect":
+            copied_list.pop(0)
     # Display output
     for entry in copied_list:
         print(entry)
@@ -51,4 +59,4 @@ def cli_completion_handler(explorer, copied_list, prog_bar):
     if explorer.queued_checks == 0:
         prog_bar.setValue(prog_bar.maximum())
         logging.info("Task complete")
-        sys.exit(0)
+        app.exit(0)

@@ -1,23 +1,24 @@
 Mora the Explorer
 Matt Milner
-v1.7.4
+v1.7.5a
 License: GPLv3
 Please report any bugs to milner@uni-muenster.de!
-
-Reminder: only use a-z, 0-9, "-", "_", and spaces in titles when submitting spectra!
-
-Changes in version 1.7.4:
-- Characters in spectrum titles other than a-z, 0-9, "-", "_", and space, are replaced instead of causing crash
-- The "NMRCheck style" checkbox is clickable again
-- Entries in the output list are now selectable and can be copied to the clipboard with Ctrl+C
+Changes in version 1.7.5a:
+- Added tests to automatically find bugs
+- Found and fixed many bugs as a result, e.g.:
+  - 300er wasn't being checked when 400er search was run
+  - Creation/loading of user config files would crash in certain circumstances
+- Addition of a command line interface
+- A fix to "include solvent" box for Klaus
+- Improvements to pyinstaller building process
+Key changes in versions 1.7.0-1.7.4:
+- Progress bar now more accurately shows progress for 400 MHz spectrometers
+- A spinner now shows when checking and copying is in progress
+- Output display now automatically scrolls down when new messages arrive
+- Entries in the output display are now selectable and can be copied to the clipboard with Ctrl+C
+- Go To button also works on Windows when the destination folder is a network path (\\nwz.uni-muenster.de\...)
 - Errors during checking are now reported in detail, and very rarely cause the whole program to crash
-Changes in versions 1.7.0-1.7.3:
 - Spectra measured in 2023 can be found again
 - Any spectra measured in previous years that haven't been archived will be found correctly in future
-- Go To button works on Windows when the destination folder is a network path (\\nwz.uni-muenster.de\...)
-- Progress bar now more accurately shows progress for 400 MHz spectrometers
-- A spinner shows when checking and copying is in progress
-- Results display automatically scrolls down when new messages arrive
+- Characters in spectrum titles other than a-z, 0-9, "-", "_", and space, are replaced instead of causing crash
 - User config now contained in a config.toml
-- Internal restructuring to make future maintenance easier
-- Removal of deprecated (<v1.5.2) things

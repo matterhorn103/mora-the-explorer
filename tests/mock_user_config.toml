@@ -1,0 +1,14 @@
+[options]
+initials = "mue"
+group = "glo"
+dest_path = "/home/matt/test"
+inc_init = true
+inc_solv = true
+inc_path = false
+nmrcheck_style = false
+spec = "spec4"
+repeat_switch = true
+repeat_delay = 3
+
+[groups]
+new = "newgroup"
