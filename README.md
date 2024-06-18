@@ -1,21 +1,23 @@
 # mora_the_explorer
 
-A small GUI program written for use at the Organic Chemistry department at the University of Münster.
-Mora the Explorer checks the central `\\mora` server for NMR data matching the user's details and automatically saves any new ones to a folder of the user's choosing (e.g. personal analytics folder).
+A small program written for use at the Organic Chemistry department at the University of Münster.
+Mora the Explorer checks the central server for NMR data matching the user's details and automatically saves any new ones to a folder of the user's choosing (e.g. personal analytics folder).
 
 The app is written in Python (v3.12) using the PySide6 bindings for the Qt6 framework.
 
 The app can be "compiled" to an `.exe` Windows executable using `pyinstaller` (installable via `pip install pyinstaller`). For this a `.spec` file is provided, so all settings have been taken care of and the app bundle can be prepared just by executing the command `pyinstaller .\mora_the_explorer.spec` within the directory of the files (once the necessary dependencies listed in `pyproject.toml` have been installed, naturally).
 
 **Advantages** over the `NMRCheck` program used until now include:
-* Can find spectra not just on the Studer group spectrometer but also on the service 400 MHz and high-field 500/600 MHz spectrometers
-* Fast! Doesn't check the whole server every time, so it takes barely a second to check for new spectra
+* Can find spectra from both Bruker and Agilent spectrometers, including the department's high-field 500/600 MHz spectrometers
+* Fast! Doesn't check the whole server every time, and Python caches the parts that it has checked, so it takes only seconds to check for new spectra
 * Crashes much less frequently than `NMRCheck`
-* Has a progress bar to show progress
-* Looks (and is) much more modern, which makes option selection much less ambiguous (it is clear which has been selected), improving the UX. Also supports dark mode
-* Can check for spectra from any chosen date, and only from this date, so won't download hundreds of spectra at once
+* Has a progress bar to show progress and a spinner to show that a check is running
+* Looks (and is) much more modern, in particular making option selection much less ambiguous (it is clear which has been selected), improving the UX
+* Looks native to the system, and supports dark mode
+* Checks for spectra from any chosen date, but only from this date, so won't download hundreds of spectra at once
+* At the same time, the option exists to check a range of dates in one go
 * Can be used to get spectra even months or years after measurement
-* Can identify if previously copied spectra are missing files and add the new ones (useful if some error occurred or e.g. when only the proton spectrum of a sample submitted on the high-field spectra was completed on the last check but carbon, COSY etc. have been measured since) 
+* Can identify if previously copied spectra are missing files and add the new ones (useful if some error occurred or e.g. when only the proton spectrum of a sample submitted on the high-field spectra was completed on the last check but carbon, COSY etc. have been measured since)
 * Whether spectra are copied depends on whether one with the same name exists in the target folder, not on whether they were measured before/after the last check
 * Saves spectra with a sensible name including experiment (proton, 13C etc) so you don't have to rename them yourself - I save directly to my analytics NMR folder
 * Can save with solvent in name if desired
