@@ -1,7 +1,7 @@
 import logging
 import sys
 
-from ..explorer import Config, Explorer
+from ..explorer import app, Config, Explorer
 
 
 class TerminalProgress:
@@ -45,8 +45,7 @@ def setup_command_line_explorer(rsrc_dir):
 
 def cli_completion_handler(explorer, copied_list, prog_bar):
     """The handler for a completed check."""
-    from .. import app
-
+    
     explorer.queued_checks -= 1
     if len(copied_list) > 1:
         # At least one spectrum was found

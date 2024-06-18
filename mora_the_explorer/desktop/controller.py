@@ -3,7 +3,8 @@ import platform
 from datetime import date
 from pathlib import Path
 
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import QTimer, QUrl
+from PySide6.QtGui import QDesktopServices
 
 from ..explorer import Config, Explorer
 from .ui.main_window import MainWindow
@@ -90,7 +91,7 @@ class Controller:
         self.opts.dest_path_input.textChanged.connect(
             self.main_window.dest_path_changed
         )
-        self.opts.open_button.clicked.connect(self.explorer.open_destination)
+        self.opts.open_button.clicked.connect(self.open_destination)
         self.opts.inc_init_checkbox.stateChanged.connect(
             self.main_window.inc_init_switched
         )
@@ -122,6 +123,13 @@ class Controller:
         self.ui.start_check_button.clicked.connect(self.started)
         self.ui.interrupt_button.clicked.connect(self.interrupted)
         self.ui.notification.clicked.connect(self.main_window.notification_clicked)
+
+    def open_destination(self):
+        """Show the destination folder for spectra in the system file browser."""
+
+        if Path(self.config.options["dest_path"]).exists() is True:
+            url = QUrl.fromLocalFile(self.config.options["dest_path"])
+            QDesktopServices.openUrl(url)
 
     def initials_changed(self, new_initials):
         """Make necessary adjustments after the user types something in `initials`.

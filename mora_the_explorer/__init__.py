@@ -63,13 +63,11 @@ class App(QApplication):
         self.setPalette(dark_palette)
 
 
-# Always create an instance of the "app", even if imported for use as package or via CLI
-# Otherwise some Qt things don't work properly
-app = App(sys.argv)
-
 
 def run_desktop_app(rsrc_dir: Path, explorer: Explorer | None = None):
     """Run Mora the Explorer as a desktop application with a GUI."""
+
+    app = App(sys.argv)
 
     # Logs should be saved to:
     # Windows:  c:/Users/<user>/AppData/Local/mora_the_explorer/log.log

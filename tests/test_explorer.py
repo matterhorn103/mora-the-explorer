@@ -5,8 +5,7 @@ from shutil import rmtree
 
 import pytest
 
-from mora_the_explorer import app
-from mora_the_explorer.explorer import Config, Explorer
+from mora_the_explorer.explorer import app, Config, Explorer
 
 
 def empty_folder(path: Path):

@@ -3,13 +3,12 @@ import platform
 from datetime import date, timedelta
 from pathlib import Path
 
-from PySide6.QtCore import QThreadPool, QUrl
-from PySide6.QtGui import QDesktopServices
+from PySide6.QtCore import QThreadPool
 
-from .worker import Worker
+from .app import app
 from .checknmr import check_nmr
 from .config import Config
-
+from .worker import Worker
 
 class Explorer:
     """Launches checks based on a given `Config` object.
@@ -43,6 +42,13 @@ class Explorer:
     
 
     def reload_config(self):
+        """Refresh the Explorer's attributes to match the current config.
+        
+        This should not generally be necessary during runtime, as the attributes
+        concerned are things that are on the whole constant.
+        Changes to user options are picked up on automatically and do not require a
+        reload.
+        """
         # Set path to server
         self.server_path = Path(self.config.paths[platform.system()])
 
@@ -55,14 +61,6 @@ class Explorer:
             elif isinstance(v, dict):
                 self.all_groups.update(v)
         self.specs = self.config.specs
-
-
-    def open_destination(self):
-        """Show the destination folder for spectra in the system file browser."""
-
-        if Path(self.config.options["dest_path"]).exists() is True:
-            url = QUrl.fromLocalFile(self.config.options["dest_path"])
-            QDesktopServices.openUrl(url)
 
 
     def single_check(
@@ -143,4 +141,10 @@ class Explorer:
         if self.queued_checks == 0:
             print("Task complete")
             logging.info("Task complete")
+            app.exit(0)
 
+
+    def explore(self):
+        """Execute the app and in doing so process the results of all run checks."""
+
+        app.exec()
