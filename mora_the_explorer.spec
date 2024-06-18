@@ -6,7 +6,7 @@ block_cipher = None
 
 a = Analysis(
     ['mora_the_explorer.py'],
-    pathex=['.venv/lib/python3.12/site-packages/'],
+    pathex=[],
     binaries=[],
     datas=[
         ('LICENSE.md', '.'),
