@@ -11,7 +11,7 @@ from PySide6.QtCore import QSize, QUrl
 from PySide6.QtWidgets import QMainWindow, QWidget, QMessageBox
 from PySide6.QtGui import QDesktopServices
 
-from ..config import Config
+from ...explorer import Config
 from .layout import Layout
 
 

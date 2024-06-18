@@ -6,8 +6,7 @@ from PySide6.QtCore import QRunnable, Signal, Slot, QObject
 class WorkerSignals(QObject):
     progress = Signal(int)
     status = Signal(str)
-    result = Signal(list)
-    completed = Signal()
+    completed = Signal(list)
 
 
 class Worker(QRunnable):
@@ -33,10 +32,10 @@ class Worker(QRunnable):
             output = self.fn(*self.args, **self.kwargs)
             # After completion of the function, emit the output as the result signal so that
             # it can be picked up by anything connected to the signal
-            self.signals.result.emit(output)
+            self.signals.completed.emit(output)
         except Exception as error:
             logging.exception("Exception raised by check_nmr")
-            self.signals.result.emit([
+            self.signals.completed.emit([
                 "Exception",
                 type(error).__name__,
                 *(error.args),
@@ -44,4 +43,3 @@ class Worker(QRunnable):
                 str(logging.getLogger().handlers[0].baseFilename),
                 "for further details",
             ])
-        self.signals.completed.emit()
