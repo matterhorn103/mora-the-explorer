@@ -44,7 +44,7 @@ class TestCheck:
         def completion_handler(copied_list):
             nonlocal output
             output = copied_list
-            app.exit()
+            app().exit()
         config = self.config
         config.options["initials"] = "aaa"
         explorer = Explorer(config)
@@ -53,7 +53,7 @@ class TestCheck:
             wild_group=False,
             completion_handler=completion_handler,
         )
-        app.exec()
+        app().exec()
         assert len(output) > 0
 
     def test_single_check_with_copy(self):
@@ -63,7 +63,7 @@ class TestCheck:
         def completion_handler(copied_list):
             nonlocal output
             output = copied_list
-            app.exit()
+            app().exit()
         config = self.config
         config.options["initials"] = "mjm"
         config.options["spec"] = "300er"
@@ -75,7 +75,7 @@ class TestCheck:
             wild_group=False,
             completion_handler=completion_handler,
         )
-        app.exec()
+        app().exec()
         assert output[1] == "Spectrum found: mjm-500-1-proton-DMSO"
 
     def test_400er_checks_300er(self):
@@ -85,7 +85,7 @@ class TestCheck:
         def completion_handler(copied_list):
             nonlocal output
             output = copied_list
-            app.exit()
+            app().exit()
         config = self.config
         config.options["initials"] = "mjm"
         config.options["spec"] = "400er"
@@ -97,7 +97,7 @@ class TestCheck:
             wild_group=False,
             completion_handler=completion_handler,
         )
-        app.exec()
+        app().exec()
         assert output[1] == "Spectrum found: mjm-500-1-proton-DMSO"
 
     def test_no_initials(self):
@@ -106,7 +106,7 @@ class TestCheck:
         def completion_handler(copied_list):
             nonlocal output
             output = copied_list
-            app.exit()
+            app().exit()
         config = self.config
         config.options["initials"] = "mjm"
         config.options["spec"] = "300er"
@@ -118,7 +118,7 @@ class TestCheck:
             wild_group=False,
             completion_handler=completion_handler,
         )
-        app.exec()
+        app().exec()
         assert output[1] == "Spectrum found: 500-1-proton-DMSO"
 
     def test_no_solvent(self):
@@ -127,7 +127,7 @@ class TestCheck:
         def completion_handler(copied_list):
             nonlocal output
             output = copied_list
-            app.exit()
+            app().exit()
         config = self.config
         config.options["initials"] = "mjm"
         config.options["spec"] = "300er"
@@ -139,6 +139,6 @@ class TestCheck:
             wild_group=False,
             completion_handler=completion_handler,
         )
-        app.exec()
+        app().exec()
         assert output[1] == "Spectrum found: mjm-500-1-proton"
 
