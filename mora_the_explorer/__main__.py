@@ -52,12 +52,12 @@ def main():
     check_parser.add_argument(
         "group",
         action="store",
-        help=f"the group initialism",
+        help="the group initialism",
     )
     check_parser.add_argument(
         "user",
         action="store",
-        help=f"the user's initialism",
+        help="the user's initialism",
     )
     check_parser.add_argument(
         "-c",

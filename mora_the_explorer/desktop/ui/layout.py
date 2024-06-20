@@ -1,7 +1,7 @@
 import platform
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QPushButton, QLabel, QProgressBar, QVBoxLayout, QSizePolicy
+from PySide6.QtWidgets import QPushButton, QLabel, QProgressBar, QVBoxLayout
 
 
 from .options import OptionsLayout

@@ -1,5 +1,4 @@
 import logging
-import os
 import platform
 import sys
 from datetime import date
@@ -99,7 +98,7 @@ class MainWindow(QMainWindow):
                     app_name="Mora the Explorer",
                     timeout=2,
                 )
-            except:
+            except Exception:
                 pass
 
     def notification_clicked(self):

@@ -1,5 +1,4 @@
 import logging
-import platform
 from datetime import date
 from pathlib import Path
 

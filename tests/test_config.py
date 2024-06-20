@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import pytest
 
 from mora_the_explorer.explorer import Config
 

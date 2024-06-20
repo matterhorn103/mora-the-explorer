@@ -1,9 +1,7 @@
-import sys
 from datetime import date, timedelta
 from pathlib import Path
 from shutil import rmtree
 
-import pytest
 
 from mora_the_explorer.explorer import app, Config, Explorer
 

@@ -1,5 +1,4 @@
 import logging
-import sys
 
 from ..explorer import app, Config, Explorer
 
@@ -23,7 +22,7 @@ class TerminalProgress:
         try:
             print(f"Progress: {int((self._value / self._max) * 100)}%")
         except ZeroDivisionError:
-            print(f"Progress: 100%")
+            print("Progress: 100%")
 
 
 def setup_command_line_explorer(rsrc_dir):
