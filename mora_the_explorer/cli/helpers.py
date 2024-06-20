@@ -58,4 +58,4 @@ def cli_completion_handler(explorer, copied_list, prog_bar):
     if explorer.queued_checks == 0:
         prog_bar.setValue(prog_bar.maximum())
         logging.info("Task complete")
-        app.exit(0)
+        app().exit(0)

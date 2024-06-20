@@ -6,7 +6,8 @@ import sys
 from datetime import date
 from pathlib import Path
 
-from . import cli, explorer
+from . import cli
+from .explorer import app
 
 
 def main():
@@ -121,7 +122,6 @@ def main():
     # Launch desktop app if requested
     if args.command == "launch":
         logging.info("Launching GUI from command line")
-        explorer.app.shutdown()
         from . import run_desktop_app
         run_desktop_app(rsrc_dir, explorer)
     
@@ -177,7 +177,7 @@ def main():
                 completion_handler=lambda copied_list: cli.cli_completion_handler(explorer, copied_list, prog_bar),
             )
         
-        explorer.app.exec()
+        app().exec()
 
 
 if __name__ == "__main__":

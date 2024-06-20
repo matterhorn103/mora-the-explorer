@@ -28,23 +28,17 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QPalette, QColor, QIcon
 from PySide6.QtWidgets import QApplication
 
-from .explorer import Config, Explorer
+from .explorer import app, AppManager, Config, Explorer
 from .desktop import Controller, MainWindow
 
 
-class App(QApplication):
-    """The overall Mora the Explorer graphical application class."""
+def set_dark_mode():
+    """Manually set a dark mode (intended for use on Windows).
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
-    def set_dark_mode(self):
-        """Manually set a dark mode (intended for use on Windows).
-
-        Make dark mode less black than Windows default dark mode because it looks bad.
-        """
-
+    Make dark mode less black than Windows default dark mode because it looks bad.
+    """
+    
+    if isinstance(app(), QApplication):
         dark_palette = QPalette()
         dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
         dark_palette.setColor(QPalette.WindowText, Qt.white)
@@ -59,15 +53,16 @@ class App(QApplication):
         dark_palette.setColor(QPalette.Link, QColor(42, 130, 218))
         dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
         dark_palette.setColor(QPalette.HighlightedText, Qt.black)
-        self.setStyle("Fusion")
-        self.setPalette(dark_palette)
-
+        app().setStyle("Fusion")
+        app().setPalette(dark_palette)
 
 
 def run_desktop_app(rsrc_dir: Path, explorer: Explorer | None = None):
     """Run Mora the Explorer as a desktop application with a GUI."""
 
-    app = App(sys.argv)
+    # This closes the default QCoreApplication created at startup and replaces it with
+    # a new QApplication
+    AppManager.change_instance(QApplication)
 
     # Logs should be saved to:
     # Windows:  c:/Users/<user>/AppData/Local/mora_the_explorer/log.log
@@ -102,7 +97,7 @@ def run_desktop_app(rsrc_dir: Path, explorer: Explorer | None = None):
     logging.info("...complete")
 
     if darkdetect.isDark() is True and platform.system() == "Windows":
-        app.set_dark_mode()
+        set_dark_mode()
 
     # Create instance of Explorer (back-end), unless we were passed an existing one
     if explorer is None:
@@ -113,7 +108,7 @@ def run_desktop_app(rsrc_dir: Path, explorer: Explorer | None = None):
     # Create instance of Controller to handle communication between the two
     controller = Controller(explorer, window, rsrc_dir, config)
 
-    app.setWindowIcon(QIcon(str(rsrc_dir / "explorer.ico")))
+    app().setWindowIcon(QIcon(str(rsrc_dir / "explorer.ico")))
 
     logging.info("Initialization complete")
-    app.exec()
+    app().exec()

@@ -5,10 +5,11 @@ from pathlib import Path
 
 from PySide6.QtCore import QThreadPool
 
-from .app import app
+from .appmanager import app
 from .checknmr import check_nmr
 from .config import Config
 from .worker import Worker
+
 
 class Explorer:
     """Launches checks based on a given `Config` object.
@@ -141,10 +142,10 @@ class Explorer:
         if self.queued_checks == 0:
             print("Task complete")
             logging.info("Task complete")
-            app.exit(0)
+            app().exit(0)
 
 
     def explore(self):
         """Execute the app and in doing so process the results of all run checks."""
 
-        app.exec()
+        app().exec()
