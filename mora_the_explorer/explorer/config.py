@@ -8,7 +8,7 @@ import platformdirs
 
 class Config:
     """Returns a container for the combined app and user configuration data.
-    
+
     A Config object contains two kinds of config: a `user_config` and an `app_config`.
 
     Both are Python dictionaries with the same structures as `config.toml`, which
@@ -48,11 +48,10 @@ class Config:
     """
 
     def __init__(self, app_config_file: Path, user_config_file: Path | None = None):
-
         # Load app config from config.toml
         self.app_config = self.load_config_toml(app_config_file)
         logging.info(f"App configuration loaded from: {app_config_file}")
-        
+
         # Load or create user config
         # By default check the place appropriate to the os for the config file, which
         # should be:
@@ -60,12 +59,16 @@ class Config:
         # macOS:    /Users/<user>/Library/Application Support/mora_the_explorer/config.toml
         # Linux:    /home/<user>/.config/mora_the_explorer/config.toml
         if user_config_file is None:
-            self.user_config_file = Path(platformdirs.user_config_dir(
-                    "mora_the_explorer",
-                    roaming=True,
-                    ensure_exists=True,
+            self.user_config_file = (
+                Path(
+                    platformdirs.user_config_dir(
+                        "mora_the_explorer",
+                        roaming=True,
+                        ensure_exists=True,
+                    )
                 )
-            ) / "config.toml"
+                / "config.toml"
+            )
         else:
             self.user_config_file = user_config_file
 
@@ -84,7 +87,7 @@ class Config:
             )
             logging.info("Old config.json found, read, and converted to config.toml")
             self.extend_user_config(self.user_config, self.app_config)
-        
+
         # If no user config file exists, make one and save it
         else:
             self.user_config = {"options": {}}
@@ -99,14 +102,12 @@ class Config:
         self.groups = self.app_config["groups"]
         self.specs = self.app_config["spectrometers"]
 
-
     def load_config_toml(self, path: Path):
         """Load a config from a TOML file."""
 
         with open(path, "rb") as f:
             config = tomllib.load(f)
         return config
-
 
     def load_user_config_json(self, path: Path):
         """Load a user's config from a JSON file and replace it with a TOML."""
@@ -124,7 +125,6 @@ class Config:
         path.unlink()
         return config
 
-
     def extend_user_config(self, user_config, app_config):
         """Make sure the user's config contains everything it needs to by default."""
 
@@ -141,7 +141,6 @@ class Config:
             user_config["paths"] = {}
             user_config["paths"]["linux"] = "overwrite with default mount point"
 
-    
     def update_app_config(self, config: dict):
         """Overwrite any app config settings that are specified in the given config."""
         # NOTE: Only works properly for a couple of nesting levels
@@ -157,17 +156,14 @@ class Config:
                     else:
                         self.app_config[table][k] = v
 
-
     def save(self, path: Path | None = None):
         """Save user config to file.
-        
+
         If no path is provided, it defaults to the current value of `user_config_file`.
         """
         if path is None:
             path = self.user_config_file
         with open(path, "wb") as f:
             tomli_w.dump(self.user_config, f)
-        logging.info(
-            f"The following user options were saved to {path}:"
-        )
+        logging.info(f"The following user options were saved to {path}:")
         logging.info(self.user_config)

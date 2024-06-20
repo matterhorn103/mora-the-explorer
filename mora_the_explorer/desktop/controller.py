@@ -11,7 +11,7 @@ from .ui.main_window import MainWindow
 
 class Controller:
     """The bridge between the desktop app's GUI and the background Explorer instance."""
-    
+
     def __init__(
         self,
         explorer: Explorer,
@@ -50,7 +50,6 @@ class Controller:
         self.update_check(self.update_path)
 
         self.connect_signals()
-
 
     def update_check(self, update_path):
         """Check for updates at location specified."""

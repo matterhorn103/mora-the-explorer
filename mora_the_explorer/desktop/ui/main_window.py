@@ -68,9 +68,7 @@ class MainWindow(QMainWindow):
 
     def notify_error(self, copied_list):
         """Tell the user that an error occurred, both in the app and with a system toast."""
-        self.ui.notification.setStyleSheet(
-            "background-color : #cc0010; color : white"
-        )
+        self.ui.notification.setStyleSheet("background-color : #cc0010; color : white")
         try:
             if "Error" in copied_list[0]:
                 notification_text = "Error: Python " + copied_list[0]
@@ -109,9 +107,7 @@ class MainWindow(QMainWindow):
 
         update_dialog = QMessageBox(self)
         update_dialog.setWindowTitle("Update available")
-        update_dialog.setText(
-            f"There appears to be a new update available at:\n{path}"
-        )
+        update_dialog.setText(f"There appears to be a new update available at:\n{path}")
         update_dialog.setInformativeText(
             f"Your version is {current}\nThe version on the server is {available}\n{changelog}"
         )

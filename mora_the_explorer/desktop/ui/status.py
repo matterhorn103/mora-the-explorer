@@ -6,13 +6,12 @@ from .spinner import WaitingSpinner
 
 
 class StatusBar(QWidget):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.layout = QGridLayout()
         self.layout.setSpacing(0)
-        self.layout.setContentsMargins(0,0,0,0)
+        self.layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.layout)
 
         # Button to begin check
@@ -41,9 +40,9 @@ class StatusBar(QWidget):
             line_length=5,
             line_width=2,
             speed=1.5707963267948966,
-            color=QColor(184, 140, 206)
+            color=QColor(184, 140, 206),
         )
-        #self.layout.addWidget(self.spinner)
+        # self.layout.addWidget(self.spinner)
 
         # Button to cancel pending repeat check
         self.cancel_button = QPushButton("cancel repeat check")
@@ -61,7 +60,7 @@ class StatusBar(QWidget):
         self.spinner.hide()
         self.spinner.stop()
         self.cancel_button.hide()
-    
+
     def show_status(self):
         self.start_button.hide()
         self.label.show()

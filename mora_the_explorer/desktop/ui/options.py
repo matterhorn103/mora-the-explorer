@@ -27,12 +27,16 @@ class GroupButtons(QButtonGroup):
         for group in group_list:
             group_button = QRadioButton(group)
             self.button_list.append(group_button)
-            if (group == selected_group) or (group == "other" and self.checkedButton() is None):
+            if (group == selected_group) or (
+                group == "other" and self.checkedButton() is None
+            ):
                 group_button.setChecked(True)
             self.addButton(group_button)
             if len(group_list) <= 4 or group_list.index(group) < (len(group_list) / 2):
                 self.main_layout.addWidget(group_button)
-            elif len(group_list) > 4 and group_list.index(group) >= (len(group_list) / 2):
+            elif len(group_list) > 4 and group_list.index(group) >= (
+                len(group_list) / 2
+            ):
                 self.overflow_layout.addWidget(group_button)
 
 
@@ -139,7 +143,7 @@ class OptionsLayout(QGridLayout):
         self.inc_path_box = QComboBox()
         inc_path_options = ["before", "after"]
         self.inc_path_box.addItems(inc_path_options)
-        
+
         if config.options["inc_path"] in inc_path_options:
             self.inc_path_box.setCurrentText(config.options["inc_path"])
         else:
@@ -218,11 +222,10 @@ class OptionsLayout(QGridLayout):
         date_layout.addWidget(self.date_selector, 2)
 
         self.addLayout(date_layout, 9, 1)
-    
 
     def add_group_buttons(self, groups: dict, initial_group: str):
         """Add the group buttons to rows 1 and 2.
-         
+
         Takes a groups dict containing the information in the `[groups]` table in the
         the main `config.toml`, of the form:
         `{group_initials: group_name, ... , other: {group_initials: group_name, ... }}`
@@ -231,10 +234,8 @@ class OptionsLayout(QGridLayout):
           2) a drop down list for further options that appears when "other" is selected
         """
 
-        self.group_buttons = GroupButtons(
-            self, list(groups.keys()), initial_group
-        )
-        
+        self.group_buttons = GroupButtons(self, list(groups.keys()), initial_group)
+
         self.addLayout(self.group_buttons.main_layout, 1, 1)
         self.addLayout(self.group_buttons.overflow_layout, 2, 1)
 
@@ -247,10 +248,9 @@ class OptionsLayout(QGridLayout):
 
         self.addWidget(self.other_box, 2, 2)
 
-
     def add_spec_buttons(self, specs: dict, initial_spec: str):
         """Add the spectrometer selection buttons to row 6.
-        
+
         Takes a specs dict containing the information in the `[spectrometers]` table in
         the main `config.toml`.
         """

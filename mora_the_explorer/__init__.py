@@ -37,7 +37,7 @@ def set_dark_mode():
 
     Make dark mode less black than Windows default dark mode because it looks bad.
     """
-    
+
     if isinstance(app(), QApplication):
         dark_palette = QPalette()
         dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
@@ -68,13 +68,16 @@ def run_desktop_app(rsrc_dir: Path, explorer: Explorer | None = None):
     # Windows:  c:/Users/<user>/AppData/Local/mora_the_explorer/log.log
     # macOS:    /Users/<user>/Library/Logs/mora_the_explorer/log.log
     # Linux:    /home/<user>/.local/state/mora_the_explorer/log.log
-    log = Path(
-        platformdirs.user_log_dir(
-            "mora_the_explorer",
-            opinion=False,
-            ensure_exists=True,
+    log = (
+        Path(
+            platformdirs.user_log_dir(
+                "mora_the_explorer",
+                opinion=False,
+                ensure_exists=True,
+            )
         )
-    ) / "log.log"
+        / "log.log"
+    )
 
     logging.basicConfig(
         filename=log,

@@ -1,4 +1,5 @@
 """All UI-independent backend logic for checking the server and copying new spectra."""
+
 import filecmp
 import logging
 import shutil
@@ -8,14 +9,14 @@ from pathlib import Path
 
 
 def get_check_paths(
-        specs_info: dict,
-        spec: str,
-        server_path: Path,
-        check_date: datetime.date,
-        groups: dict,
-        group: str,
-        wild_group: bool = False,
-    ):
+    specs_info: dict,
+    spec: str,
+    server_path: Path,
+    check_date: datetime.date,
+    groups: dict,
+    group: str,
+    wild_group: bool = False,
+):
     """Get list of folders that may contain spectra, appropriate for the spectrometer."""
     spec_info = specs_info[spec]
     # Start with default, normal folder paths
@@ -29,17 +30,14 @@ def get_check_paths(
     # Replace the variable fields enclosed in <> angle brackets
     check_path_list = []
     for path in raw_path_list:
-        path = (
-            path
-            .replace("<spec_dir>", spec_info["spec_dir"])
-            .replace("<date>", formatted_date)
+        path = path.replace("<spec_dir>", spec_info["spec_dir"]).replace(
+            "<date>", formatted_date
         )
         # <> fields for datetime format strings can be subbed all at once
         path = check_date.strftime(path)
         if wild_group is False:
             path = (
-                path
-                .replace("<group>", group)
+                path.replace("<group>", group)
                 .replace("<group name>", groups[group])
                 .replace("<", "")
                 .replace(">", "")
@@ -49,12 +47,11 @@ def get_check_paths(
             wild_check_path_list = []
             for group, group_name in groups.items():
                 wild_check_path_list.append(
-                        path
-                        .replace("<group>", group)
-                        .replace("<group name>", group_name)
-                        .replace("<", "")
-                        .replace(">", "")
-                    )
+                    path.replace("<group>", group)
+                    .replace("<group name>", group_name)
+                    .replace("<", "")
+                    .replace(">", "")
+                )
                 check_path_list.extend(wild_check_path_list)
     # Turn into Path objects
     check_path_list = [server_path / p for p in check_path_list]
@@ -227,17 +224,19 @@ def format_name(
     allowed_symbols = ["-", "_", " "]
     special = set([x for x in name if not x.isalnum() and x not in allowed_symbols])
     for x in special:
-        logging.info(f"Char {x} not permitted in spectrum names, replaced with {str(hex(ord(x)))}")
+        logging.info(
+            f"Char {x} not permitted in spectrum names, replaced with {str(hex(ord(x)))}"
+        )
         name = name.replace(x, str(hex(ord(x))))
     return name
 
 
 def format_name_admin(
-        folder,
-        metadata,
-        inc_solv=True,
-        inc_path=False,
-    ) -> str:
+    folder,
+    metadata,
+    inc_solv=True,
+    inc_path=False,
+) -> str:
     """Format folder name in Klaus' desired fashion."""
     # First do normally but with everything included
     name = format_name(
@@ -272,29 +271,37 @@ def compare_spectra(server_folder, dest_folder) -> int:
         "fid",  # The actual spectrum
         "audita.txt",  # On Bruker
     ]
-    
+
     # Start with the assumption that they are not the same spectrum/spectra and try
     # to prove otherwise
     same = False
-    
+
     # Compares the list of files between the two directories provided and returns a
     # tuple of three lists (matches, mismatches, errors) - any files not in both
     # directories gets put into errors
     # By setting `shallow = False`, we don't compare metadata but rather the size and
     # content of the files themselves
     top_level_cmp = filecmp.cmpfiles(
-        server_folder, dest_folder, diagnostic_files, shallow=False,
+        server_folder,
+        dest_folder,
+        diagnostic_files,
+        shallow=False,
     )
     if len(top_level_cmp[0]) > 0:
         same = True
-        logging.info(f"Determined to be the same based on {top_level_cmp[0]} being identical")
-    
+        logging.info(
+            f"Determined to be the same based on {top_level_cmp[0]} being identical"
+        )
+
     # If don't seem to be same so far, check any subfolders (which are each spectra
     # on Agilent specs) to see if they are identical spectra
     if not same:
         for x in [x for x in server_folder.iterdir() if x.is_dir()]:
             subdir_cmp = filecmp.cmpfiles(
-                x, dest_folder / x.name, diagnostic_files, shallow=False,
+                x,
+                dest_folder / x.name,
+                diagnostic_files,
+                shallow=False,
             )
             if len(subdir_cmp[0]) > 0:
                 same = True
@@ -303,10 +310,10 @@ def compare_spectra(server_folder, dest_folder) -> int:
                 )
                 # Stop as soon as we find a single hint that they are the same folder
                 break
-    
+
     # This compares the contents of the two folders but on metadata only
     comparison = filecmp.dircmp(server_folder, dest_folder)
-    
+
     # One final check
     # This compares just the metadata of any top-level files including modified time,
     # which means even the same spectra might give a false negative, so we can't use it
@@ -317,7 +324,7 @@ def compare_spectra(server_folder, dest_folder) -> int:
             logging.info(
                 f"Determined to be the same based on the metadata of {comparison.same_files} being identical"
             )
-        
+
     if same:
         # See if there are any subdirectories or files that we are missing
         # Note that this doesn't look within subfolders
@@ -413,8 +420,10 @@ def iterate_progress(prog_state, n, progress_callback):
         print(f"Spectra checked: {prog_state}")
     return prog_state
 
+
 cache = tuple()
 cached_paths = []
+
 
 def check_nmr(
     fed_options: dict,
@@ -431,7 +440,7 @@ def check_nmr(
 
     if status_callback is not None:
         status_callback.emit("preparing...")
-    
+
     # Some initial setup that is the same for all spectrometers
     logging.info(f"Beginning check of {check_date} with the options:")
     logging.info(fed_options)
@@ -484,7 +493,7 @@ def check_nmr(
         except Exception:
             # This stops Python from hanging when the program is closed, no idea why
             sys.exit()
-    
+
     if status_callback is not None:
         status_callback.emit("checking...")
 
@@ -498,9 +507,9 @@ def check_nmr(
         # Iterate through spectra
         for folder in check_path.iterdir():
             logging.info(folder)
-            
+
             hit = False
-            
+
             # Extract title and experiment details from title file in spectrum folder
             try:
                 if spec_info["manufacturer"] == "bruker":

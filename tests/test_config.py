@@ -5,7 +5,6 @@ from mora_the_explorer.explorer import Config
 
 
 class TestConfig:
-
     test_dir = Path(__file__).parent
     mock_app = test_dir / "mock_app_config.toml"
     mock_user = test_dir / "mock_user_config.toml"

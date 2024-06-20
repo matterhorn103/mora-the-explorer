@@ -11,6 +11,7 @@ class WorkerSignals(QObject):
 
 class Worker(QRunnable):
     """A container for a function to make it executable in a thread from a QThreadPool."""
+
     def __init__(self, fn, *args, **kwargs):
         super(Worker, self).__init__()
 
@@ -35,11 +36,13 @@ class Worker(QRunnable):
             self.signals.completed.emit(output)
         except Exception as error:
             logging.exception("Exception raised by check_nmr")
-            self.signals.completed.emit([
-                "Exception",
-                type(error).__name__,
-                *(error.args),
-                "See log file at:",
-                str(logging.getLogger().handlers[0].baseFilename),
-                "for further details",
-            ])
+            self.signals.completed.emit(
+                [
+                    "Exception",
+                    type(error).__name__,
+                    *(error.args),
+                    "See log file at:",
+                    str(logging.getLogger().handlers[0].baseFilename),
+                    "for further details",
+                ]
+            )

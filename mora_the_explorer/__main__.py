@@ -48,7 +48,7 @@ def main():
         action="store",
         help="reconfigure with a provided TOML file CONFIG",
     )
-    
+
     check_parser.add_argument(
         "group",
         action="store",
@@ -113,18 +113,21 @@ def main():
 
     if args.config:
         # Replace previously loaded user config with provided one
-        explorer.config.user_config = explorer.config.load_config_toml(Path(args.config))
+        explorer.config.user_config = explorer.config.load_config_toml(
+            Path(args.config)
+        )
         # Overwrite any app settings
         explorer.config.update_app_config(explorer.config.user_config)
         # Make sure the Explorer is appropriately configured as a result
         explorer.reload_config()
-    
+
     # Launch desktop app if requested
     if args.command == "launch":
         logging.info("Launching GUI from command line")
         from . import run_desktop_app
+
         run_desktop_app(rsrc_dir, explorer)
-    
+
     elif args.command == "check":
         args = parser.parse_args()
 
@@ -160,23 +163,29 @@ def main():
                 initial_date=date.fromisoformat(args.multi),
                 wild_group=wild_group,
                 prog_bar=prog_bar,
-                completion_handler=lambda copied_list: cli.cli_completion_handler(explorer, copied_list, prog_bar),
+                completion_handler=lambda copied_list: cli.cli_completion_handler(
+                    explorer, copied_list, prog_bar
+                ),
             )
         elif args.date:
             explorer.single_check(
                 date=date.fromisoformat(args.date),
                 wild_group=wild_group,
                 prog_bar=prog_bar,
-                completion_handler=lambda copied_list: cli.cli_completion_handler(explorer, copied_list, prog_bar),
+                completion_handler=lambda copied_list: cli.cli_completion_handler(
+                    explorer, copied_list, prog_bar
+                ),
             )
         else:
             explorer.single_check(
                 date=date.today(),
                 wild_group=wild_group,
                 prog_bar=prog_bar,
-                completion_handler=lambda copied_list: cli.cli_completion_handler(explorer, copied_list, prog_bar),
+                completion_handler=lambda copied_list: cli.cli_completion_handler(
+                    explorer, copied_list, prog_bar
+                ),
             )
-        
+
         app().exec()
 
 
