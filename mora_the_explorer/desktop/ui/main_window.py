@@ -181,10 +181,12 @@ The repeat function is also disabled as long as this option is selected.
 
     def dest_path_changed(self, new_path):
         formatted_path = new_path
-        # Best way to ensure cross-platform compatibility is to avoid use of backslashes and then let pathlib.Path take care of formatting
+        # Best way to ensure cross-platform compatibility is to avoid use of backslashes
+        # and then let pathlib.Path take care of formatting
         if "\\" in formatted_path:
             formatted_path = formatted_path.replace("\\", "/")
-        # If the option "copy path" is used in Windows Explorer and then pasted into the box, the path will be surrounded by quotes, so remove them if there
+        # If the option "copy path" is used in Windows Explorer and then pasted into the
+        # box, the path will be surrounded by quotes, so remove them if there
         if formatted_path[0] == '"':
             formatted_path = formatted_path.replace('"', "")
         self.config.options["dest_path"] = formatted_path

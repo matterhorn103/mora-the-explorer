@@ -25,9 +25,9 @@ class Layout(QVBoxLayout):
         # Title and version info header
         with open(resource_directory / "version.txt", encoding="utf-8") as f:
             version_info = "".join(f.readlines()[:5])
-        version_box = QLabel(version_info)
-        version_box.setAlignment(Qt.AlignHCenter)
-        self.addWidget(version_box)
+        self.version_box = QLabel(version_info)
+        self.version_box.setAlignment(Qt.AlignHCenter)
+        self.addWidget(self.version_box)
 
         # All the user-configurable options
         self.opts = OptionsLayout(config)

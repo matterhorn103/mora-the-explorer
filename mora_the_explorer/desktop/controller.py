@@ -1,6 +1,8 @@
 import logging
+import platform
 from datetime import date
 from pathlib import Path
+from urllib.parse import quote
 
 from PySide6.QtCore import QTimer, QUrl
 from PySide6.QtGui import QDesktopServices
@@ -83,6 +85,7 @@ class Controller:
         """
         # Remember that self.ui = self.main_window.ui
         # and self.opts = self.main_window.ui.opts
+        self.ui.version_box.linkActivated.connect(self.report_bug)
         self.opts.initials_entry.textChanged.connect(self.initials_changed)
         self.opts.group_buttons.buttonClicked.connect(self.group_changed)
         self.opts.other_box.currentTextChanged.connect(self.group_changed)
@@ -121,6 +124,28 @@ class Controller:
         self.ui.start_check_button.clicked.connect(self.started)
         self.ui.interrupt_button.clicked.connect(self.interrupted)
         self.ui.notification.clicked.connect(self.main_window.notification_clicked)
+
+    def report_bug(self, link):
+        """Open a draft email containing some basic information."""
+
+        # Get version number
+        with open(self.rsrc_dir / "version.txt", encoding="utf-8") as f:
+            version_no = f.readlines()[2].strip()
+        # Get system info
+        os_info = platform.uname()
+        # Get path to log
+        log_location = str(logging.getLogger().handlers[0].baseFilename)
+        email_info = "\n".join([
+            f"Version: {version_no}",
+            f"System: {os_info.system} {os_info.release}, {os_info.machine}, {os_info.version}",
+            "Description: (please describe your bug)",
+            f"Log: (please insert the contents of your log here, found at {log_location})",
+        ])
+        escaped_info = quote(email_info)
+        url = QUrl(
+            f"mailto:milner@uni-muenster.de?subject=Mora%20the%20Explorer%20bug&body={escaped_info}"
+        )
+        QDesktopServices.openUrl(url)
 
     def open_destination(self):
         """Show the destination folder for spectra in the system file browser."""
