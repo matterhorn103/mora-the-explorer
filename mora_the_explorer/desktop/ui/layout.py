@@ -26,7 +26,7 @@ class Layout(QVBoxLayout):
         with open(resource_directory / "version.txt", encoding="utf-8") as f:
             version_info = "".join(f.readlines()[:5])
         # Turn into html
-        version_info = f'<p style="line-height: 1.2;">{version_info.replace("\n", "<br>")}</p>'
+        version_info = f'<p style="line-height: 1.1;">{version_info.replace("\n", "<br>")}</p>'
         self.version_box = QLabel(version_info)
         self.version_box.setAlignment(Qt.AlignHCenter)
         self.addWidget(self.version_box)
