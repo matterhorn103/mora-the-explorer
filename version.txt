@@ -2,7 +2,7 @@ Mora the Explorer
 Matt Milner
 v1.7.5a
 License: GPLv3
-<a href="#">Report a bug</a>
+<a href="mailto:milner@uni-muenster.de">Report a bug</a>
 Changes in version 1.7.5a:
 - Added tests to automatically find bugs
 - Found and fixed many bugs as a result, e.g.:

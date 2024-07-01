@@ -125,25 +125,25 @@ class Controller:
         self.ui.interrupt_button.clicked.connect(self.interrupted)
         self.ui.notification.clicked.connect(self.main_window.notification_clicked)
 
-    def report_bug(self, link):
+    def report_bug(self, mailto_link):
         """Open a draft email containing some basic information."""
 
         # Get version number
         with open(self.rsrc_dir / "version.txt", encoding="utf-8") as f:
-            version_no = f.readlines()[2].strip()
+            version_no = f.readlines()[2].strip().replace("<br>", "")
         # Get system info
         os_info = platform.uname()
         # Get path to log
         log_location = str(logging.getLogger().handlers[0].baseFilename)
         email_info = "\n".join([
             f"Version: {version_no}",
-            f"System: {os_info.system} {os_info.release}, {os_info.machine}, {os_info.version}",
+            f"System: {os_info.system} {os_info.release}, {os_info.machine}",
             "Description: (please describe your bug)",
             f"Log: (please insert the contents of your log here, found at {log_location})",
         ])
         escaped_info = quote(email_info)
         url = QUrl(
-            f"mailto:milner@uni-muenster.de?subject=Mora%20the%20Explorer%20bug&body={escaped_info}"
+            f"{mailto_link}?subject=Mora%20the%20Explorer%20bug&body={escaped_info}"
         )
         QDesktopServices.openUrl(url)
 
