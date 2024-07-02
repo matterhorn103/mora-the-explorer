@@ -64,6 +64,7 @@ This results in sample names of the form `stu mjm 301-2`, or `stu mjm al-12-1` f
 
 Though the program will successfully find and copy any spectra featuring that match the first two rules, sample numbers are expected in the prescribed format. For example, extra hyphens e.g. `"stu mjm-301-2"` will result in the automatic formatting working less well.
 
+
 ### Desktop app
 
 Usage is fairly self-explanatory within the app.
@@ -72,12 +73,25 @@ The NMR department has also made a guide available on their [website](https://ww
 To set up the search options:
 
 1. Type your insitute-wide three-letter initialism into the `initials` field.
-2. Select your research group from the options; if your group is not shown, select "other" and find your group in the drop-down list that appears.
-3. Type or copy-and-paste the location you wish to save copies of the spectra to into the `save in` field; the location given can be opened in your system's file explorer at any time by clicking the "go to" button or using the shortcut <kbd>Ctrl</kbd>+<kbd>G</kbd>
-4. Next to `include:`, check or uncheck the boxes as desired to determine which extra information should be included in the name of the copied spectrum's folder. The experiment name (`proton`, `carbon256`, `dept90` etc.) is always included.
+2. Select your research group from the options.
+    - If your group is not shown, select "other" and find your group in the drop-down list that appears.
+3. Type or copy-and-paste the location you wish to save copies of the spectra to into the `save in` field.
+    - The location given can be opened in your system's file explorer at any time by clicking the "go to" button or using the shortcut <kbd>Ctrl</kbd>+<kbd>G</kbd>
+4. Next to `include:`, check or uncheck the boxes as desired to determine which extra information should be included in the name of the copied spectrum's folder.
+    - The experiment name (`proton`, `carbon256`, `dept90` etc.) is always included.
     - For example, a $^1$H spectrum measured in CDCl$_3$ with the provided title `stu mjm 301-2` will be saved as `301-2-proton` by default, and as `mjm-301-2-proton-CDCl3` if both "initials" and "solvent" are checked.
     - The "use comprehensive (NMRCheck) style" option is provided to use folder name formatting as close as possible to the syntax used by the previous app, NMRCheck. This is provided for compatibility only, and its use should be avoided by new users. It results in unwieldy folder names like `mjm_301-2_neo400c_Jul02-2024_240-proton`.
 5. Select the spectrometer that should be checked.
-6. If desired, the app can automatically run a new check at the user-specified interval by checking the box next to `repeat:`. This option is not available for all spectrometers.
-7. 
+    - Note that the availability of some options can be affected by the choice of spectrometer.
+6. If desired, the app can automatically run a new check at the user-specified interval by checking the box next to `repeat:`.
+7. After any changes have been made to the above options, the selection can be saved as the default settings by clicking the appropriate button.
+    - Your user configuration is stored in the appropriate place for your operating system:
+        - ![image](https://commons.wikimedia.org/wiki/File:Windows_logo_-_2021.svg#/media/File:Windows_logo_-_2021.svg) `%USERPROFILE%\AppData\Roaming\mora_the_explorer\config.toml`
+        - ![image](https://commons.wikimedia.org/wiki/File:Apple_logo_grey.svg) `~/Library/Application Support/mora_the_explorer/config.toml`
+        - ![image](https://upload.wikimedia.org/wikipedia/commons/6/64/Tux_Classic_flat_look_v1.1.svg) `$XDG_CONFIG_HOME/mora_the_explorer` or `~/.config/mora_the_explorer/config.toml`
 
+To run a search:
+
+1. Select the date to search in the box.
+    - Each part of the date can be selected individually and adjusted using the arrows or replaced by typing.
+    - 
