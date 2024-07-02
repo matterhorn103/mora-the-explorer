@@ -7,6 +7,9 @@ The app is written in Python (v3.12) using the PySide6 bindings for the Qt6 fram
 
 The app can be "compiled" to an `.exe` Windows executable using `pyinstaller` (installable via `pip install pyinstaller`). For this a `.spec` file is provided, so all settings have been taken care of and the app bundle can be prepared just by executing the command `pyinstaller .\mora_the_explorer.spec` within the directory of the files (once the necessary dependencies listed in `pyproject.toml` have been installed, naturally).
 
+
+## Features
+
 **Advantages** over the `NMRCheck` program used until now include:
 * Can find spectra from both Bruker and Agilent spectrometers, including the department's high-field 500/600 MHz spectrometers
 * Fast! Doesn't check the whole server every time, and Python caches the parts that it has checked, so it takes only seconds to check for new spectra
@@ -27,17 +30,54 @@ The app can be "compiled" to an `.exe` Windows executable using `pyinstaller` (i
 * Configuration saved to a config file which follows the user across different Windows PCs within the uni
 * Has a better name (possibly most important)
 
-Usage is fairly self-explanatory within the app. When submitting samples to the NMR spectrometers it is important to stick to the rules for naming spectra:
 
-1. Sample names must begin with the group's initialism, followed by the user's, separated by a space
-2. The initialisms must be typed in lowercase
+## Installation
 
-If these are followed, the spectrum will be found by Mora the Explorer. Additionally, the NMR department has the rule that:
+Ready-to-use versions for Windows, macOS, and Linux (in the form of executable binaries prepared with PyInstaller) are available on the Organic Chemistry department's central NMR server at `\\mora\nmr\mora_the_explorer\`.
 
-3. Sample codes should consist of the reaction number followed by a sample number, separated by a hyphen; samples should be simply numbered sequentially
-4. Extra letters are allowed only when they occur at the start of the reaction number e.g. to indicate a student on placement/Praktikum
+The same binaries can also be downloaded from this repository's [releases page](https://github.com/matterhorn103/mora-the-explorer/releases).
+
+Alternatively, the code can be downloaded and run directly with Python.
+All necessary packages to run the desktop app are listed in `pyproject.toml` and can be installed in the usual way using `pip` or any other package manager (our preferred option is [`uv`](https://github.com/astral-sh/uv)).
+Running `python3 mora_the_explorer.py` from the command line will then open the desktop app.
+
+Alternatively, Mora the Explorer can be itself installed as a Python package (either system-wide or into a Python virtual environment) by executing e.g. `pip install .` from within the project's folder.
+After this, the app can be run from the command line with `mora-the-explorer`.
+
+
+## Usage
+
+### NMR sample submission
+
+The first step is of course to actually measure the NMR spectra.
+Mora the Explorer expects the "title" field of submitted measurements to have been filled out according to the department's rules for sample/measurement names:
+
+1. Sample names must begin with the group's abbreviation, followed by the user's three-letter abbreviation, followed by a sample code, separated by spaces
+2. The abbreviations must be typed in lowercase
+
+If these two rules are followed, spectra will be found by Mora the Explorer. Additionally, the NMR department has the rule that:
+
+3. Sample codes should consist of the reaction number followed by a sample number, separated by a hyphen; samples should be simply numbered sequentially (`-1`, `-2` etc.)
+4. Extra letters are allowed only when they occur as part of the actual reaction number e.g. to indicate a student on placement/Praktikum
 
 This results in sample names of the form `stu mjm 301-2`, or `stu mjm al-12-1` for reactions run as part of Praktika.
 
 Though the program will successfully find and copy any spectra featuring that match the first two rules, sample numbers are expected in the prescribed format. For example, extra hyphens e.g. `"stu mjm-301-2"` will result in the automatic formatting working less well.
+
+### Desktop app
+
+Usage is fairly self-explanatory within the app.
+The NMR department has also made a guide available on their [website](https://www.uni-muenster.de/imperia/md/content/organisch_chemisches_institut2/nmr/readme_mora_the_explorer.pdf), though the information may not be completely up-to-date.
+
+To set up the search options:
+
+1. Type your insitute-wide three-letter initialism into the `initials` field.
+2. Select your research group from the options; if your group is not shown, select "other" and find your group in the drop-down list that appears.
+3. Type or copy-and-paste the location you wish to save copies of the spectra to into the `save in` field; the location given can be opened in your system's file explorer at any time by clicking the "go to" button or using the shortcut <kbd>Ctrl</kbd>+<kbd>G</kbd>
+4. Next to `include:`, check or uncheck the boxes as desired to determine which extra information should be included in the name of the copied spectrum's folder. The experiment name (`proton`, `carbon256`, `dept90` etc.) is always included.
+    - For example, a $^1$H spectrum measured in CDCl$_3$ with the provided title `stu mjm 301-2` will be saved as `301-2-proton` by default, and as `mjm-301-2-proton-CDCl3` if both "initials" and "solvent" are checked.
+    - The "use comprehensive (NMRCheck) style" option is provided to use folder name formatting as close as possible to the syntax used by the previous app, NMRCheck. This is provided for compatibility only, and its use should be avoided by new users. It results in unwieldy folder names like `mjm_301-2_neo400c_Jul02-2024_240-proton`.
+5. Select the spectrometer that should be checked.
+6. If desired, the app can automatically run a new check at the user-specified interval by checking the box next to `repeat:`. This option is not available for all spectrometers.
+7. 
 
