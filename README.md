@@ -1,4 +1,4 @@
-# mora_the_explorer
+# mora-the-explorer
 
 A small program written for use at the Organic Chemistry department at the University of Münster.
 Mora the Explorer checks the central server for NMR data matching the user's details and automatically saves any new ones to a folder of the user's choosing (e.g. a personal analytics folder).
