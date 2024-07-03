@@ -1,24 +1,14 @@
 Mora the Explorer
 Matt Milner
-v1.7.5a
+v1.7.5
 License: GPLv3
 <a href="mailto:milner@uni-muenster.de">Report a bug</a>
-Changes in version 1.7.5a:
-- Added tests to automatically find bugs
-- Found and fixed many bugs as a result, e.g.:
+Changes in version 1.7.5:
+- Added a clickable link for sending bug reports
+- Added automatic bug testing and found and fixed many bugs as a result, e.g.:
   - 300er wasn't being checked when 400er search was run
   - Creation/loading of user config files would crash in certain circumstances
+- Decreased the size of the installed program by ~10%
 - Addition of a command line interface
 - A fix to "include solvent" box for Klaus
 - Improvements to pyinstaller building process
-Key changes in versions 1.7.0-1.7.4:
-- Progress bar now more accurately shows progress for 400 MHz spectrometers
-- A spinner now shows when checking and copying is in progress
-- Output display now automatically scrolls down when new messages arrive
-- Entries in the output display are now selectable and can be copied to the clipboard with Ctrl+C
-- Go To button also works on Windows when the destination folder is a network path (\\nwz.uni-muenster.de\...)
-- Errors during checking are now reported in detail, and very rarely cause the whole program to crash
-- Spectra measured in 2023 can be found again
-- Any spectra measured in previous years that haven't been archived will be found correctly in future
-- Characters in spectrum titles other than a-z, 0-9, "-", "_", and space, are replaced instead of causing crash
-- User config now contained in a config.toml
