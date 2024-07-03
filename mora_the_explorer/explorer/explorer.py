@@ -66,7 +66,7 @@ class Explorer:
     def single_check(
         self,
         date,
-        wild_group,
+        wild_group=False,
         prog_bar=None,
         status_bar=None,
         completion_handler=None,
