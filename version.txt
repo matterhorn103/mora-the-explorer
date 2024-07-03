@@ -1,14 +1,15 @@
 Mora the Explorer
 Matt Milner
-v1.7.5
+v1.8.0
 License: GPLv3
 <a href="mailto:milner@uni-muenster.de">Report a bug</a>
-Changes in version 1.7.5:
+Changes in version 1.8.0:
 - Added a clickable link for sending bug reports
 - Added automatic bug testing and found and fixed many bugs as a result, e.g.:
   - 300er wasn't being checked when 400er search was run
   - Creation/loading of user config files would crash in certain circumstances
 - Decreased the size of the installed program by ~10%
-- Addition of a command line interface
 - A fix to "include solvent" box for Klaus
+- Addition of a command line interface
+- Finished the behind-the-scenes changes
 - Improvements to pyinstaller building process
