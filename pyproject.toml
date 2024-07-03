@@ -1,6 +1,6 @@
 [project]
 name = "mora-the-explorer"
-version = "1.7.5"
+version = "1.8.0"
 description = "A small program for downloading NMR spectra at the Organic Chemistry department at the University of Münster"
 authors = [
     { name = "Matthew J. Milner", email = "matterhorn103@proton.me" }
