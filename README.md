@@ -35,16 +35,33 @@ Ready-to-use versions for Windows, macOS, and Linux (in the form of executable b
 
 The same binaries can also be downloaded from this repository's [releases page](https://github.com/matterhorn103/mora-the-explorer/releases).
 
-If desired, the source code can be downloaded and run directly with Python.
-All necessary packages to run the desktop app are listed in `pyproject.toml` and can be installed in the usual way using `pip` or any other package manager (our preferred option is [`uv`](https://github.com/astral-sh/uv)).
-Running `python3 mora_the_explorer.py` from the command line will then open the desktop app.
+If desired, the source code can be downloaded and either run directly with Python or installed.
+Our preferred and recommended tool for this is [`uv`](https://github.com/astral-sh/uv).
+If uv is installed, using the program is very simple and can be done in a number of ways:
 
-Alternatively, Mora the Explorer can be itself installed as a Python package (either system-wide or into a Python virtual environment) by executing e.g. `pip install .` from within the project's folder.
-After this, the app can be run from the command line with `mora-the-explorer`.
-Details on command line usage are found below.
+1. The desktop app can be started from the command line simply by running the top-level script:
+   ```bash
+   $ uv run mora_the_explorer.py
+   ```
 
-Finally, a binary can be prepared from the source code in the same way as is used to create those for the releases page by installing PyInstaller using `pip`, (or `uv` etc.) and then simply running `pyinstaller mora_the_explorer.spec`.
+2. Alternatively, Mora the Explorer can be itself installed as a Python package 
+   With uv this is currently done with:
+   ```bash
+   $ uv pip install .
+   ```
+   After this, the app can be run from the command line with `mora-the-explorer`.
+   Details on command line usage are found below.
 
+3. Finally, a binary can be prepared from the source code in the same way as is used to create those for the releases page by using pyinstaller:
+   ```bash
+   $ uv run --with pyinstaller -- pyinstaller mora_the_explorer.spec
+   ```
+
+If you are *not* using uv, all packages necessary to directly run the desktop app are listed in `pyproject.toml` and can be installed in the usual way using pip or any other package manager.
+
+1. Running `python3 mora_the_explorer.py` from the command line will open the desktop app.
+2. The program can be installed (either system-wide or into a Python virtual environment) by executing e.g. `pip install .` from within the project's folder.
+3. A binary can be prepared from the source code by installing PyInstaller from PyPI and then simply running `pyinstaller mora_the_explorer.spec`.
 
 ## Usage
 
