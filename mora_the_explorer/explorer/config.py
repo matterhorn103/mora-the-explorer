@@ -76,7 +76,9 @@ class Config:
         if self.user_config_file.exists() is True:
             self.user_config = self.load_config_toml(self.user_config_file)
             logging.info(f"User configuration loaded from: {self.user_config_file}")
-            self.extend_user_config(self.user_config, self.app_config)
+            changed = self.extend_user_config(self.user_config, self.app_config)
+            if changed:
+                self.save()
             # Update any app settings specified in the user config
             self.update_app_config(self.user_config)
 
@@ -86,7 +88,9 @@ class Config:
                 self.user_config_file.with_name("config.json")
             )
             logging.info("Old config.json found, read, and converted to config.toml")
-            self.extend_user_config(self.user_config, self.app_config)
+            changed = self.extend_user_config(self.user_config, self.app_config)
+            if changed:
+                self.save()
 
         # If no user config file exists, make one and save it
         else:
@@ -98,6 +102,7 @@ class Config:
 
         # Expose some parts of user and app configs at top level
         self.options = self.user_config["options"]
+        self.appearance = self.user_config["appearance"]
         self.paths = self.app_config["paths"]
         self.groups = self.app_config["groups"]
         self.specs = self.app_config["spectrometers"]
@@ -125,13 +130,15 @@ class Config:
         path.unlink()
         return config
 
-    def extend_user_config(self, user_config, app_config):
+    def extend_user_config(self, user_config, app_config) -> bool:
         """Make sure the user's config contains everything it needs to by default."""
 
+        changed = False
         # First just anything in the default options table
         for option in app_config["default_options"]:
             if option not in user_config["options"]:
                 user_config["options"][option] = app_config["default_options"][option]
+                changed = True
         # Then anything from other tables that needs to be present i.e. anything for
         # which it should be made obvious to the user that it can be configured
         if "paths" in user_config:
@@ -140,6 +147,14 @@ class Config:
         else:
             user_config["paths"] = {}
             user_config["paths"]["linux"] = "overwrite with default mount point"
+            changed = True
+        if "appearance" in user_config:
+            if "start_button_colour" in user_config["appearance"]:
+                pass
+        else:
+            user_config["appearance"] = {"start_button_colour": "#b88cce"}
+            changed = True
+        return changed
 
     def update_app_config(self, config: dict):
         """Overwrite any app config settings that are specified in the given config."""
