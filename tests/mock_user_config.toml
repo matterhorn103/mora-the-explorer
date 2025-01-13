@@ -12,3 +12,9 @@ repeat_delay = 3
 
 [groups]
 new = "newgroup"
+
+[paths]
+linux = "overwrite with default mount point"
+
+[appearance]
+start_button_colour = "#b88cce"

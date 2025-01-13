@@ -115,7 +115,13 @@ def get_metadata_bruker(folder: Path, server_path) -> dict:
             sample_info = title[2:]
         else:
             initials = title[1][:3]
-            sample_info = [title[1][3:]].extend(title[2:])
+            # Still keep rest of second item in title as first part of sample info
+            # If spectra submitted in form "stu msc-jo 004", don't keep the hyphen, so
+            # for this example should get `initials="msc"`, `sample_info=["jo", "004"]`
+            sample_info = (
+                [title[1][3:]] if title[1][3].isalnum() else [title[1][4:]]
+                + title[2:]
+            )
     elif len(title) >= 2:
         # Presumably the initials were not separated correctly from the sample number
         group = title[0]

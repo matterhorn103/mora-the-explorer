@@ -24,6 +24,10 @@ repeat_switch = false
 repeat_delay = 5
 
 
+[appearance]
+start_button_colour = "#b88cce"
+
+
 [paths]
 update = "mnova/mora_the_explorer"
 Windows = "//mora/nmr"

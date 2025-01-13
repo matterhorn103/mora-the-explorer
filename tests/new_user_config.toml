@@ -12,3 +12,6 @@ repeat_delay = 5
 
 [paths]
 linux = "overwrite with default mount point"
+
+[appearance]
+start_button_colour = "#b88cce"

@@ -33,6 +33,9 @@ class MainWindow(QMainWindow):
 
         self.ui = Layout(self.rsrc_dir, self.config)
 
+        # Apply user's preferred colour to start check button
+        self.ui.status_bar.start_button.setStyleSheet(f"background-color : {self.config.appearance["start_button_colour"]}")
+
         # Make options easily accessible, as they are frequently accessed
         self.opts = self.ui.opts
 
