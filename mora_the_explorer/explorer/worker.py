@@ -2,6 +2,31 @@ import logging
 
 from PySide6.QtCore import QRunnable, Signal, Slot, QObject
 
+from mora_the_explorer.explorer.checknmr import Reporter
+
+
+class QtReporter(Reporter):
+    def __init__(self):
+        self.signals = WorkerSignals()
+
+    def set_status(self, message):
+        self.signals.status.setText(message)
+
+    def progress(self) -> int:
+        self.prog_bar.value()
+
+    def reset_progress(self):
+        self.prog_bar.setValue(0)
+
+    def increment_progress(self, increment: int = 1):
+        self.prog_bar.setValue(self.prog_bar.value() + increment)
+
+    def max_progress(self) -> int:
+        pass
+
+    def set_max_progress(self, max: int):
+        self.prog_bar.setMaximum(max)
+
 
 class WorkerSignals(QObject):
     progress = Signal(int)

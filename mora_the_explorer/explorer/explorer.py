@@ -6,9 +6,11 @@ from pathlib import Path
 from PySide6.QtCore import QThreadPool
 
 from .appmanager import app
-from .checknmr import check_nmr
+from .checknmr import Manufacturer, check_nmr, Reporter
 from .config import Config
 from .worker import Worker
+from .paths import get_check_paths
+
 
 
 class Explorer:
@@ -63,43 +65,42 @@ class Explorer:
 
     def single_check(
         self,
+        reporter: Reporter,
         date,
         wild_group=False,
-        prog_bar=None,
-        status_bar=None,
         completion_handler=None,
     ):
         """Conduct a check of a single date."""
-        if status_bar:
+        if hasattr(reporter, "status_bar"):
             # Hide start button, show status bar
-            status_bar.show_status()
+            reporter.status_bar.show_status()
 
-        # Handlers for updating progress and status
-        def update_progress(prog_state):
-            if prog_bar:
-                prog_bar.setValue(prog_state)
-            else:
-                print(prog_state)
-
-        def update_status(status):
-            if status_bar:
-                status_bar.setText(status)
-            else:
-                print(status)
+        paths = get_check_paths(
+            specs_info=self.specs,
+            spec=self.config.options["spec"],
+            server_path=self.server_path,
+            check_date=date,
+            groups=self.all_groups,
+        )
 
         # Default to using own built-in handler for completion
         if completion_handler is None:
             completion_handler = self.completion_handler
         # Start main checking function in worker thread
+        options = self.config.options
         worker = Worker(
             check_nmr,
-            fed_options=self.config.options,
+            reporter=reporter,
             server_path=self.server_path,
-            specs_info=self.specs,
-            check_date=date,
-            groups=self.all_groups,
-            wild_group=wild_group,
-            prog_bar=prog_bar,
+            check_paths=paths,
+            dest_path=options["dest_path"],
+            manufacturer=Manufacturer.from_str(self.specs[self.config.options["spec"]]),
+            initials=options["initials"],
+            group=options["group"],
+            inc_init=options["inc_init"],
+            inc_solv=options["inc_solv"],
+            inc_path=options["inc_path"],
+            #nmrcheck_compat_mode=options[""]
         )
         worker.signals.progress.connect(update_progress)
         worker.signals.status.connect(update_status)

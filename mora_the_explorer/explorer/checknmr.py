@@ -1,85 +1,55 @@
 """All UI-independent backend logic for checking the server and copying new spectra."""
 
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
 import filecmp
 import logging
+from os import PathLike
 import shutil
 import sys
-from datetime import date, datetime
+from datetime import datetime
 from pathlib import Path
 
 
-def get_check_paths(
-    specs_info: dict,
-    spec: str,
-    server_path: Path,
-    check_date: datetime.date,
-    groups: dict,
-    group: str,
-    wild_group: bool = False,
-):
-    """Get list of folders that may contain spectra, appropriate for the spectrometer."""
-    spec_info = specs_info[spec]
-    # Start with default, normal folder paths
-    raw_path_list = spec_info["check_paths"]
-    # Add archives for previous years other than the current if requested
-    if check_date.year != date.today().year:
-        if "archives" in spec_info:
-            raw_path_list.extend(spec_info["archives"])
-    if "date" in spec_info:
-        formatted_date = check_date.strftime(spec_info["date"])
-    # Replace the variable fields enclosed in <> angle brackets
-    check_path_list = []
-    for path in raw_path_list:
-        path = path.replace("<spec_dir>", spec_info["spec_dir"]).replace(
-            "<date>", formatted_date
-        )
-        # <> fields for datetime format strings can be subbed all at once
-        path = check_date.strftime(path)
-        if wild_group is False:
-            path = (
-                path.replace("<group>", group)
-                .replace("<group name>", groups[group])
-                .replace("<", "")
-                .replace(">", "")
-            )
-            check_path_list.append(path)
-        elif wild_group is True:
-            wild_check_path_list = []
-            for group, group_name in groups.items():
-                wild_check_path_list.append(
-                    path.replace("<group>", group)
-                    .replace("<group name>", group_name)
-                    .replace("<", "")
-                    .replace(">", "")
-                )
-                check_path_list.extend(wild_check_path_list)
-    # Turn into Path objects
-    check_path_list = [server_path / p for p in check_path_list]
-    # Go over the list to make sure we only bother checking paths that exist
-    check_path_list = [p for p in check_path_list if p.exists()]
-    # Add potential overflow folders for same day (these are generated on mora when two
-    # samples are submitted with same exp. no.)
-    for path in check_path_list.copy():
-        for num in range(2, 20):
-            overflow_path = path.with_name(path.name + "_" + str(num))
-            if overflow_path.exists():
-                check_path_list.append(overflow_path)
-            else:
-                break
-    # Include other spectrometers if indicated in `config.toml`
-    if "include" in spec_info:
-        for included_spec in spec_info["include"]:
-            included_spec_paths = get_check_paths(
-                specs_info,
-                included_spec,
-                server_path,
-                check_date,
-                groups,
-                group,
-                wild_group,
-            )
-            check_path_list.extend(included_spec_paths)
-    return check_path_list
+class Manufacturer(Enum):
+    BRUKER = 1
+    AGILENT = 2
+
+    @classmethod
+    def from_str(s: str):
+        if s.lower() == "bruker":
+            Manufacturer.BRUKER
+        elif s.lower() == "agilent":
+            Manufacturer.AGILENT
+        else:
+            raise ValueError("Only Bruker and Agilent are recognized manufacturers!")
+
+
+class Reporter(ABC):
+    @abstractmethod
+    def set_status(self, message: str):
+        pass
+
+    @abstractmethod
+    def progress(self) -> int:
+        pass
+
+    @abstractmethod
+    def reset_progress(self):
+        pass
+
+    @abstractmethod
+    def increment_progress(self, increment: int = 1):
+        pass
+
+    @abstractmethod
+    def max_progress(self) -> int:
+        pass
+
+    @abstractmethod
+    def set_max_progress(self, max: int):
+        pass
 
 
 def get_number_spectra(path: Path | None = None, paths: list[Path] | None = None):
@@ -98,7 +68,18 @@ def get_number_spectra(path: Path | None = None, paths: list[Path] | None = None
     return n
 
 
-def get_metadata_bruker(folder: Path, server_path) -> dict:
+@dataclass
+class MeasurementMetadata():
+    server_location: str
+    group: str | None
+    initials: str
+    experiment: str | None
+    solvent: str | None
+    frequency: str | None
+    other_sample_info: list[str]
+
+
+def get_metadata_bruker(folder: Path, server_path: Path) -> MeasurementMetadata:
     # Extract title and experiment details from title file in spectrum folder
     title_file = folder / "pdata" / "1" / "title"
     with open(title_file, encoding="utf-8") as f:
@@ -136,20 +117,20 @@ def get_metadata_bruker(folder: Path, server_path) -> dict:
         logging.info("Title doesn't have enough parts")
         raise IndexError
 
-    metadata = {
-        "server_location": str(folder.relative_to(server_path)),
-        "group": group,
-        "initials": initials,
-        "sample_info": sample_info,  # All remaining parts of title
-        "experiment": details[0],
-        "solvent": details[1],
-        "frequency": None,
-    }
+    metadata = MeasurementMetadata(
+        server_location=str(folder.relative_to(server_path)),
+        group=group,
+        initials=initials,
+        other_sample_info=sample_info,  # All remaining parts of title
+        experiment=details[0],
+        solvent=details[1],
+        frequency=None,
+    )
     return metadata
 
 
-def get_metadata_agilent(folder: Path, server_path) -> dict:
-    # Find out magnet strength, set to initial false value as flag
+def get_metadata_agilent(folder: Path, server_path: Path) -> MeasurementMetadata:
+    # Find out magnet strength, set to None initially
     magnet_freq = None
     while magnet_freq is None:
         for subfolder in folder.iterdir():
@@ -161,25 +142,25 @@ def get_metadata_agilent(folder: Path, server_path) -> dict:
                     magnet_freq = line_with_freq_split[0]
         break
 
-    metadata = {
-        "server_location": str(folder.relative_to(server_path)),
-        "group": None,
-        "initials": folder.name[:3],
-        "sample_info": [folder.name[3:]],  # A list so as to match the Bruker version
-        "experiment": None,
-        "solvent": None,
-        "frequency": magnet_freq,
-    }
+    metadata = MeasurementMetadata(
+        server_location=str(folder.relative_to(server_path)),
+        group=None,
+        initials=folder.name[:3],
+        other_sample_info=[folder.name[3:]],  # A list so as to match the Bruker version
+        experiment=None,
+        solvent=None,
+        frequency=magnet_freq,
+    )
     return metadata
 
 
 def format_name(
-    folder,
-    metadata,
-    inc_group=False,
-    inc_init=False,
-    inc_solv=False,
-    nmrcheck_style=False,
+    folder: Path,
+    metadata: MeasurementMetadata,
+    inc_group: bool = False,
+    inc_init: bool = False,
+    inc_solv: bool = False,
+    nmrcheck_style: bool = False,
 ) -> str:
     """Format folder name according to the user's choices."""
     # Format in the style of NMRCheck if requested i.e. using underscores,
@@ -190,8 +171,8 @@ def format_name(
             [
                 x
                 for x in [
-                    metadata["initials"],
-                    *metadata["sample_info"],
+                    metadata.initials,
+                    *(metadata.other_sample_info),
                     folder.parent.name,
                     folder.name,
                 ]
@@ -204,23 +185,23 @@ def format_name(
             [
                 x
                 for x in [
-                    *metadata["sample_info"],
-                    metadata["experiment"],
+                    *(metadata.other_sample_info),
+                    metadata.experiment,
                 ]
                 if x is not None
             ]
         )
     # Apply user choices, some only if NMRCheck style wasn't chosen
     if nmrcheck_style is False:
-        if inc_init is True and metadata["initials"] is not None:
-            name = metadata["initials"] + "-" + name
-        if inc_group is True and metadata["group"] is not None:
-            name = metadata["group"] + "-" + name
-    if inc_solv is True and metadata["solvent"] is not None:
-        name = name + "-" + metadata["solvent"]
+        if inc_init is True and metadata.initials is not None:
+            name = metadata.initials + "-" + name
+        if inc_group is True and metadata.group is not None:
+            name = metadata.group + "-" + name
+    if inc_solv is True and metadata.solvent is not None:
+        name = name + "-" + metadata.solvent
     # Add frequency info if available
-    if metadata["frequency"] is not None:
-        name = name + "_" + metadata["frequency"]
+    if metadata.frequency is not None:
+        name = name + "_" + metadata.frequency
     # Make sure there are no special characters in the name, and if so, replace them
     # with the Unicode hexadecimal code points
     # Otherwise Windows will likely reject them
@@ -239,7 +220,7 @@ def format_name(
 
 def format_name_admin(
     folder,
-    metadata,
+    metadata: MeasurementMetadata,
     inc_solv=True,
     inc_path=False,
 ) -> str:
@@ -254,7 +235,7 @@ def format_name_admin(
     )
     # Add location details if requested
     if inc_path:
-        location = metadata["server_location"].replace("/", "_").replace("\\", "_")
+        location = metadata.server_location.replace("/", "_").replace("\\", "_")
         if inc_path == "before" or inc_path is True:
             name = location + "_" + name
         elif inc_path == "after":
@@ -417,93 +398,70 @@ def copy_folder(src: Path, target: Path):
     return output
 
 
-def iterate_progress(prog_state, n, progress_callback):
-    """Update progress state and signal to progress bar if a callback object has been given"""
-    prog_state += n
-    if progress_callback is not None:
-        progress_callback.emit(prog_state)
-    else:
-        print(f"Spectra checked: {prog_state}")
-    return prog_state
-
-
 cache = tuple()
 cached_paths = []
 
 
 def check_nmr(
-    fed_options: dict,
-    server_path: Path,
-    specs_info: dict,
-    check_date: datetime.date,
-    groups: dict,
-    wild_group: bool,
-    prog_bar=None,
-    progress_callback=None,
-    status_callback=None,
+    reporter: Reporter,
+    server_path: PathLike,
+    check_paths: list[str],
+    dest_path: PathLike,
+    manufacturer: Manufacturer,
+    initials: str,
+    group: str,
+    inc_init: bool = False,
+    inc_solv: bool = False,
+    inc_path: bool = False,
+    nmrcheck_compat_mode: bool = False,
 ):
     """Main checking function for Mora the Explorer."""
 
-    if status_callback is not None:
-        status_callback.emit("preparing...")
+    reporter.set_status("preparing...")
+
+    logging.info("Beginning check with the options:")
+    logging.info(f"{server_path = }")
+    logging.info(f"{check_paths = }")
+    logging.info(f"{dest_path = }")
+    logging.info(f"{manufacturer = }")
+    logging.info(f"{initials = }")
+    logging.info(f"{inc_init = }")
+    logging.info(f"{inc_solv = }")
+    logging.info(f"{inc_path = }")
+    logging.info(f"{nmrcheck_compat_mode = }")
 
     # Some initial setup that is the same for all spectrometers
-    logging.info(f"Beginning check of {check_date} with the options:")
-    logging.info(fed_options)
     # Initialize list that will be returned as output
     output_list = ["No new spectra"]
     # Confirm destination directory exists
-    if Path(fed_options["dest_path"]).exists() is False:
+    dest_path = Path(dest_path)
+    if dest_path.exists() is False:
         logging.info("Given destination folder not found!")
         output_list.append("Given destination folder not found!")
         return output_list
     # Confirm server can be reached
+    server_path = Path(server_path)
     if server_path.exists() is False:
         logging.info("The NMR server could not be reached!")
         output_list.append("The NMR server could not be reached!")
         return output_list
-    spectrometer = fed_options["spec"]
-    spec_info = specs_info[spectrometer]
 
-    # Directory discovery
-    check_path_list = get_check_paths(
-        specs_info,
-        spectrometer,
-        server_path,
-        check_date,
-        groups=groups,
-        group=fed_options["group"],
-        wild_group=wild_group,
-    )
-
-    # Give message if no directories for the given date exist yet
-    if len(check_path_list) == 0:
-        logging.info("No folders exist for this date!")
-        output_list.append("No folders exist for this date!")
-        return output_list
-    else:
-        logging.info("The following paths will be checked for spectra:")
-        logging.info(check_path_list)
+    check_path_list = [server_path / p for p in check_paths]
+    logging.info("The following paths will be checked for spectra:")
+    logging.info(check_path_list)
 
     # Initialize progress bar
-    prog_state = 0
     n_spectra = get_number_spectra(paths=check_path_list)
     logging.info(f"Total spectra in these paths: {n_spectra}")
-    if prog_bar is not None:
-        try:
-            prog_bar.setMaximum(n_spectra)
-            if progress_callback is not None:
-                progress_callback.emit(0)  # Reset bar to 0
-            else:
-                print(f"Total spectra to check: {n_spectra}")
-        except Exception:
-            # This stops Python from hanging when the program is closed, no idea why
-            sys.exit()
+    try:
+        reporter.set_max_progress(n_spectra)
+        reporter.reset_progress()
+    except Exception:
+        # This stops Python from hanging when the program is closed, no idea why
+        sys.exit()
+    reporter.set_status("checking...")
 
-    if status_callback is not None:
-        status_callback.emit("checking...")
-
-    # Now we have a list of directories to check, start the actual search process
+    # Start the actual search process
     # Needs to be slightly different depending on the spectrometer, as the contents of
     # the folder for a spectrum is manufacturer-dependent
 
@@ -518,83 +476,77 @@ def check_nmr(
 
             # Extract title and experiment details from title file in spectrum folder
             try:
-                if spec_info["manufacturer"] == "bruker":
+                if manufacturer is Manufacturer.BRUKER:
                     metadata = get_metadata_bruker(folder, server_path)
-                elif spec_info["manufacturer"] == "agilent":
+                elif manufacturer is Manufacturer.AGILENT:
                     # Save a step by not extracting metadata unless initials in folder
                     # name as folders are given the name of the sample on Agilent specs
-                    if fed_options["initials"] in folder.name:
+                    if initials in folder.name:
                         hit = True
                         metadata = get_metadata_agilent(folder, server_path)
                     else:
-                        prog_state = iterate_progress(prog_state, 1, progress_callback)
+                        reporter.increment_progress()
                         continue
-                else:
-                    raise ValueError(
-                        f"Manufacturer {spec_info["manufacturer"]} is not supported!"
-                    )
             except FileNotFoundError:
                 output_list.append(f"No metadata could be found for {folder}!")
                 logging.info("No metadata found")
-                prog_state = iterate_progress(prog_state, 1, progress_callback)
+                reporter.increment_progress()
                 continue
             except IndexError:  # Due to title not being long enough
-                prog_state = iterate_progress(prog_state, 1, progress_callback)
+                reporter.increment_progress()
                 continue
 
             # Look for search string
-            if metadata["initials"] == fed_options["initials"]:
+            if metadata.initials == initials:
                 hit = True
             # Klaus can give a group initialism as the initials and download all spectra
             # from a group
             elif (
-                fed_options["group"] == "nmr"
-                and metadata["group"] == fed_options["initials"]
+                group == "nmr"
+                and metadata.group == initials
             ):
                 hit = True
 
             if not hit:
                 # Update progress bar
-                prog_state = iterate_progress(prog_state, 1, progress_callback)
+                reporter.increment_progress()
                 continue
             else:
                 logging.info("Spectrum matches search query!")
 
             # Formatting
-            if fed_options["group"] == "nmr":
+            if group == "nmr":
                 new_folder_name = format_name_admin(
                     folder,
                     metadata,
-                    inc_solv=fed_options["inc_solv"],
-                    inc_path=fed_options["inc_path"],
+                    inc_solv=inc_solv,
+                    inc_path=inc_path,
                 )
             else:
                 new_folder_name = format_name(
                     folder,
                     metadata,
-                    inc_init=fed_options["inc_init"],
-                    inc_solv=fed_options["inc_solv"],
-                    nmrcheck_style=fed_options["nmrcheck_style"],
+                    inc_init=inc_init,
+                    inc_solv=inc_solv,
+                    nmrcheck_style=nmrcheck_compat_mode,
                 )
 
             # Copy, add output messages to main output list
-            if status_callback is not None:
-                status_callback.emit("copying...")
+            reporter.set_status("copying...")
             output_list.extend(
-                copy_folder(folder, Path(fed_options["dest_path"]) / new_folder_name)
+                copy_folder(folder, dest_path/new_folder_name)
             )
-            if status_callback is not None:
-                status_callback.emit("checking...")
+            reporter.set_status("checking...")
 
             # Update progress bar if a callback object has been given
             # Make sure there's a noticeable movement after copying a spectrum,
             # otherwise it looks frozen
-            if prog_bar is not None:
-                prog_bar.setMaximum(prog_bar.maximum() + 5)
-                prog_state = iterate_progress(prog_state, 5, progress_callback)
+            if reporter is not None:
+                reporter.set_max_progress(reporter.max_progress() + 5)
+                reporter.increment_progress(5)
 
     now = datetime.now().strftime("%H:%M:%S")
-    completed_statement = f"Check of {check_date} completed at " + now
+    completed_statement = f"Check completed at {now}"
     output_list.append(completed_statement)
     logging.info(completed_statement)
     return output_list
