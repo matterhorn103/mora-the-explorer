@@ -7,22 +7,25 @@ from mora_the_explorer.explorer.checknmr import Reporter
 
 class QtReporter(Reporter):
     def __init__(self):
+        self._progress = 0
+        self._max_progress = 0
         self.signals = WorkerSignals()
 
     def set_status(self, message):
-        self.signals.status.setText(message)
+        self.signals.status.emit(message)
 
     def progress(self) -> int:
-        self.prog_bar.value()
+        return self._progress
 
     def reset_progress(self):
-        self.prog_bar.setValue(0)
+        self.signals.progress.emit(0)
 
     def increment_progress(self, increment: int = 1):
-        self.prog_bar.setValue(self.prog_bar.value() + increment)
+        self._progress += increment
+        self.signals.progress.emit(self._progress)
 
     def max_progress(self) -> int:
-        pass
+        return self._max_progress
 
     def set_max_progress(self, max: int):
         self.prog_bar.setMaximum(max)
