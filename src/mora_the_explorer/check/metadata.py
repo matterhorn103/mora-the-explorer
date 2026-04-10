@@ -14,7 +14,7 @@ class Manufacturer(Enum):
     AGILENT = 2
 
     @classmethod
-    def from_str(s: str):
+    def from_str(cls, s: str):
         if s.lower() == "bruker":
             Manufacturer.BRUKER
         elif s.lower() == "agilent":
@@ -120,7 +120,7 @@ class MeasurementMetadata:
 
 
     @classmethod
-    def from_title(title: str, rules: MetadataRules) -> Self:
+    def from_title(cls, title: str, rules: MetadataRules) -> Self:
         # Split by every occurrence of one or more of -, _, or whitespace (or
         # whichever custom alternative was specified)
         components = re.split(rules.src_sep, title)
@@ -310,123 +310,88 @@ def generate_folder_name(
     return name
 
 
-def format_name(
-    folder: Path,
-    metadata: MeasurementMetadata,
-    inc_group: bool = False,
-    inc_init: bool = False,
-    inc_solv: bool = False,
-    nmrcheck_style: bool = False,
-) -> str:
-    """Format folder name according to the user's choices."""
-    # Format in the style of NMRCheck if requested i.e. using underscores,
-    # including initials and spectrometer and date and (spectrometer's) exp no
-    # Note that this is legacy
-    if nmrcheck_style is True:
-        name = "_".join(
-            [
-                x
-                for x in [
-                    metadata.initials,
-                    *(metadata.sample_info),
-                    folder.parent.name,
-                    folder.name,
-                ]
-                if x is not None
-            ]
-        )
-    else:
-        # Include experiment type e.g. proton
-        name = "-".join(
-            [
-                x
-                for x in [
-                    *(metadata.sample_info),
-                    metadata.experiment,
-                ]
-                if x is not None
-            ]
-        )
-    # Apply user choices, some only if NMRCheck style wasn't chosen
-    if nmrcheck_style is False:
-        if inc_init is True and metadata.initials is not None:
-            name = metadata.initials + "-" + name
-        if inc_group is True and metadata.group is not None:
-            name = metadata.group + "-" + name
-    if inc_solv is True and metadata.solvent is not None:
-        name = name + "-" + metadata.solvent
-    # Add frequency info if available
-    if metadata.frequency is not None:
-        name = name + "_" + metadata.frequency
-    # Make sure there are no special characters in the name, and if so, replace them
-    # with the Unicode hexadecimal code points
-    # Otherwise Windows will likely reject them
-    # Replacing rather than just removing ensures the name is still unique compared to
-    # other spectra
-    # alphanumeric characters, space, hyphen, underscore are allowed
-    allowed_symbols = ["-", "_", " "]
-    special = set([x for x in name if not x.isalnum() and x not in allowed_symbols])
-    for x in special:
-        logging.info(f"Char {x} not permitted in spectrum names, replaced with {str(hex(ord(x)))}")
-        name = name.replace(x, str(hex(ord(x))))
-    return name
-
-
-def format_name_admin(
-    folder,
-    metadata: MeasurementMetadata,
-    inc_solv=True,
-    inc_path=False,
-) -> str:
-    """Format folder name in Klaus' desired fashion."""
-    # First do normally but with everything included
-    name = format_name(
-        folder,
-        metadata,
-        inc_group=True,
-        inc_init=True,
-        inc_solv=inc_solv,
-    )
-    # Add location details if requested
-    if inc_path:
-        location = metadata.server_location.replace("/", "_").replace("\\", "_")
-        if inc_path == "before" or inc_path is True:
-            name = location + "_" + name
-        elif inc_path == "after":
-            name = name + "_" + location
-    return name
-
-
-# TODO Make these into proper tests
-if __name__ == "__main__":
-    dest_fields = ["user", "sample_info", "experiment", "solvent"]
-    bruker_metarules = MetadataRules(
-        ["group", "user:3"],
-        {"group": "stu", "user": "mjm"},
-        dest_fields,
-    )
-    print(bruker_metarules)
-    bruker_title = "stu mjm 213-4 repeat"
-    metadata = MeasurementMetadata.from_title(bruker_title, bruker_metarules)
-    print(metadata)
-    assert metadata == MeasurementMetadata(
-        group="stu", user="mjm", sample_info=["213", "4", "repeat"]
-    )
-    metadata.manufacturer = Manufacturer.BRUKER
-    metadata.date = datetime.today()
-    name = generate_folder_name(metadata, bruker_metarules)
-    print(name)
-    assert name == "mjm-213-4-repeat"
-
-    agilent_metarules = MetadataRules(
-        ["user:3"],
-        {"user": "mjm"},
-        dest_fields,
-    )
-    agilent_title = "mjm304-1-ß"
-    metadata = MeasurementMetadata.from_title(agilent_title, agilent_metarules)
-    print(metadata)
-    assert metadata == MeasurementMetadata(user="mjm", sample_info=["304", "1", "ß"])
-    name = generate_folder_name(metadata, agilent_metarules)
-    print(name)
-    assert name == "mjm-304-1-0xdf"
+#def format_name(
+#    folder: Path,
+#    metadata: MeasurementMetadata,
+#    inc_group: bool = False,
+#    inc_init: bool = False,
+#    inc_solv: bool = False,
+#    nmrcheck_style: bool = False,
+#) -> str:
+#    """Format folder name according to the user's choices."""
+#    # Format in the style of NMRCheck if requested i.e. using underscores,
+#    # including initials and spectrometer and date and (spectrometer's) exp no
+#    # Note that this is legacy
+#    if nmrcheck_style is True:
+#        name = "_".join(
+#            [
+#                x
+#                for x in [
+#                    metadata.initials,
+#                    *(metadata.sample_info),
+#                    folder.parent.name,
+#                    folder.name,
+#                ]
+#                if x is not None
+#            ]
+#        )
+#    else:
+#        # Include experiment type e.g. proton
+#        name = "-".join(
+#            [
+#                x
+#                for x in [
+#                    *(metadata.sample_info),
+#                    metadata.experiment,
+#                ]
+#                if x is not None
+#            ]
+#        )
+#    # Apply user choices, some only if NMRCheck style wasn't chosen
+#    if nmrcheck_style is False:
+#        if inc_init is True and metadata.initials is not None:
+#            name = metadata.initials + "-" + name
+#        if inc_group is True and metadata.group is not None:
+#            name = metadata.group + "-" + name
+#    if inc_solv is True and metadata.solvent is not None:
+#        name = name + "-" + metadata.solvent
+#    # Add frequency info if available
+#    if metadata.frequency is not None:
+#        name = name + "_" + metadata.frequency
+#    # Make sure there are no special characters in the name, and if so, replace them
+#    # with the Unicode hexadecimal code points
+#    # Otherwise Windows will likely reject them
+#    # Replacing rather than just removing ensures the name is still unique compared to
+#    # other spectra
+#    # alphanumeric characters, space, hyphen, underscore are allowed
+#    allowed_symbols = ["-", "_", " "]
+#    special = set([x for x in name if not x.isalnum() and x not in allowed_symbols])
+#    for x in special:
+#        logging.info(f"Char {x} not permitted in spectrum names, replaced with {str(hex(ord(x)))}")
+#        name = name.replace(x, str(hex(ord(x))))
+#    return name
+#
+#
+#def format_name_admin(
+#    folder,
+#    metadata: MeasurementMetadata,
+#    inc_solv=True,
+#    inc_path=False,
+#) -> str:
+#    """Format folder name in Klaus' desired fashion."""
+#    # First do normally but with everything included
+#    name = format_name(
+#        folder,
+#        metadata,
+#        inc_group=True,
+#        inc_init=True,
+#        inc_solv=inc_solv,
+#    )
+#    # Add location details if requested
+#    if inc_path:
+#        location = metadata.server_location.replace("/", "_").replace("\\", "_")
+#        if inc_path == "before" or inc_path is True:
+#            name = location + "_" + name
+#        elif inc_path == "after":
+#            name = name + "_" + location
+#    return name
