@@ -18,7 +18,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 import platform
-import sys
 from pathlib import Path
 
 import darkdetect
@@ -28,7 +27,8 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QPalette, QColor, QIcon
 from PySide6.QtWidgets import QApplication
 
-from .explorer import app, AppManager, Config, Explorer
+from .config import Config
+from .explorer import app, AppManager, Explorer
 from .desktop import Controller, MainWindow
 
 

@@ -2,7 +2,7 @@ import logging
 
 from PySide6.QtCore import QRunnable, Signal, Slot, QObject
 
-from mora_the_explorer.explorer.checknmr import Reporter
+from ..check import get_check_paths, Manufacturer, check_nmr, Reporter
 
 
 class QtReporter(Reporter):

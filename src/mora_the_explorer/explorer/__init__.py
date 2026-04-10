@@ -4,5 +4,4 @@
 from .appmanager import app, AppManager
 
 # These are just namespace imports for convenience
-from .config import Config
 from .explorer import Explorer

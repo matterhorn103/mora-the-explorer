@@ -7,7 +7,8 @@ from urllib.parse import quote
 from PySide6.QtCore import QTimer, QUrl
 from PySide6.QtGui import QDesktopServices
 
-from ..explorer import Config, Explorer
+from ..config import Config
+from ..explorer import Explorer
 from .ui.main_window import MainWindow
 
 

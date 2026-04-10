@@ -3,7 +3,7 @@ name = "mora-the-explorer"
 version = "1.8.1"
 description = "A small program for downloading NMR spectra at the Organic Chemistry department at the University of Münster"
 authors = [
-    { name = "Matthew J. Milner", email = "matterhorn103@proton.me" }
+    { name = "Matthew Milner", email = "matterhorn103@proton.me" }
 ]
 dependencies = [
     "darkdetect>=0.8.0",
@@ -26,12 +26,13 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "pyinstaller>=6.6.0",
+    "pytest>=9.0.3",
 ]
 
-[tool.pytest.ini_options]
-addopts = [
-    "--import-mode=importlib",
-]
-pythonpath = [
-  "."
-]
+#[tool.pytest.ini_options]
+#addopts = [
+#    "--import-mode=importlib",
+#]
+#pythonpath = [
+#  "."
+#]

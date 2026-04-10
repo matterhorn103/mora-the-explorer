@@ -6,10 +6,9 @@ from pathlib import Path
 from PySide6.QtCore import QThreadPool
 
 from .appmanager import app
-from .checknmr import Manufacturer, check_nmr, Reporter
-from .config import Config
+from ..config import Config
 from .worker import Worker
-from .paths import get_check_paths
+from ..check import get_check_paths, Manufacturer, check_nmr, Reporter
 
 
 

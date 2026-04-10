@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import sys
 from pathlib import Path
 
-import mora_the_explorer
+from mora_the_explorer import run_desktop_app
 
 
 def get_rsrc_dir():
@@ -35,4 +35,4 @@ def get_rsrc_dir():
 if __name__ == "__main__":
     rsrc_dir = get_rsrc_dir()
 
-    mora_the_explorer.run_desktop_app(rsrc_dir)
+    run_desktop_app(rsrc_dir)
