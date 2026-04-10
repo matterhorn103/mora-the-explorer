@@ -10,7 +10,6 @@ from datetime import datetime
 from pathlib import Path
 
 from .metadata import (
-    MeasurementMetadata,
     MetadataRules,
     Manufacturer,
     generate_folder_name,
@@ -49,7 +48,7 @@ class Reporter(ABC):
 
 
 def get_number_spectra(paths: list[Path]):
-    """Get the total number of spectra folders in the given directory or directories.
+    """Get the total number of spectra folders in the given directories.
 
     We can then use the length of it to measure progress.
     """
@@ -149,8 +148,10 @@ def compare_spectra(server_folder, dest_folder) -> int:
     return same, incomplete
 
 
-def copy_folder(src: Path, target: Path):
+def copy_folder(src: Path, target: Path) -> str:
     """Copy a spectra folder over to the target if it isn't already there.
+
+    Returns a string summarizing the result of the operation for the user.
 
     Note that `target` should be the target path of the copied folder, not a directory
     to copy it into.
@@ -162,9 +163,6 @@ def copy_folder(src: Path, target: Path):
 
     Partial copies are also checked for and recopied if they are incomplete.
     """
-
-    output = []
-
     # Check that spectrum hasn't been copied before
     same_spectrum_found = False
     incomplete_copy = False
@@ -199,31 +197,25 @@ def copy_folder(src: Path, target: Path):
                     elif x.is_file():
                         shutil.copy2(x, target / x.name)
                 except PermissionError:
-                    output.append("You do not have permission to write to the given folder")
-                    return output
-        text_to_add = "New files found for: " + target.name
-        output.append(text_to_add)
-
+                    return "You do not have permission to write to the given folder"
+        return "New files found for: " + target.name
     elif same_spectrum_found is False:
         try:
             shutil.copytree(src, target)
         except PermissionError:
-            output.append("You do not have permission to write to the given folder")
             logging.info("No write permission for destination")
-            return output
-        text_to_add = "Spectrum found: " + target.name
+            return "You do not have permission to write to the given folder"
         logging.info(f"Spectrum saved to {target.name}")
-        output.append(text_to_add)
-
-    return output
+        return "Spectrum found: " + target.name
 
 
 def check_nmr(
     src: list[PathLike],
     dest: PathLike,
-    manufacturer: Manufacturer,
     rules: MetadataRules,
+    manufacturer: Manufacturer,
     reporter: Reporter,
+    date: datetime | None = None,
 ):
     """Main checking function for Mora the Explorer."""
 
@@ -253,6 +245,7 @@ def check_nmr(
             check_paths.append(p)
 
     # Initialize progress bar
+    # Get total number of folders that we're going to be checking across all src paths
     n_spectra = get_number_spectra(paths=check_paths)
     logging.info(f"Total spectra in these paths: {n_spectra}")
     try:
@@ -275,20 +268,26 @@ def check_nmr(
         for folder in check_path.iterdir():
             logging.info(folder)
 
-            hit = False
-
             # Extract title and experiment details from title file in spectrum folder
             try:
+                # For Agilent spectra the name of the folder itself ought to include the user
+                # initials so if that's a condition for a match (it usually is) we can save
+                # some time by checking for it straight away and short-circuiting if they are
+                # are missing from the folder name of the sample
                 if (
                     manufacturer is Manufacturer.AGILENT
                     and "user" in rules.conditions
                     and rules.conditions["user"] not in folder.name
                 ):
-                    # Save a step by short-circuiting if either the initials or full name of the
-                    # user are missing from the folder name of the sample
                     reporter.increment_progress()
                     continue
+                # Otherwise resolve the metadata fully
                 metadata = get_metadata(folder, rules, manufacturer)
+                # Some things are not typically resolved by the get_metadata function
+                # but can be supplied because we know them already
+                metadata.manufacturer = manufacturer
+                if metadata.date is None:
+                    metadata.date = date
             except FileNotFoundError:
                 reporter.append_output(f"No metadata could be found for {folder}!")
                 logging.info("No metadata found")
@@ -298,15 +297,7 @@ def check_nmr(
                 reporter.increment_progress()
                 continue
 
-            # Look for search string
-            if metadata.initials == initials:
-                hit = True
-            # Klaus can give a group initialism as the initials and download all spectra
-            # from a group
-            elif group == "nmr" and metadata.group == initials:
-                hit = True
-
-            if not hit:
+            if not metadata.matches_rules(rules):
                 # Update progress bar
                 reporter.increment_progress()
                 continue
@@ -314,26 +305,12 @@ def check_nmr(
                 logging.info("Spectrum matches search query!")
 
             # Formatting
-            if group == "nmr":
-                new_folder_name = format_name_admin(
-                    folder,
-                    metadata,
-                    inc_solv=inc_solv,
-                    inc_path=inc_path,
-                )
-            else:
-                new_folder_name = format_name(
-                    folder,
-                    metadata,
-                    inc_init=inc_init,
-                    inc_solv=inc_solv,
-                    nmrcheck_style=nmrcheck_compat_mode,
-                )
+            new_folder_name = generate_folder_name(metadata, rules)
 
             # Copy, add output messages to main output list
             reporter.set_status("copying...")
-            output_list.extend(copy_folder(folder, dest_path / new_folder_name))
-            reporter.set_status("checking...")
+            copy_return_message = copy_folder(folder, dest_path / new_folder_name)
+            reporter.append_output(copy_return_message)
 
             # Update progress bar if a callback object has been given
             # Make sure there's a noticeable movement after copying a spectrum,
@@ -341,9 +318,11 @@ def check_nmr(
             if reporter is not None:
                 reporter.set_max_progress(reporter.max_progress() + 5)
                 reporter.increment_progress(5)
+            
+            # Go back to checking
+            reporter.set_status("checking...")
 
     now = datetime.now().strftime("%H:%M:%S")
     completed_statement = f"Check completed at {now}"
-    output_list.append(completed_statement)
+    reporter.append_output(completed_statement)
     logging.info(completed_statement)
-    return output_list
