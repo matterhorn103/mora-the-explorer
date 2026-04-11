@@ -1,7 +1,7 @@
 """Metadata handling."""
 
 from dataclasses import dataclass
-from datetime import datetime
+import datetime
 from enum import Enum
 import logging
 from pathlib import Path
@@ -106,8 +106,9 @@ class MeasurementMetadata:
     """The actual extracted metadata of a measurement."""
 
     path: str | None = None
+    folder_name: str | None = None
     manufacturer: Manufacturer | None = None
-    date: datetime | None = None
+    date: datetime.date | None = None
     user: str | None = None
     user_name: str | None = None
     group: str | None = None
@@ -230,6 +231,7 @@ def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetada
         raise IndexError
 
     metadata.path = str(folder)
+    metadata.folder_name = folder.name
     metadata.manufacturer = Manufacturer.BRUKER
     details_split = details.split()
     metadata.experiment = details_split[0]
@@ -254,6 +256,7 @@ def get_metadata_agilent(folder: Path, rules: MetadataRules) -> MeasurementMetad
     title = folder.name
     metadata = MeasurementMetadata.from_title(title, rules)
     metadata.path = str(folder)
+    metadata.folder_name = folder.name
     metadata.manufacturer = Manufacturer.AGILENT
     metadata.frequency = magnet_freq
 

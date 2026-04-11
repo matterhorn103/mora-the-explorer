@@ -8,8 +8,7 @@ from PySide6.QtCore import QThreadPool
 from .appmanager import app
 from ..config import Config
 from .worker import Worker
-from ..check import get_check_paths, Manufacturer, check_nmr, Reporter
-
+from ..check import get_check_paths, Manufacturer, check_nmr, MetadataRules
 
 
 class Explorer:
@@ -50,7 +49,7 @@ class Explorer:
         reload.
         """
         # Set path to server
-        self.server_path = Path(self.config.paths[platform.system()])
+        self.server_path = Path(self.config.paths[platform.system().lower()])
 
         # Load group and spectrometer info
         # Need to flatten groups dict (as some are in e.g. an "other" subdict)
@@ -62,17 +61,60 @@ class Explorer:
                 self.all_groups.update(v)
         self.specs = self.config.specs
 
+    def generate_rules(self) -> MetadataRules:
+        """Generate metadata handling rules based on the curent configuration."""
+        options = self.config.options
+        selected_spec = options["spec"]
+        spec_info = self.specs[selected_spec]
+        # Put together the way the folder names should be formatted
+        if options["inc_init"]:
+            name_format = ["user", "sample_info", "experiment"]
+        else:
+            name_format = ["sample_info", "experiment"]
+        if options["inc_solv"]:
+            name_format.append("solvent")
+        if options["inc_path"]:
+            name_format.append("folder_name")
+        # Always include the frequency info too if it's available
+        name_format.append("frequency")
+        rules = MetadataRules(
+            src_fields=spec_info.title_format,
+            conditions={
+                "user": options["user"],
+                "group": options["group"],
+            },
+            dest_fields=name_format,
+        )
+        return rules
+
     def single_check(
         self,
-        reporter: Reporter,
-        date,
-        wild_group=False,
-        completion_handler=None,
+        date: date,
+        prog_bar=None,
+        status_bar=None,
+        completion_handler: callable | None = None,
     ):
         """Conduct a check of a single date."""
-        if hasattr(reporter, "status_bar"):
+        if status_bar is not None:
             # Hide start button, show status bar
-            reporter.status_bar.show_status()
+            status_bar.show_status()
+
+        # Handlers for updating progress and status
+        def update_progress(prog_state):
+            if prog_bar:
+                prog_bar.setValue(prog_state)
+            else:
+                print(prog_state)
+
+        def set_max_progress(max_prog):
+            if prog_bar:
+                prog_bar.setMaximum(max_prog)
+
+        def update_status(status):
+            if status_bar:
+                status_bar.setText(status)
+            else:
+                print(status)
 
         paths = get_check_paths(
             specs_info=self.specs,
@@ -87,33 +129,28 @@ class Explorer:
             completion_handler = self.completion_handler
         # Start main checking function in worker thread
         options = self.config.options
+        rules = self.generate_rules()
         worker = Worker(
             check_nmr,
-            reporter=reporter,
-            server_path=self.server_path,
-            check_paths=paths,
-            dest_path=options["dest_path"],
-            manufacturer=Manufacturer.from_str(self.specs[self.config.options["spec"]]),
-            initials=options["initials"],
-            group=options["group"],
-            inc_init=options["inc_init"],
-            inc_solv=options["inc_solv"],
-            inc_path=options["inc_path"],
-            #nmrcheck_compat_mode=options[""]
+            src=paths,
+            dest=options["dest_path"],
+            rules=rules,
+            manufacturer=Manufacturer.from_str(self.specs[options["spec"]]),
+            date=date,
         )
-        worker.signals.progress.connect(update_progress)
-        worker.signals.status.connect(update_status)
-        worker.signals.completed.connect(completion_handler)
+        worker.reporter.signals.update_progress.connect(update_progress)
+        worker.reporter.signals.set_max_progress.connect(set_max_progress)
+        worker.reporter.signals.set_status.connect(update_status)
+        worker.reporter.signals.completed.connect(completion_handler)
         self.threadpool.start(worker)
         self.queued_checks += 1
 
     def multiday_check(
         self,
-        initial_date,
-        wild_group,
+        initial_date: date,
         prog_bar=None,
         status_bar=None,
-        completion_handler=None,
+        completion_handler: callable | None = None,
     ):
         """Check multiple days in sequence."""
 
@@ -122,7 +159,6 @@ class Explorer:
         while date_to_check != end_date:
             self.single_check(
                 date_to_check,
-                wild_group,
                 prog_bar,
                 status_bar,
                 completion_handler,

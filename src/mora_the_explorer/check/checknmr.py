@@ -6,7 +6,7 @@ import logging
 from os import PathLike
 import shutil
 import sys
-from datetime import datetime
+import datetime
 from pathlib import Path
 
 from .metadata import (
@@ -44,6 +44,10 @@ class Reporter(ABC):
 
     @abstractmethod
     def append_output(self, line: str):
+        pass
+
+    @abstractmethod
+    def finish(self, completion_message: str):
         pass
 
 
@@ -215,7 +219,7 @@ def check_nmr(
     rules: MetadataRules,
     manufacturer: Manufacturer,
     reporter: Reporter,
-    date: datetime | None = None,
+    date: datetime.date | None = None,
 ):
     """Main checking function for Mora the Explorer."""
 
@@ -322,7 +326,7 @@ def check_nmr(
             # Go back to checking
             reporter.set_status("checking...")
 
-    now = datetime.now().strftime("%H:%M:%S")
+    now = datetime.datetime.now().strftime("%H:%M:%S")
     completed_statement = f"Check completed at {now}"
-    reporter.append_output(completed_statement)
     logging.info(completed_statement)
+    reporter.finish(completed_statement)

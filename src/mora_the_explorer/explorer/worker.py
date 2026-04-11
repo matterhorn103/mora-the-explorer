@@ -1,8 +1,9 @@
+from datetime import datetime
 import logging
 
 from PySide6.QtCore import QRunnable, Signal, Slot, QObject
 
-from ..check import get_check_paths, Manufacturer, check_nmr, Reporter
+from ..check import Reporter
 
 
 class QtReporter(Reporter):
@@ -10,30 +11,41 @@ class QtReporter(Reporter):
         self._progress = 0
         self._max_progress = 0
         self.signals = WorkerSignals()
+        self.output = []
 
     def set_status(self, message):
-        self.signals.status.emit(message)
+        self.signals.set_status.emit(message)
 
     def progress(self) -> int:
         return self._progress
 
     def reset_progress(self):
-        self.signals.progress.emit(0)
+        self._progress = 0
+        self.signals.update_progress.emit(0)
 
     def increment_progress(self, increment: int = 1):
         self._progress += increment
-        self.signals.progress.emit(self._progress)
+        self.signals.update_progress.emit(self._progress)
 
     def max_progress(self) -> int:
         return self._max_progress
 
     def set_max_progress(self, max: int):
-        self.prog_bar.setMaximum(max)
+        self._max_progress = max
+        self.signals.set_max_progress.emit(max)
+
+    def append_output(self, line: str):
+        self.output.append(line)
+
+    def finish(self, completion_message: str):
+        self.output.append(completion_message)
+        self.signals.completed.emit(self.output)
 
 
 class WorkerSignals(QObject):
-    progress = Signal(int)
-    status = Signal(str)
+    update_progress = Signal(int)
+    set_max_progress = Signal(int)
+    set_status = Signal(str)
     completed = Signal(list)
 
 
@@ -47,30 +59,37 @@ class Worker(QRunnable):
         self.fn = fn
         self.args = args
         self.kwargs = kwargs
-        # Give the worker signals
-        self.signals = WorkerSignals()
-        # Add the progress and status signals to kwargs so they are available within and
-        # can be emitted from the function scope
-        self.kwargs["progress_callback"] = self.signals.progress
-        self.kwargs["status_callback"] = self.signals.status
+
+        ## Give the worker signals
+        #self.signals = WorkerSignals()
+        ## Add the progress and status signals to kwargs so they are available within and
+        ## can be emitted from the function scope
+        #self.kwargs["progress_callback"] = self.signals.progress
+        #self.kwargs["status_callback"] = self.signals.status
+
+        # New approach - give the worker a reporter
+        # The reporter will process all the feedback that the checking function sends
+        # and emit the relevant signals
+        self.reporter = QtReporter()
 
     @Slot()
     def run(self):
         # Run the Worker's function with passed args, kwargs, including the callbacks
         try:
-            output = self.fn(*self.args, **self.kwargs)
-            # After completion of the function, emit the output as the result signal so that
-            # it can be picked up by anything connected to the signal
-            self.signals.completed.emit(output)
-        except Exception as error:
-            logging.exception("Exception raised by check_nmr")
-            self.signals.completed.emit(
-                [
-                    "Exception",
-                    type(error).__name__,
-                    *(error.args),
-                    "See log file at:",
-                    str(logging.getLogger().handlers[0].baseFilename),
-                    "for further details",
-                ]
-            )
+            self.fn(*self.args, **self.kwargs, reporter=self.reporter)
+        except Exception as e:
+            logging.exception(f"{type(e).__name__} raised by check_nmr")
+            logging.exception(repr(*(e.args)))
+            message_lines = [
+                "Exception",
+                type(e).__name__,
+                *(e.args),
+                "See log file at:",
+                str(logging.getLogger().handlers[0].baseFilename),
+                "for further details",
+            ]
+            # Since the function won't have finished, wrap it up ourselves
+            self.reporter.output.extend(message_lines)
+            now = datetime.now().strftime("%H:%M:%S")
+            completed_statement = f"Check terminated with error at {now}"
+            self.reporter.finish(completed_statement)
