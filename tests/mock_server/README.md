@@ -29,6 +29,8 @@ For **Agilent** spectra, the contents of each folder is identical, other than th
 - For each spectrum folder, `./spectrum.fid/text` has been changed
 - `./dirinfo/macdir/sampleinfo` has been changed
 
+However, **each fid file includes an integer from 1 to 61 in order to make them each unique across the whole mock server** (even when the metadata for two spectra are otherwise identical).
+
 Five groups are mocked, with the following initialisms and names:
 ```toml
 [groups]
@@ -81,7 +83,6 @@ Unrealistically, each Bruker spectrometer has had the exact same set of fake spe
 
 2023-10-16_2
 - 100 = stu dna 1452-1 (1H, a)  // Overflow folder for day
-
 
 For the neo400 example they are split amongst the three spectrometers, with the letters indicated in the parentheses.
 
