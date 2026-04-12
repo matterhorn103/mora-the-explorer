@@ -1,11 +1,10 @@
 [options]
-initials = "mue"
+user = "mmu"
+user_name = "mustermann"
 group = "jkl"
-dest_path = "/home/matt/test"
-inc_init = true
+inc_user = false
 inc_solv = true
 inc_path = false
-nmrcheck_style = false
 spec = "spec4"
 repeat_switch = true
 repeat_delay = 3
@@ -14,7 +13,11 @@ repeat_delay = 3
 new = "newgroup"
 
 [paths]
-linux = "overwrite with default mount point"
+windows = "//samba.public.os.wwu.de/usershare/projects/q_nmr-oc/nmr"
+darwin = "/Volumes/usershare/projects/q_nmr-oc/nmr"
+linux = "~/usershare/projects/q_nmr-oc/nmr"
+update = "mora_the_explorer"
+save = "~/nmr"
 
 [appearance]
 start_button_colour = "#b88cce"

@@ -2,26 +2,12 @@
 
 from dataclasses import dataclass
 import datetime
-from enum import Enum
 import logging
 from pathlib import Path
 import re
 from typing import Self
 
-
-class Manufacturer(Enum):
-    BRUKER = 1
-    AGILENT = 2
-
-    @classmethod
-    def from_str(cls, s: str):
-        if s.lower() == "bruker":
-            Manufacturer.BRUKER
-        elif s.lower() == "agilent":
-            Manufacturer.AGILENT
-        else:
-            raise ValueError("Only Bruker and Agilent are recognized manufacturers!")
-
+from ..spec import Manufacturer
 
 class MetadataRules:
     """Specifies rules for extracting and proliferating measurement metadata, as

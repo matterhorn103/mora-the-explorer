@@ -1,10 +1,6 @@
 from pathlib import Path
 
-import pytest
-
-pytest.skip("Skip for now until after refactor", allow_module_level=True)
-
-from src.mora_the_explorer.explorer import Config
+from mora_the_explorer.config import Config
 
 
 class TestConfig:
@@ -19,29 +15,30 @@ class TestConfig:
         if self.new_user.exists():
             self.new_user.unlink()
         config = Config(self.mock_app, self.new_user)
-        assert config.options["initials"] == "xyz"
+        assert config.options.user == "xyz"
 
     def test_init_user_creation(self):
         # Test if a fresh user config is created for a new user
         if self.new_user.exists():
             self.new_user.unlink()
-        config = Config(self.mock_app, self.new_user)
+        _config = Config(self.mock_app, self.new_user)
         assert self.new_user.exists()
 
     def test_init_mock_user(self):
         # Test that options from a (mock) user config are loaded
         config = Config(self.mock_app, self.mock_user)
-        assert config.options["initials"] == "mue"
+        assert config.options.user == "mmu"
 
     def test_app_config_replacement(self):
         # Test that app settings from a (mock) user config override the app config
         config = Config(self.mock_app, self.mock_user)
-        assert config.groups["new"] == "newgroup"
+        assert "new" in config.groups.groups
+        assert config.groups.groups["new"] == "newgroup"
 
     def test_init_real_user(self):
         # Test config object creation using the real system user config location
-        config = Config(self.mock_app)
+        _config = Config(self.mock_app)
 
     def test_init_real_app_and_user(self):
         # Test config object creation using the proper app config and system user config
-        config = Config(self.test_dir.parent / "config.toml")
+        _config = Config(self.test_dir.parent / "config.toml")

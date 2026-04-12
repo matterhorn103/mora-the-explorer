@@ -3,7 +3,6 @@ from datetime import datetime
 from mora_the_explorer.check.metadata import MetadataRules, MeasurementMetadata, Manufacturer, generate_folder_name
 
 
-
 class TestCheck:
 
     bruker_rules = MetadataRules(

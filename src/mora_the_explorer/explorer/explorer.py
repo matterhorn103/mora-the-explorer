@@ -1,3 +1,4 @@
+from collections.abc import Callable
 import logging
 import platform
 from datetime import date, timedelta
@@ -92,7 +93,7 @@ class Explorer:
         date: date,
         prog_bar=None,
         status_bar=None,
-        completion_handler: callable | None = None,
+        completion_handler: Callable | None = None,
     ):
         """Conduct a check of a single date."""
         if status_bar is not None:
@@ -150,7 +151,7 @@ class Explorer:
         initial_date: date,
         prog_bar=None,
         status_bar=None,
-        completion_handler: callable | None = None,
+        completion_handler: Callable | None = None,
     ):
         """Check multiple days in sequence."""
 
