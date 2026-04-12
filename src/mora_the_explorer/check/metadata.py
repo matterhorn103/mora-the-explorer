@@ -167,18 +167,21 @@ class MeasurementMetadata:
         """Check if the metadata match a set of rules.
         
         If the expected value given is `None`, any value is considered a match.
+        Similarly, if a condition is given and the corresponding variable has no
+        value (it is still set to `None`), the condition is treated as met.
+        However, if a condition is given and the variable is not a metadata
+        field, an `AttributeError` will be raised.
+
         Matching is done case-insensitively.
-        If a condition is given and the corresponding variable is not even
-        present in the metadata, it is not considered a match.
         """
         for variable, expectation in rules.conditions.values():
             if expectation is None:
                 # Any value is a match
                 continue
-            actual = getattr(self, variable, "")
+            actual = getattr(self, variable)
             if actual is None:
-                # Can't be a match
-                return False
+                # Ignore the condition
+                continue
             if actual.casefold() != expectation:
                 return False
         return True
