@@ -65,94 +65,99 @@ pharmazie = "pharmazie"
 
 [spectrometers]
 # Provide the following information for each spectrometer category:
+#   manufacturer: the manufacturer of the spectrometer(s)
+#   display_name: the text shown next to the button in the user interface
+#       (note that some characters need escaping, e.g. write && for &)
 #   spec_dir: the path to the folder for the spectrometer, relative to the server
+#   title_format: the expected fields in the measurement title
 #   date: a formatting string that defines <date> - for the format codes see
 #       https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
+#   date_entry: whether the user selects the full date "dd MMM yyyy" or just year "yyyy"
 #   check_paths: the paths that should be searched for new spectra
 #   archives: if spectra from previous years can't be found under check_paths, the
 #       archive folders are checked in addition
 #   include: other spectrometers which should be searched at the same time
-#   manufacturer: the manufacturer of the spectrometer(s)
-#   display_name: the text shown next to the button in the user interface
-#       (note that some characters need escaping, e.g. write && for &)
-#   date_entry: whether the user selects the full date "dd MMM yyyy" or just year "yyyy"
-#   allow_solvent: whether to enable the folder naming option to include the solvent
-#   single_check_only: whether users may use multiday and repeat checks for this spec
 #   restrict_to: the list of groups that should be able to see the spectrometer - if
 #       this key is not used, the spectrometer will be visible to all
 #   admin_only: whether the spectrometer should only be chooseable in admin mode
+#   allow_solvent: whether to enable the folder naming option to include the solvent
+#   single_check_only: whether users may use multiday and repeat checks for this spec
 #
-# Possible variable fields are:
+# Possible variable fields in `check_paths` and `archives are:
 # - <spec_dir>      (the value of `spec_dir`)
 # - <date>          (the value of `date`)
-# - <group>         (the chosen group's initialism)
+# - <group>         (the chosen group's ID)
 # - <group_name>    (the chosen group's name)
-# - any strftime formatting string, with % characters, enclosed in <>
+# - any strftime formatting string, with % characters, enclosed in {}
 
 [spectrometers.dpx]
-spec_dir = "dpx300"
-date = "%b%d-%Y"
-check_paths = [
-    "<spec_dir>/<%y>-dpx300_<%Y>/<date>",
-]
 manufacturer = "bruker"
 display_name = "old dpx spectrometer (300 MHz)"
+spec_dir = "dpx300"
+title_format = [ "group", "user:3" ]
+date = "%b%d-%Y"
 date_entry = "dd MMM yyyy"
+check_paths = [
+    "<spec_dir>/{%y}-dpx300_{%Y}/<date>",
+]
+admin_only = true
 allow_solvent = true
 single_check_only = false
-admin_only = true
 
 [spectrometers.300er]
+manufacturer = "bruker"
+display_name = "Studer group NMR only (300 MHz)"
 spec_dir = "300er"
+title_format = [ "group", "user:3" ]
 date = "%b%d-%Y"
+date_entry = "dd MMM yyyy"
 check_paths = [
     "<spec_dir>/<date>",
 ]
 archives = [
-    "<spec_dir>/<%y>-av300_<%Y>/<date>",
-    "<spec_dir>/<%y>-dpx300_<%Y>/<date>",
+    "<spec_dir>/{%y}-av300_{%Y}/<date>",
+    "<spec_dir>/{%y}-dpx300_{%Y}/<date>",
 ]
-manufacturer = "bruker"
-display_name = "Studer group NMR only (300 MHz)"
-date_entry = "dd MMM yyyy"
-allow_solvent = true
-single_check_only = false
 restrict_to = [
     "stu",
     "nae",
 ]
+allow_solvent = true
+single_check_only = false
 
 [spectrometers.400er]
+manufacturer = "bruker"
+display_name = "routine NMR (300 && 400 MHz)"
 spec_dir = "400er"
+title_format = [ "group", "user:3" ]
 date = "%b%d-%Y"
+date_entry = "dd MMM yyyy"
 check_paths = [
     "<spec_dir>/neo400a_<date>",
     "<spec_dir>/neo400b_<date>",
     "<spec_dir>/neo400c_<date>",
 ]
 archives = [
-    "<spec_dir>/<%y>-av400_<%Y>/<date>",
-    "<spec_dir>/<%y>-neo400a_<%Y>/<date>",
-    "<spec_dir>/<%y>-neo400b_<%Y>/<date>",
-    "<spec_dir>/<%y>-neo400c_<%Y>/<date>",
+    "<spec_dir>/{%y}-av400_{%Y}/<date>",
+    "<spec_dir>/{%y}-neo400a_{%Y}/<date>",
+    "<spec_dir>/{%y}-neo400b_{%Y}/<date>",
+    "<spec_dir>/{%y}-neo400c_{%Y}/<date>",
 ]
-manufacturer = "bruker"
 include = [
     "300er",
 ]
-display_name = "routine NMR (300 && 400 MHz)"
-date_entry = "dd MMM yyyy"
 allow_solvent = true
 single_check_only = false
 
 [spectrometers.hf]
+manufacturer = "agilent"
+display_name = "high-field spectrometers (500 && 600 MHz)"
 spec_dir = "500-600er"
+title_format = [ "user:3" ]
 date = "%Y"
+date_entry = "yyyy"
 check_paths = [
     "<spec_dir>/<group_name>/<date>",
 ]
-manufacturer = "agilent"
-display_name = "high-field spectrometers (500 && 600 MHz)"
-date_entry = "yyyy"
 allow_solvent = false
 single_check_only = true

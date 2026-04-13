@@ -6,6 +6,49 @@ from PySide6.QtCore import QRunnable, Signal, Slot, QObject
 from ..check import Reporter
 
 
+class PrintingReporter(Reporter):
+    def __init__(self):
+        self._progress = 0
+        self._max_progress = 0
+        self._status = ""
+        self.output = []
+
+    def set_status(self, message):
+        self._status = message
+        print(message)
+
+    def progress(self) -> int:
+        return self._progress
+    
+    def report_progress(self):
+        print(f"Progress: {round((self._progress / self._max_progress) * 100)}%")
+
+    def reset_progress(self):
+        self._progress = 0
+        self.report_progress()
+
+    def increment_progress(self, increment: int = 1):
+        self._progress += increment
+        self.report_progress()
+
+    def max_progress(self) -> int:
+        return self._max_progress
+
+    def set_max_progress(self, max: int):
+        self._max_progress = max
+        #print(f"New max progress: {max}")
+
+    def append_output(self, line: str):
+        self.output.append(line)
+        print(line)
+
+    def finish(self, completion_message: str):
+        self._progress = self._max_progress
+        self.report_progress()
+        self.output.append(completion_message)
+        print(completion_message)
+
+
 class QtReporter(Reporter):
     def __init__(self):
         self._progress = 0

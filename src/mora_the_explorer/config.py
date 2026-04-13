@@ -38,7 +38,7 @@ class Paths:
 
 @dataclass
 class Groups:
-    groups: dict[str, str]  # A dict of `group: group_name` pairs (where `group` is the group's ID)
+    all: dict[str, str]  # A dict of `group: group_name` pairs (where `group` is the group's ID)
     overflow: list[str]  # Those groups that should be put into an overflow menu
 
 class Config:
@@ -142,7 +142,7 @@ class Config:
         for k, v in self.user_config.get("paths", {}).items():
             setattr(self.options, k, v)
         # Groups is extended, with no support for an "other" subcategory
-        self.groups.groups.update(self.user_config.get("groups", {}))
+        self.groups.all.update(self.user_config.get("groups", {}))
         # Spectrometer selection is also simply updated
         self.specs.update(self.user_config.get("spectrometers", {}))
 

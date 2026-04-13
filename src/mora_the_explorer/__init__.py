@@ -25,20 +25,19 @@ import platformdirs
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPalette, QColor, QIcon
-from PySide6.QtWidgets import QApplication
 
 from .config import Config
-from .explorer import app, AppManager, Explorer
+from .explorer import App, Explorer
 from .desktop import Controller, MainWindow
 
 
-def set_dark_mode():
+def set_dark_mode(app: App):
     """Manually set a dark mode (intended for use on Windows).
 
     Make dark mode less black than Windows default dark mode because it looks bad.
     """
 
-    if isinstance(app(), QApplication):
+    if App.has_gui():
         dark_palette = QPalette()
         dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
         dark_palette.setColor(QPalette.WindowText, Qt.white)
@@ -53,16 +52,14 @@ def set_dark_mode():
         dark_palette.setColor(QPalette.Link, QColor(42, 130, 218))
         dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
         dark_palette.setColor(QPalette.HighlightedText, Qt.black)
-        app().setStyle("Fusion")
-        app().setPalette(dark_palette)
+        app.get().setStyle("Fusion")
+        app.get().setPalette(dark_palette)
 
 
 def run_desktop_app(rsrc_dir: Path, explorer: Explorer | None = None):
     """Run Mora the Explorer as a desktop application with a GUI."""
 
-    # This closes the default QCoreApplication created at startup and replaces it with
-    # a new QApplication
-    AppManager.change_instance(QApplication)
+    app = App()
 
     # Logs should be saved to:
     # Windows:  c:/Users/<user>/AppData/Local/mora_the_explorer/log.log
@@ -100,7 +97,7 @@ def run_desktop_app(rsrc_dir: Path, explorer: Explorer | None = None):
     logging.info("...complete")
 
     if darkdetect.isDark() is True and platform.system() == "Windows":
-        set_dark_mode()
+        set_dark_mode(app)
 
     # Create instance of Explorer (back-end), unless we were passed an existing one
     if explorer is None:
@@ -109,9 +106,9 @@ def run_desktop_app(rsrc_dir: Path, explorer: Explorer | None = None):
         logging.info("...complete")
 
     # Create instance of Controller to handle communication between the two
-    controller = Controller(explorer, window, rsrc_dir, config)
+    _controller = Controller(explorer, window, rsrc_dir, config)
 
-    app().setWindowIcon(QIcon(str(rsrc_dir / "explorer.ico")))
+    app.get().setWindowIcon(QIcon(str(rsrc_dir / "explorer.ico")))
 
     logging.info("Initialization complete")
-    app().exec()
+    app.exec()

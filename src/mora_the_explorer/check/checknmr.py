@@ -223,11 +223,8 @@ def check_nmr(
 ):
     """Main checking function for Mora the Explorer."""
 
-    reporter.set_status("preparing...")
+    reporter.set_status("Preparing…")
 
-    logging.info("Checking the following paths for new spectra:")
-    for p in src:
-        logging.info(str(p))
     logging.info("Checking with the following options:")
     logging.info(f"- Match conditions: {rules.conditions}")
     logging.info(f"- Save location: {dest}")
@@ -240,13 +237,31 @@ def check_nmr(
         reporter.append_output("Given destination folder not found!")
     # Confirm server can be reached
     check_paths = []
+    not_found = []
     for p in src:
         p = Path(p)
         if p.exists() is False:
-            logging.info(f"No folder could be found at {p}")
-            reporter.append_output(f"No folder could be found at {p}")
+            not_found.append(f"No folder could be found at {p}")
         else:
             check_paths.append(p)
+            # Look for potential overflow folders for same day (these are generated
+            # on mora when two samples are submitted with same exp. no.)
+            for n in range(2, 99):
+                overflow_path = p.with_name(p.name + f"_{n}")
+                if overflow_path.exists():
+                    check_paths.append(overflow_path)
+                else:
+                    # Stop as soon as we reach the max number
+                    break
+    if len(check_paths) == 0:
+        logging.info("No folders could be found!")
+        for message in not_found:
+            logging.info(message)
+        reporter.append_output("No folders could be found!")
+    else:
+        logging.info("The following paths could be reached and will be checked for new spectra:")
+        for p in check_paths:
+            logging.info(str(p))
 
     # Initialize progress bar
     # Get total number of folders that we're going to be checking across all src paths
@@ -258,7 +273,7 @@ def check_nmr(
     except Exception:
         # This stops Python from hanging when the program is closed, no idea why
         sys.exit()
-    reporter.set_status("checking...")
+    reporter.set_status("Checking…")
 
     # Start the actual search process
     # Needs to be slightly different depending on the spectrometer, as the contents of
@@ -312,7 +327,7 @@ def check_nmr(
             new_folder_name = generate_folder_name(metadata, rules)
 
             # Copy, add output messages to main output list
-            reporter.set_status("copying...")
+            reporter.set_status("Copying…")
             copy_return_message = copy_folder(folder, dest_path / new_folder_name)
             reporter.append_output(copy_return_message)
 
@@ -324,7 +339,7 @@ def check_nmr(
                 reporter.increment_progress(5)
             
             # Go back to checking
-            reporter.set_status("checking...")
+            reporter.set_status("Checking…")
 
     now = datetime.datetime.now().strftime("%H:%M:%S")
     completed_statement = f"Check completed at {now}"

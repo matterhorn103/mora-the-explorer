@@ -160,7 +160,7 @@ class MeasurementMetadata:
 
         Matching is done case-insensitively.
         """
-        for variable, expectation in rules.conditions.values():
+        for variable, expectation in rules.conditions.items():
             if expectation is None:
                 # Any value is a match
                 continue
@@ -177,7 +177,7 @@ def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetada
     # Extract title and experiment details from title file in spectrum folder
     title_file = folder / "pdata/1/title"
     with open(title_file, encoding="utf-8") as f:
-        title_contents = f.readlines()
+        title_contents = f.read().splitlines()
     if len(title_contents) < 2:
         logging.info("Title file is empty")
     title = title_contents[0]
@@ -237,7 +237,7 @@ def get_metadata_agilent(folder: Path, rules: MetadataRules) -> MeasurementMetad
             text_file = subfolder / "text"
             if text_file.exists():
                 with open(text_file, encoding="utf-8") as f:
-                    spectrum_info = f.readlines()
+                    spectrum_info = f.read().splitlines()
                     line_with_freq_split = spectrum_info[3].split(",")
                     magnet_freq = line_with_freq_split[0]
         break
@@ -260,6 +260,8 @@ def get_metadata(
             return get_metadata_bruker(folder, rules)
         case Manufacturer.AGILENT:
             return get_metadata_agilent(folder, rules)
+        case _:
+            raise ValueError(f"{repr(manufacturer)} is not a valid manufacturer!")
 
 
 def generate_folder_name(
