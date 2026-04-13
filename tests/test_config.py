@@ -15,7 +15,7 @@ class TestConfig:
         if self.new_user.exists():
             self.new_user.unlink()
         config = Config(self.mock_app, self.new_user)
-        assert config.options.user == "xyz"
+        assert config.options.user == "mmu"
 
     def test_init_user_creation(self):
         # Test if a fresh user config is created for a new user
@@ -27,13 +27,13 @@ class TestConfig:
     def test_init_mock_user(self):
         # Test that options from a (mock) user config are loaded
         config = Config(self.mock_app, self.mock_user)
-        assert config.options.user == "mmu"
+        assert config.options.user == "mjm"
 
     def test_app_config_replacement(self):
         # Test that app settings from a (mock) user config override the app config
         config = Config(self.mock_app, self.mock_user)
-        assert "new" in config.groups.groups
-        assert config.groups.groups["new"] == "newgroup"
+        assert "new" in config.groups.all
+        assert config.groups.all["new"] == "newgroup"
 
     def test_init_real_user(self):
         # Test config object creation using the real system user config location

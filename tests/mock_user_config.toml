@@ -1,11 +1,11 @@
 [options]
-user = "mmu"
-user_name = "mustermann"
-group = "jkl"
+user = "mjm"
+user_name = "milner"
+group = "stu"
 inc_user = false
 inc_solv = true
 inc_path = false
-spec = "spec4"
+spec = "av300"
 repeat_switch = true
 repeat_delay = 3
 
