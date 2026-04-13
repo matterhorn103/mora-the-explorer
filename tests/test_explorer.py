@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date
 from pathlib import Path
 from shutil import rmtree
 
@@ -47,8 +47,9 @@ class TestCheck:
         explorer = mock_explorer()
         # Use a fictitious user so we don't match anything
         explorer.config.options.user = "aaa"
-        output = explorer.single_check(date(2023, 10, 16))
-        assert len(output) > 0
+        reporter = explorer.single_check(date(2023, 10, 16))
+        assert len(reporter.output) > 0
+        assert len(reporter.copied) == 0
 
     def test_single_check_with_copy(self):
         # Check that the spectrum mjm-500-1-proton is found as expected
@@ -56,9 +57,10 @@ class TestCheck:
         explorer.config.options.spec = "av300"
         explorer.config.options.inc_user = True
         explorer.config.options.inc_solv = True
-        output = explorer.single_check(date(2023, 10, 15))
-        print(output)
-        assert output[0] == "Spectrum found: mjm-500-1-proton-cdcl3"
+        reporter = explorer.single_check(date(2023, 10, 15))
+        print(reporter.output)
+        assert reporter.output[0] == "Spectrum found: mjm-500-1-proton-cdcl3"
+        assert reporter.copied[0] == "mjm-500-1-proton-cdcl3"
 
     def test_400er_checks_300er(self):
         # Check that checking the neo400 also checks the av300
@@ -66,24 +68,25 @@ class TestCheck:
         explorer.config.options.spec = "neo400"
         explorer.config.options.inc_user = True
         explorer.config.options.inc_solv = True
-        output = explorer.single_check(date(2023, 10, 15))
+        reporter = explorer.single_check(date(2023, 10, 15))
         # The spectrum should be found twice but determined to be different spectra,
         # both copied, and automatically numbered as different measurements
-        assert output[0] == "Spectrum found: mjm-500-1-proton-cdcl3"
-        assert output[1] == "Spectrum found: mjm-500-1-proton-cdcl3-2"
+        print(reporter.copied)
+        assert reporter.copied[0] == "mjm-500-1-proton-cdcl3"
+        assert reporter.copied[1] == "mjm-500-1-proton-cdcl3-2"
 
     def test_no_initials(self):
         explorer = mock_explorer()
         explorer.config.options.spec = "av300"
         explorer.config.options.inc_user = False
         explorer.config.options.inc_solv = True
-        output = explorer.single_check(date(2023, 10, 15))
-        assert output[0] == "Spectrum found: 500-1-proton-cdcl3"
+        reporter = explorer.single_check(date(2023, 10, 15))
+        assert reporter.copied[0] == "500-1-proton-cdcl3"
 
     def test_no_solvent(self):
         explorer = mock_explorer()
         explorer.config.options.spec = "av300"
         explorer.config.options.inc_user = True
         explorer.config.options.inc_solv = False
-        output = explorer.single_check(date(2023, 10, 15))
-        assert output[0] == "Spectrum found: mjm-500-1-proton"
+        reporter = explorer.single_check(date(2023, 10, 15))
+        assert reporter.copied[0] == "mjm-500-1-proton"

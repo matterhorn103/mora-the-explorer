@@ -1,15 +1,58 @@
-from copy import copy
-import logging
 from datetime import date, timedelta
 from pathlib import Path
 import platform
 
-from PySide6.QtCore import QThreadPool
+from .config import Config
+from .spec import Spectrometer
+from .check import get_check_paths, check_nmr, MetadataRules, Reporter
 
-from ..config import Config
-from ..spec import Spectrometer
-from ..check import get_check_paths, check_nmr, MetadataRules
-from .worker import PrintingReporter
+
+class PrintingReporter(Reporter):
+    """A basic Reporter that just prints all status updates, progress etc. to stdout."""
+    def __init__(self):
+        self._progress = 0
+        self._max_progress = 0
+        self._status = ""
+        self.copied = []
+        self.output = []
+
+    def set_status(self, message):
+        self._status = message
+        print(message)
+
+    def progress(self) -> int:
+        return self._progress
+    
+    def report_progress(self):
+        print(f"Progress: {round((self._progress / self._max_progress) * 100)}%")
+
+    def reset_progress(self):
+        self._progress = 0
+        self.report_progress()
+
+    def increment_progress(self, increment: int = 1):
+        self._progress += increment
+        self.report_progress()
+
+    def max_progress(self) -> int:
+        return self._max_progress
+
+    def set_max_progress(self, max: int):
+        self._max_progress = max
+        #print(f"New max progress: {max}")
+
+    def add_output(self, line: str):
+        self.output.append(line)
+        print(line)
+
+    def add_copied(self, name: str):
+        self.copied.append(name)
+
+    def finish(self, completion_message: str):
+        self._progress = self._max_progress
+        self.report_progress()
+        self.output.append(completion_message)
+        print(completion_message)
 
 
 class Explorer:
@@ -24,8 +67,8 @@ class Explorer:
 
         # Set up multithreading; MaxThreadCount limited to 1 as checks don't run
         # properly if multiple run concurrently
-        self.threadpool = QThreadPool()
-        self.threadpool.setMaxThreadCount(1)
+        #self.threadpool = QThreadPool()
+        #self.threadpool.setMaxThreadCount(1)
 
         # Initialize number of queued checks
         self.queued_checks = 0
@@ -57,11 +100,15 @@ class Explorer:
         )
         return rules
 
-    def single_check(
-        self,
-        date: date,
-    ) -> list[str]:
-        """Conduct a check of a single date."""
+    def single_check(self, date: date, reporter: Reporter | None = None) -> Reporter:
+        """Conduct a check of a single date.
+        
+        Returns the `Reporter` it was passed, or the default `PrintingReporter`
+        that was created if none was passed.
+        """
+
+        # If the caller didn't provide a reporter, just create a basic one
+        reporter = reporter if reporter else PrintingReporter()
 
         spec: Spectrometer = self.config.specs[self.config.options.spec]
         # If there's any spectrometer that ought to be included, sub the actual
@@ -92,16 +139,8 @@ class Explorer:
         # Start main checking function
         options = self.config.options
         rules = self.generate_rules()
-        #worker = Worker(
-        #    check_nmr,
-        #    src=paths,
-        #    dest=self.config.paths.save,
-        #    rules=rules,
-        #    manufacturer=self.config.specs[options.spec].manufacturer,
-        #    date=date,
-        #)
         spec = self.config.specs[options.spec]
-        reporter = PrintingReporter()
+        
         check_nmr(
             src=paths,
             dest=self.config.paths.save,
@@ -110,52 +149,25 @@ class Explorer:
             reporter=reporter,
             date=date,
         )
-        #worker.reporter.signals.update_progress.connect(update_progress)
-        #worker.reporter.signals.set_max_progress.connect(set_max_progress)
-        #worker.reporter.signals.set_status.connect(update_status)
-        #worker.reporter.signals.completed.connect(completion_handler)
-        #self.threadpool.start(worker)
-        #self.queued_checks += 1
-        return reporter.output
+
+        return reporter
 
     def multiday_check(
-        self,
-        initial_date: date,
-        #prog_bar=None,
-        #status_bar=None,
-        #completion_handler: Callable | None = None,
-    ) -> list[str]:
-        """Check multiple days in sequence."""
+        self, initial_date: date, reporter: Reporter | None = None,
+    ) -> Reporter:
+        """Check multiple days in sequence.
+        
+        Uses a single `Reporter` for all days -- either the passed one or a simple
+        `PrintingReporter` created by default.
+        """
+
+        # If the caller didn't provide a reporter, just create a basic one
+        reporter = reporter if reporter else PrintingReporter()
 
         end_date = date.today() + timedelta(days=1)
         date_to_check = initial_date
-        output = []
         while date_to_check != end_date:
-            partial_output = self.single_check(
-                date_to_check,
-                #prog_bar,
-                #status_bar,
-                #completion_handler,
-            )
+            self.single_check(date_to_check, reporter)
             date_to_check += timedelta(days=1)
-            output.extend(partial_output)
-        return output
 
-    def completion_handler(self, copied_list):
-        """The default handler for a completed check."""
-
-        self.queued_checks -= 1
-        # Display output
-        for entry in copied_list:
-            print(entry)
-        self.all_output.extend(copied_list)
-        self.app.quit()
-        # Task is complete only if all queued checks have finished
-        if self.queued_checks == 0:
-            print("Task complete")
-            logging.info("Task complete")
-            self.app.exit(0)
-
-    def explore(self):
-        """Execute the app and in doing so process the results of all run checks."""
-        self.app.exec()
+        return reporter

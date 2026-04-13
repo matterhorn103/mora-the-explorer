@@ -43,7 +43,11 @@ class Reporter(ABC):
         pass
 
     @abstractmethod
-    def append_output(self, line: str):
+    def add_output(self, line: str):
+        pass
+
+    @abstractmethod
+    def add_copied(self, name: str):
         pass
 
     @abstractmethod
@@ -152,10 +156,11 @@ def compare_spectra(server_folder, dest_folder) -> int:
     return same, incomplete
 
 
-def copy_folder(src: Path, target: Path) -> str:
+def copy_folder(src: Path, target: Path) -> tuple[str, Path | None]:
     """Copy a spectra folder over to the target if it isn't already there.
 
-    Returns a string summarizing the result of the operation for the user.
+    Returns a string summarizing the result of the operation for the user and
+    the destination that was saved to, if any.
 
     Note that `target` should be the target path of the copied folder, not a directory
     to copy it into.
@@ -201,16 +206,16 @@ def copy_folder(src: Path, target: Path) -> str:
                     elif x.is_file():
                         shutil.copy2(x, target / x.name)
                 except PermissionError:
-                    return "You do not have permission to write to the given folder"
-        return "New files found for: " + target.name
+                    return "You do not have permission to write to the given folder", None
+        return ("New files found for: " + target.name, target.name)
     elif same_spectrum_found is False:
         try:
             shutil.copytree(src, target)
         except PermissionError:
             logging.info("No write permission for destination")
-            return "You do not have permission to write to the given folder"
+            return "You do not have permission to write to the given folder", None
         logging.info(f"Spectrum saved to {target.name}")
-        return "Spectrum found: " + target.name
+        return ("Spectrum found: " + target.name, target.name)
 
 
 def check_nmr(
@@ -234,7 +239,7 @@ def check_nmr(
     dest_path = Path(dest)
     if dest_path.exists() is False:
         logging.info("Given destination folder not found!")
-        reporter.append_output("Given destination folder not found!")
+        reporter.add_output("Given destination folder not found!")
     # Confirm server can be reached
     check_paths = []
     not_found = []
@@ -257,7 +262,7 @@ def check_nmr(
         logging.info("No folders could be found!")
         for message in not_found:
             logging.info(message)
-        reporter.append_output("No folders could be found!")
+        reporter.add_output("No folders could be found!")
     else:
         logging.info("The following paths could be reached and will be checked for new spectra:")
         for p in check_paths:
@@ -308,7 +313,7 @@ def check_nmr(
                 if metadata.date is None:
                     metadata.date = date
             except FileNotFoundError:
-                reporter.append_output(f"No metadata could be found for {folder}!")
+                reporter.add_output(f"No metadata could be found for {folder}!")
                 logging.info("No metadata found")
                 reporter.increment_progress()
                 continue
@@ -328,8 +333,10 @@ def check_nmr(
 
             # Copy, add output messages to main output list
             reporter.set_status("Copying…")
-            copy_return_message = copy_folder(folder, dest_path / new_folder_name)
-            reporter.append_output(copy_return_message)
+            copy_return_message, copy_dest = copy_folder(folder, dest_path / new_folder_name)
+            reporter.add_output(copy_return_message)
+            if copy_dest:
+                reporter.add_copied(copy_dest)
 
             # Update progress bar if a callback object has been given
             # Make sure there's a noticeable movement after copying a spectrum,
