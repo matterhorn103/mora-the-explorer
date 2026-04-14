@@ -135,19 +135,6 @@ def main():
             encoding="utf-8",
             level=logging.INFO,
         )
-
-    # Launch desktop app if requested
-    if args.command == "launch":
-        logging.info("Launching GUI from command line")
-        from .desktop import run_desktop_app
-        run_desktop_app(get_rsrc_dir())
-        # Event loop will continue until the program is closed
-        return
-    elif args.command == "check":
-        pass
-    else:
-        parser.print_help()
-        return
     
     app_config = get_rsrc_dir() / "config.toml"
     if args.config:
@@ -155,6 +142,20 @@ def main():
         config = Config(app_config, Path(args.config))
     else:
         config = Config(app_config, USER_CONFIG_PATH)
+
+    # Launch desktop app if requested
+    if args.command == "launch":
+        logging.info("Launching GUI from command line")
+        from .desktop import App
+        app = App(config)
+        app.run()
+        # Event loop will continue until the program is closed
+        return
+    elif args.command == "check":
+        pass
+    else:
+        parser.print_help()
+        return
 
     # Group and user are mandatory fields
     # Let user use wild group

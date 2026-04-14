@@ -51,7 +51,7 @@ class StatusBar(QWidget):
 
         self.show_start()
 
-    def setText(self, text):
+    def set_text(self, text):
         self.label.setText(text)
 
     def show_start(self):

@@ -13,36 +13,45 @@ from .ui.main_window import MainWindow
 
 
 class Controller:
-    """The bridge between the desktop app's GUI and the background Explorer instance."""
+    """The bridge between the desktop app's interface and the searching backend.
+    
+    A `Controller` coordinates the creation of, and interaction between, all the
+    components necessary to run the GUI app and run searches.
+    It has an associated `MainWindow` and `Explorer`, as well as a `Config` that
+    is passed to it at instantiation.
+    """
 
-    def __init__(
-        self,
-        explorer: Explorer,
-        main_window: MainWindow,
-        resource_directory: Path,
-        config: Config,
-    ):
-        self.explorer = explorer
-        self.main_window = main_window
-        self.rsrc_dir = resource_directory
+    def __init__(self, config: Config, version_header: str):
+        """Create a new `Controller` along with new associated `MainWindow` and
+        `Explorer` instances.
+        
+        `version_header` has two functions:
+        1. The first five lines are displayed to the user at the top of the app,
+           providing information about the version, author, license etc.
+        2. The contents are compared to the same file that is deposited on the
+           server to see if updates are available.
+        """
         self.config = config
+        self.version_header = version_header
+
+        # Create new instances of the different singletons
+        # Create instance of Explorer (back-end)
+        logging.info("Initializing explorer...")
+        self.explorer = Explorer(config)
+        logging.info("...complete")
+
+        # Create instance of MainWindow (front-end), then show it
+        logging.info("Initializing user interface...")
+        self.main_window = MainWindow(config, version_header)
+        self.main_window.show()
+        logging.info("...complete")
 
         # Make it easier to access elements of the UI
         self.ui = self.main_window.ui
         self.opts = self.main_window.ui.opts
 
-        # Set path to mora
-        self.mora_path = explorer.server_path
-        self.update_path = self.mora_path / config.paths["update"]
-
         # Initialize some variables for later
-        self.wild_group = False
         self.date_selected = date.today()
-
-        # Load group and spectrometer info
-        # Need to flatten groups dict (as some are in an "other" subdict)
-        self.all_groups = explorer.all_groups
-        self.specs = explorer.specs
 
         # Timer for repeat check, starts checking function when timer runs out
         self.timer = QTimer()
@@ -54,7 +63,7 @@ class Controller:
 
         self.connect_signals()
 
-    def update_check(self, update_path):
+    def update_check(self, update_path: Path):
         """Check for updates at location specified."""
 
         logging.info(f"Checking for updates at: {update_path}")
@@ -78,11 +87,11 @@ class Controller:
     def connect_signals(self):
         """Connect all the signals from the UI elements to the various handlers.
 
-        As much as possible, when the effects are only relevant for the UI, the handlers
-        are defined as methods of MainWindow, while those that are relevant for the
-        backend logic and searching are defined here as methods of Explorer.
+        When the effects are only relevant for the UI, the handlers are methods of
+        the `MainWindow`, while those that trigger backend logic and searching are
+        connected to methods of `self`.
 
-        To allow a reasonable overview, however, all signals are connected here.
+        To allow for a better overview, however, all signals are connected here.
         """
         # Remember that self.ui = self.main_window.ui
         # and self.opts = self.main_window.ui.opts
@@ -94,8 +103,8 @@ class Controller:
             self.main_window.dest_path_changed
         )
         self.opts.open_button.clicked.connect(self.open_destination)
-        self.opts.inc_init_checkbox.stateChanged.connect(
-            self.main_window.inc_init_switched
+        self.opts.inc_user_checkbox.stateChanged.connect(
+            self.main_window.inc_user_switched
         )
         self.opts.inc_solv_checkbox.stateChanged.connect(
             self.main_window.inc_solv_switched

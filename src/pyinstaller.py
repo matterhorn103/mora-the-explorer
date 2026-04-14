@@ -16,8 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from mora_the_explorer import get_rsrc_dir
-from mora_the_explorer.desktop import run_desktop_app
+import sys
+
+from mora_the_explorer.desktop import App
 
 if __name__ == "__main__":
-    run_desktop_app(get_rsrc_dir())
+    app = App()
+    sys.exit(app.run())

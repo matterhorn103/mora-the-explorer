@@ -2,7 +2,6 @@ import logging
 import platform
 import sys
 from datetime import date
-from pathlib import Path
 
 import plyer
 
@@ -11,27 +10,27 @@ from PySide6.QtWidgets import QMainWindow, QWidget, QMessageBox
 from PySide6.QtGui import QDesktopServices
 
 from ...config import Config
-from .layout import Layout
+from .layout import Interface
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, resource_directory: Path, config: Config):
+    """The main window of the QtWidgets user interface.
+    
+    Used as a container for the widgets and layouts."""
+
+    def __init__(self, config: Config, version_header: str):
         super().__init__()
 
-        self.rsrc_dir = resource_directory
         self.config = config
-
-        # self.mora_path = Path(config.paths[platform.system()])
-        # self.update_path = Path(config.paths["update"])
 
         # Setup UI
         self.setWindowTitle("Mora the Explorer")
-        self.setup_ui()
+        self.setup_ui(version_header)
 
-    def setup_ui(self):
+    def setup_ui(self, version_header: str):
         """Setup main layout, which is a simple vertical stack."""
 
-        self.ui = Layout(self.rsrc_dir, self.config)
+        self.ui = Interface(self.config, version_header)
 
         # Apply user's preferred colour to start check button
         self.ui.status_bar.start_button.setStyleSheet(f"background-color : {self.config.appearance["start_button_colour"]}")
@@ -59,7 +58,7 @@ class MainWindow(QMainWindow):
         else:
             self.setMinimumSize(QSize(450, 780))
 
-    def notify_spectra(self, copied_list):
+    def notify_spectra(self):
         """Tell the user that spectra were found, both in the app and with a system toast."""
         notification_text = "Spectra have been found!"
         self.ui.notification.setText(
@@ -149,7 +148,7 @@ The repeat function is also disabled as long as this option is selected.
     def group_changed(self):
         """Find out what the new group is, save it to config, make necessary adjustments."""
         if self.opts.group_buttons.checkedButton().text() == "other":
-            new_group = self.opts.other_box.currentText()
+            new_group = self.opts.group_overflow.currentText()
         else:
             new_group = self.opts.group_buttons.checkedButton().text()
         self.config.options["group"] = new_group
@@ -160,21 +159,21 @@ The repeat function is also disabled as long as this option is selected.
         if group is None:
             group = self.config.options["group"]
         if group in self.config.groups["other"]:
-            self.opts.other_box.show()
+            self.opts.group_overflow.show()
         else:
-            self.opts.other_box.hide()
+            self.opts.group_overflow.hide()
         # If nmr group has been selected, disable the initials/solvent naming option
         # checkboxes as they will be treated as selected anyway, and show the options
         # for prepending/appending the path
         if group == "nmr":
-            self.opts.inc_init_checkbox.setEnabled(False)
+            self.opts.inc_user_checkbox.setEnabled(False)
             self.opts.nmrcheck_style_checkbox.hide()
             self.opts.inc_path_checkbox.show()
             self.opts.inc_path_box.show()
         else:
             # Only enable initials checkbox if nmrcheck_style option is not selected,
             # disable otherwise
-            self.opts.inc_init_checkbox.setEnabled(
+            self.opts.inc_user_checkbox.setEnabled(
                 not self.config.options["nmrcheck_style"]
             )
             self.opts.nmrcheck_style_checkbox.show()
@@ -196,8 +195,8 @@ The repeat function is also disabled as long as this option is selected.
         self.opts.open_button.show()
         self.opts.save_button.setEnabled(True)
 
-    def inc_init_switched(self):
-        self.config.options["inc_init"] = self.opts.inc_init_checkbox.isChecked()
+    def inc_user_switched(self):
+        self.config.options["inc_user"] = self.opts.inc_user_checkbox.isChecked()
         self.opts.save_button.setEnabled(True)
 
     def inc_solv_switched(self):
@@ -215,7 +214,7 @@ The repeat function is also disabled as long as this option is selected.
             self.opts.nmrcheck_style_checkbox.isChecked()
         )
         self.opts.save_button.setEnabled(True)
-        self.opts.inc_init_checkbox.setEnabled(
+        self.opts.inc_user_checkbox.setEnabled(
             not self.opts.nmrcheck_style_checkbox.isChecked()
         )
         self.adapt_to_spec(self.config.options["spec"])

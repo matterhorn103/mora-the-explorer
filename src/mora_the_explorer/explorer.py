@@ -58,8 +58,7 @@ class PrintingReporter(Reporter):
 class Explorer:
     """Launches checks based on a given `Config` object.
 
-    Serves as a task queuer as well as an interpreter between a configuration and the
-    `check_nmr` function.
+    Serves as an interpreter between a configuration and the `check_nmr` function.
     """
 
     def __init__(self, config: Config):
@@ -158,7 +157,7 @@ class Explorer:
     ) -> Reporter:
         """Check multiple days in sequence.
         
-        Uses a single `Reporter` for all days -- either the passed one or a simple
+        Uses a single `Reporter` for all days – either the passed one or a simple
         `PrintingReporter` created by default.
         """
 
