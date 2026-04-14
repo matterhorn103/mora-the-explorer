@@ -1,48 +1,97 @@
 from pathlib import Path
 
-from mora_the_explorer import Config, get_rsrc_dir
+from mora_the_explorer import Config, get_rsrc_dir, USER_CONFIG_PATH
 
+TEST_DIR = Path(__file__).parent
+MOCK_APP_CONFIG = TEST_DIR / "mock_app_config.toml"
+MOCK_USER_CONFIG = TEST_DIR / "mock_user_config.toml"
+MOCK_NEW_CONFIG = TEST_DIR / "new_user_config.toml"
+
+def mock_config() -> Config:
+    """Creates a `Config` from the two mock config files written for testing."""
+    return Config(MOCK_APP_CONFIG, MOCK_USER_CONFIG)
+
+def fresh_config(app_config_file: Path = MOCK_APP_CONFIG) -> Config:
+    """Simulates the situation where no user config yet exists and so a fresh one
+    is created with the default settings from the given app config and not the values
+    in the mock user config.
+    """
+    # Make sure the temp user config doesn't exist yet
+    if MOCK_NEW_CONFIG.exists():
+            MOCK_NEW_CONFIG.unlink()
+    return Config(app_config_file, MOCK_NEW_CONFIG)
 
 class TestConfig:
-    test_dir = Path(__file__).parent
-    mock_app = test_dir / "mock_app_config.toml"
-    mock_user = test_dir / "mock_user_config.toml"
-    new_user = test_dir / "new_user_config.toml"
-
     def test_init_no_user(self):
         # Test if the defaults are set according to the (mock) app config
-        # Make sure the temp user config doesn't exist yet
-        if self.new_user.exists():
-            self.new_user.unlink()
-        config = Config(self.mock_app, self.new_user)
+        config = fresh_config()
         assert config.options.user == "mmu"
 
     def test_init_user_creation(self):
         # Test if a fresh user config is created for a new user
-        if self.new_user.exists():
-            self.new_user.unlink()
-        _config = Config(self.mock_app, self.new_user)
-        assert self.new_user.exists()
+        # Make sure the temp user config doesn't exist yet
+        if MOCK_NEW_CONFIG.exists():
+            MOCK_NEW_CONFIG.unlink()
+        assert not MOCK_NEW_CONFIG.exists()
+        config = fresh_config()
+        assert config.options.user == "mmu"
+        assert MOCK_NEW_CONFIG.exists()
 
     def test_init_mock_user(self):
         # Test that options from a (mock) user config are loaded
-        config = Config(self.mock_app, self.mock_user)
-        assert config.options.user == "mjm"
+        config = mock_config()
+        # Groups in user config should supplement, not replace, those in app config
+        assert "new" in config.groups.all
+        assert config.groups.all["new"] == "newgroup"
 
     def test_app_config_replacement(self):
         # Test that app settings from a (mock) user config override the app config
-        config = Config(self.mock_app, self.mock_user)
-        assert "new" in config.groups.all
-        assert config.groups.all["new"] == "newgroup"
-        assert Path(config.paths.linux).expanduser() == Path.home()/"dfs/nmr"
-        assert Path(config.paths.save).expanduser() == Path.home()/"nmr"
+        config = mock_config()
+        assert config.options.user == "mjm"  # App config has "mmu", user config has "mjm"
+        assert Path(config.paths.linux).expanduser() == Path.home()/"dfs/nmr"  # App config has "~/usershare/projects/q_nmr-oc/nmr"
+        assert Path(config.paths.save).expanduser() == Path.home()/"nmr"  # App config has "~/Documents/nmr"
 
     def test_init_real_user(self):
         # Test config object creation using the real system user config location
-        config = Config(self.mock_app)
-        # Note this requires the value to have been changed in your user config!
-        assert Path(config.paths.linux).expanduser() == Path.home()/"dfs/nmr"
+        config = Config(MOCK_APP_CONFIG, USER_CONFIG_PATH)
+        # Note that in order to pass this value must have been set in your actual
+        # local user config!
+        assert Path(config.paths.save).expanduser() == Path.home()/"nmr"  # App config has "~/Documents/nmr"
 
     def test_init_real_app_and_user(self):
-        # Test config object creation using the proper app config and system user config
-        _config = Config(get_rsrc_dir() / "config.toml")
+        # Test config object creation using the proper app config and a fresh user config
+        config = fresh_config(get_rsrc_dir() / "config.toml")
+        assert "rav" in config.groups.all  # Mock app config only has "gil", "glo", "stu", "biochemie", "pharmazie"
+
+
+class TestGroups:
+    def test_all(self):
+        config = mock_config()
+        assert config.groups.all == {
+            "new": "newgroup",  # The one specified in the mock user config
+            "gil": "gilmour",
+            "glo": "glorius",
+            "stu": "studer",
+            "biochemie": "biochemie",
+            "pharmazie": "pharmazie",
+        }
+
+    def test_overflow(self):
+        config = mock_config()
+        assert config.groups.overflow == ["biochemie", "pharmazie"]
+
+    def test_filter_no_overflow(self):
+        config = mock_config()
+        assert config.groups.filter_overflow(False) == {
+            "new": "newgroup",  # The one specified in the mock user config
+            "gil": "gilmour",
+            "glo": "glorius",
+            "stu": "studer",
+        }
+    
+    def test_filter_overflow(self):
+        config = mock_config()
+        assert config.groups.filter_overflow(True) == {
+            "biochemie": "biochemie",
+            "pharmazie": "pharmazie",
+        }

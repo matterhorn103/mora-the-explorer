@@ -56,6 +56,11 @@ class Groups:
     all: dict[str, str]  # A dict of `group: group_name` pairs (where `group` is the group's ID)
     overflow: list[str]  # Those groups that should be put into an overflow menu
 
+    def filter_overflow(self, overflow: bool) -> dict[str, str]:
+        """Get only the groups marked or not marked as overflow groups."""
+
+        return {k: v for k, v in self.all.items() if (k in self.overflow) is overflow}
+
 class Config:
     """A container for the combined app and user configuration data.
 
@@ -110,7 +115,7 @@ class Config:
         if "other" in all_groups:
             other = all_groups.pop("other")
             all_groups.update(other)
-        self.groups = Groups(all_groups, other.keys())
+        self.groups = Groups(all_groups, list(other.keys()))
         specs = self.app_config["spectrometers"].copy()
         for spec in specs:
             specs[spec]["manufacturer"] = Manufacturer.from_str(specs[spec]["manufacturer"])

@@ -9,15 +9,15 @@ spec = "av300"
 repeat_switch = true
 repeat_delay = 3
 
-[groups]
-new = "newgroup"
-
 [paths]
 windows = "//samba.public.os.wwu.de/usershare/projects/q_nmr-oc/nmr"
 darwin = "/Volumes/usershare/projects/q_nmr-oc/nmr"
-linux = "~/usershare/projects/q_nmr-oc/nmr"
+linux = "~/dfs/nmr"
 update = "mora_the_explorer"
-save = "~/Documents/nmr"
+save = "~/nmr"
 
 [appearance]
 start_button_colour = "#b88cce"
+
+[groups]
+new = "newgroup"
