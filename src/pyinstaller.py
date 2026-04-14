@@ -16,23 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import sys
-from pathlib import Path
-
-from mora_the_explorer import run_desktop_app
-
-
-def get_rsrc_dir():
-    """Gets the location of the program's resources, which is platform-dependent."""
-    # For whatever reason __file__ doesn't give the right location on a mac when a .app has
-    # been generated with pyinstaller
-    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        return Path(sys._MEIPASS)
-    else:
-        return Path(__file__).parent
-
+from mora_the_explorer import get_rsrc_dir
+from mora_the_explorer.desktop import run_desktop_app
 
 if __name__ == "__main__":
-    rsrc_dir = get_rsrc_dir()
-
-    run_desktop_app(rsrc_dir)
+    run_desktop_app(get_rsrc_dir())

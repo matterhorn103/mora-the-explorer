@@ -24,11 +24,11 @@ class PrintingReporter(Reporter):
         return self._progress
     
     def report_progress(self):
-        print(f"Progress: {round((self._progress / self._max_progress) * 100)}%")
+        print(f"Progress: {round((self._progress / self._max_progress) * 100)}%", end="\r")
 
     def reset_progress(self):
         self._progress = 0
-        self.report_progress()
+        #self.report_progress()
 
     def increment_progress(self, increment: int = 1):
         self._progress += increment
@@ -120,7 +120,8 @@ class Explorer:
         # Get platform dependent server path
         server_path = Path(
             getattr(self.config.paths, platform.system().lower())
-        )
+        ).expanduser()
+        dest_path = Path(self.config.paths.save).expanduser()
 
         # If a specific group hasn't been selected, check all groups i.e. treat as wild
         # An empty string and `None` both mean that nothing has been selected
@@ -129,7 +130,7 @@ class Explorer:
         else:
             groups = {k: v for k, v in self.config.groups.all.items() if k == self.config.options.group}
 
-        paths = get_check_paths(
+        check_paths = get_check_paths(
             spec_info=spec,
             server_path=server_path,
             check_date=date,
@@ -142,8 +143,8 @@ class Explorer:
         spec = self.config.specs[options.spec]
         
         check_nmr(
-            src=paths,
-            dest=self.config.paths.save,
+            src=check_paths,
+            dest=dest_path,
             rules=rules,
             manufacturer=spec.manufacturer,
             reporter=reporter,

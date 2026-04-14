@@ -29,6 +29,11 @@ dev = [
     "pytest>=9.0.3",
 ]
 
+#[tool.hatch.build]
+#include = [
+#    "src/mora_the_explorer/config.toml"
+#]
+
 [tool.pytest.ini_options]
 addopts = [
     "--import-mode=importlib",

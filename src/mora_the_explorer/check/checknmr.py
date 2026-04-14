@@ -156,7 +156,7 @@ def compare_spectra(server_folder, dest_folder) -> int:
     return same, incomplete
 
 
-def copy_folder(src: Path, target: Path) -> tuple[str, Path | None]:
+def copy_folder(src: Path, target: Path) -> tuple[str | None, Path | None]:
     """Copy a spectra folder over to the target if it isn't already there.
 
     Returns a string summarizing the result of the operation for the user and
@@ -193,7 +193,7 @@ def copy_folder(src: Path, target: Path) -> tuple[str, Path | None]:
                 # and have arrived at a new unique name, so we need to copy the
                 # spectrum and use this unique name
                 break
-
+    
     # Try and fix only partially copied spectra
     if same_spectrum_found is True and incomplete_copy is True:
         logging.info("The existing copy is only partial")
@@ -206,16 +206,18 @@ def copy_folder(src: Path, target: Path) -> tuple[str, Path | None]:
                     elif x.is_file():
                         shutil.copy2(x, target / x.name)
                 except PermissionError:
-                    return "You do not have permission to write to the given folder", None
+                    return ("You do not have permission to write to the given folder", None)
         return ("New files found for: " + target.name, target.name)
     elif same_spectrum_found is False:
         try:
             shutil.copytree(src, target)
         except PermissionError:
             logging.info("No write permission for destination")
-            return "You do not have permission to write to the given folder", None
+            return ("You do not have permission to write to the given folder", None)
         logging.info(f"Spectrum saved to {target.name}")
         return ("Spectrum found: " + target.name, target.name)
+    else:
+        return None, None
 
 
 def check_nmr(
@@ -334,7 +336,8 @@ def check_nmr(
             # Copy, add output messages to main output list
             reporter.set_status("Copying…")
             copy_return_message, copy_dest = copy_folder(folder, dest_path / new_folder_name)
-            reporter.add_output(copy_return_message)
+            if copy_return_message:
+                reporter.add_output(copy_return_message)
             if copy_dest:
                 reporter.add_copied(copy_dest)
 

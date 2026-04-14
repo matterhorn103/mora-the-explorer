@@ -10,6 +10,21 @@ import platformdirs
 from .spec import Manufacturer, Spectrometer
 
 
+#: The OS-appropriate place for the config file.
+#: 
+#: Should be:
+#: - Windows:  c:/Users/<user>/AppData/Roaming/mora_the_explorer/config.toml
+#: - macOS:    /Users/<user>/Library/Application Support/mora_the_explorer/config.toml
+#: - Linux:    /home/<user>/.config/mora_the_explorer/config.toml
+USER_CONFIG_PATH = Path(
+    platformdirs.user_config_dir(
+        "mora_the_explorer",
+        roaming=True,
+        ensure_exists=True,
+    )
+) / "config.toml"
+
+
 # Dataclasses that hold the configuration in a structured fashion
 
 @dataclass
@@ -81,30 +96,10 @@ class Config:
     file.
     """
 
-    def __init__(self, app_config_file: Path, user_config_file: Path | None = None):
+    def __init__(self, app_config_file: Path, user_config_file: Path = USER_CONFIG_PATH):
         # Load app config from config.toml
         self.app_config = self.load_config_toml(app_config_file)
         logging.info(f"App configuration loaded from: {app_config_file}")
-
-        # Load or create user config
-        # By default check the place appropriate to the os for the config file, which
-        # should be:
-        # Windows:  c:/Users/<user>/AppData/Roaming/mora_the_explorer/config.toml
-        # macOS:    /Users/<user>/Library/Application Support/mora_the_explorer/config.toml
-        # Linux:    /home/<user>/.config/mora_the_explorer/config.toml
-        if user_config_file is None:
-            self.user_config_file = (
-                Path(
-                    platformdirs.user_config_dir(
-                        "mora_the_explorer",
-                        roaming=True,
-                        ensure_exists=True,
-                    )
-                )
-                / "config.toml"
-            )
-        else:
-            self.user_config_file = user_config_file
 
         # Extract the parts of the configuration from the app config
         self.options = UserOptions(**(self.app_config["options"]))
@@ -121,14 +116,19 @@ class Config:
             specs[spec]["manufacturer"] = Manufacturer.from_str(specs[spec]["manufacturer"])
         self.specs = {k: Spectrometer(**v) for k, v in specs.items()}
 
-        # Load user config from config.toml in user's config directory
-        if self.user_config_file.exists():
-            self.user_config = self.load_config_toml(self.user_config_file)
-            logging.info(f"User configuration loaded from: {self.user_config_file}")
+        # Load or create user config user config from config.toml in user's config directory
+        # By default uses the OS-appropriate place, which should be:
+        # Windows:  c:/Users/<user>/AppData/Roaming/mora_the_explorer/config.toml
+        # macOS:    /Users/<user>/Library/Application Support/mora_the_explorer/config.toml
+        # Linux:    /home/<user>/.config/mora_the_explorer/config.toml
+        self.user_config_file = user_config_file
+        if user_config_file.exists():
+            self.user_config = self.load_config_toml(user_config_file)
+            logging.info(f"User configuration loaded from: {user_config_file}")
         # User options used to be stored in config.json pre v1.7, so also check for it
-        elif self.user_config_file.with_name("config.json").exists():
+        elif user_config_file.with_name("config.json").exists():
             self.user_config = self.load_user_config_json(
-                self.user_config_file.with_name("config.json")
+                user_config_file.with_name("config.json")
             )
             logging.info("Old config.json found, read, and converted to config.toml")
         else:
@@ -138,13 +138,19 @@ class Config:
         for k, v in self.user_config.get("options", {}).items():
             setattr(self.options, k, v)
         for k, v in self.user_config.get("appearance", {}).items():
-            setattr(self.options, k, v)
+            setattr(self.appearance, k, v)
         for k, v in self.user_config.get("paths", {}).items():
-            setattr(self.options, k, v)
+            setattr(self.paths, k, v)
         # Groups is extended, with no support for an "other" subcategory
         self.groups.all.update(self.user_config.get("groups", {}))
         # Spectrometer selection is also simply updated
         self.specs.update(self.user_config.get("spectrometers", {}))
+
+        logging.info("The app is now configured as follows:")
+        logging.info(f"- options: {self.options}")
+        logging.info(f"- appearance: {self.appearance}")
+        logging.info(f"- paths: {self.paths}")
+        logging.info(f"- available groups: {self.groups}")
 
         # Save the user config to file
         self.user_config_file.parent.mkdir(parents=True, exist_ok=True)

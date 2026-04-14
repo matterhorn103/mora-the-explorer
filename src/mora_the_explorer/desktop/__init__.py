@@ -3,12 +3,12 @@ import platform
 from pathlib import Path
 
 import darkdetect
-import platformdirs
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPalette, QColor, QIcon
 from PySide6.QtWidgets import QApplication
 
+from .. import LOG_FILE
 from ..config import Config
 from ..explorer import Explorer
 from .controller import Controller
@@ -39,28 +39,13 @@ def set_dark_mode(app: QApplication):
     app.setPalette(dark_palette)
 
 
-def run_desktop_app(rsrc_dir: Path, explorer: Explorer | None = None):
+def run_desktop_app(rsrc_dir: Path):
     """Run Mora the Explorer as a desktop application with a GUI."""
 
     app = QApplication()
 
-    # Logs should be saved to:
-    # Windows:  c:/Users/<user>/AppData/Local/mora_the_explorer/log.log
-    # macOS:    /Users/<user>/Library/Logs/mora_the_explorer/log.log
-    # Linux:    /home/<user>/.local/state/mora_the_explorer/log.log
-    log = (
-        Path(
-            platformdirs.user_log_dir(
-                "mora_the_explorer",
-                opinion=False,
-                ensure_exists=True,
-            )
-        )
-        / "log.log"
-    )
-
     logging.basicConfig(
-        filename=log,
+        filename=LOG_FILE,
         filemode="w",
         format="%(asctime)s %(message)s",
         encoding="utf-8",
@@ -82,11 +67,10 @@ def run_desktop_app(rsrc_dir: Path, explorer: Explorer | None = None):
     if darkdetect.isDark() is True and platform.system() == "Windows":
         set_dark_mode(app)
 
-    # Create instance of Explorer (back-end), unless we were passed an existing one
-    if explorer is None:
-        logging.info("Initializing explorer...")
-        explorer = Explorer(config)
-        logging.info("...complete")
+    # Create instance of Explorer (back-end)
+    logging.info("Initializing explorer...")
+    explorer = Explorer(config)
+    logging.info("...complete")
 
     # Create instance of Controller to handle communication between the two
     _controller = Controller(explorer, window, rsrc_dir, config)

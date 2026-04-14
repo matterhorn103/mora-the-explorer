@@ -5,7 +5,7 @@ block_cipher = None
 
 
 a = Analysis(
-    ['mora_the_explorer.py'],
+    ['src/pyinstaller.py'],
     pathex=[],
     binaries=[],
     datas=[
@@ -14,7 +14,7 @@ a = Analysis(
         ('explorer.ico', '.'),
         ('version.txt', '.'),
         ('pyproject.toml', '.'),
-        ('config.toml', '.'),
+        ('src/mora_the_explorer/config.toml', '.'),
     ],
     hiddenimports=['plyer.platforms.win.notification', 'plyer.platforms.macosx.notification', 'plyer.platforms.linux.notification'],
     hookspath=[],

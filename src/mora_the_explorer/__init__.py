@@ -16,6 +16,36 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from .config import Config
+from pathlib import Path
+import sys
+
+import platformdirs
+
+from .config import Config, USER_CONFIG_PATH
 from .explorer import Explorer
-from .desktop import Controller, MainWindow
+
+
+#: Logs should be saved to:
+#: - Windows:  c:/Users/<user>/AppData/Local/mora_the_explorer/log.log
+#: - macOS:    /Users/<user>/Library/Logs/mora_the_explorer/log.log
+#: - Linux:    /home/<user>/.local/state/mora_the_explorer/log.log
+LOG_FILE = (
+    Path(
+        platformdirs.user_log_dir(
+            "mora_the_explorer",
+            opinion=False,
+            ensure_exists=True,
+        )
+    )
+    / "log.log"
+)
+
+
+def get_rsrc_dir():
+    """Gets the location of the program's resources, which is platform-dependent."""
+    # For whatever reason __file__ doesn't give the right location on a mac when a .app has
+    # been generated with pyinstaller
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        return Path(sys._MEIPASS)
+    else:
+        return Path(__file__).parent

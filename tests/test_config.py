@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from mora_the_explorer.config import Config
+from mora_the_explorer import Config, get_rsrc_dir
 
 
 class TestConfig:
@@ -34,11 +34,15 @@ class TestConfig:
         config = Config(self.mock_app, self.mock_user)
         assert "new" in config.groups.all
         assert config.groups.all["new"] == "newgroup"
+        assert Path(config.paths.linux).expanduser() == Path.home()/"dfs/nmr"
+        assert Path(config.paths.save).expanduser() == Path.home()/"nmr"
 
     def test_init_real_user(self):
         # Test config object creation using the real system user config location
-        _config = Config(self.mock_app)
+        config = Config(self.mock_app)
+        # Note this requires the value to have been changed in your user config!
+        assert Path(config.paths.linux).expanduser() == Path.home()/"dfs/nmr"
 
     def test_init_real_app_and_user(self):
         # Test config object creation using the proper app config and system user config
-        _config = Config(self.test_dir.parent / "config.toml")
+        _config = Config(get_rsrc_dir() / "config.toml")
