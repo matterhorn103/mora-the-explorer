@@ -58,6 +58,5 @@ class Spectrometer:
     include: list[Self | str] = field(default_factory=list)
     restrict_to: list[str] = field(default_factory=list)
     admin_only: bool = False
-    allow_solvent: bool = True
     single_check_only: bool = False
 

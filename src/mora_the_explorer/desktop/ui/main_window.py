@@ -1,280 +1,393 @@
 import logging
 import platform
 import sys
-from datetime import date
+import datetime
 
 import plyer
 
-from PySide6.QtCore import QSize, QUrl
-from PySide6.QtWidgets import QMainWindow, QWidget, QMessageBox
-from PySide6.QtGui import QDesktopServices
+from PySide6.QtCore import Qt, QSize, QUrl
+#from PySide6.QtGui import QDesktopServices
+from PySide6.QtWidgets import (
+    QMainWindow,
+    QWidget,
+    QGridLayout,
+    QLabel,
+    QPushButton,
+    QProgressBar,
+    #QMessageBox,
+    #QRadioButton,
+    #QButtonGroup,
+    #QComboBox,
+    #QLineEdit,
+    #QDateEdit,
+    #QCheckBox,
+    #QSpinBox,
+    #QHBoxLayout,
+    #QVBoxLayout,
+    #QFileDialog,
+)
 
 from ...config import Config
-from .layout import Interface
+from . import rows
+from .display import Display
+from .status import StatusBar
+
+
+def create_version_label(version_header: str) -> QLabel:
+    version_info = version_header.splitlines()[:5]
+    # Turn into html
+    version_info = f'<p style="line-height: 1.1;">{"<br>".join(version_info)}</p>'
+    version_label = QLabel(version_info)
+    version_label.setAlignment(Qt.AlignHCenter)
+    return version_label
 
 
 class MainWindow(QMainWindow):
     """The main window of the QtWidgets user interface.
     
-    Used as a container for the widgets and layouts."""
+    The main window is the parent of all the widgets and layouts, and holds all the
+    row components.
+    It connects all the wiring of the intra-UI logic e.g. responses to user
+    interaction.
 
-    def __init__(self, config: Config, version_header: str):
+    The main window stores and maintains a `Config` object that represents the
+    current state of the UI and the user's choices.
+
+    A signal is emitted when a check should be launched, which can be intercepted by
+    e.g. a `Controller`.
+    """
+
+    def __init__(self, config: Config, version_header: str, admin_mode: bool):
         super().__init__()
 
         self.config = config
+        # Initially not in admin mode
+        self.admin_mode = admin_mode
 
-        # Setup UI
         self.setWindowTitle("Mora the Explorer")
-        self.setup_ui(version_header)
 
-    def setup_ui(self, version_header: str):
-        """Setup main layout, which is a simple vertical stack."""
-
-        self.ui = Interface(self.config, version_header)
-
-        # Apply user's preferred colour to start check button
-        self.ui.status_bar.start_button.setStyleSheet(f"background-color : {self.config.appearance["start_button_colour"]}")
-
-        # Make options easily accessible, as they are frequently accessed
-        self.opts = self.ui.opts
-
-        # Add central widget and give it main layout
-        layout_widget = QWidget()
-        layout_widget.setLayout(self.ui)
-        self.setCentralWidget(layout_widget)
-
-        # Generate group and spectrometer buttons
-        self.opts.add_group_buttons(self.config.groups, self.config.options["group"])
-        self.opts.add_spec_buttons(self.config.specs, self.config.options["spec"])
-
-        # Trigger function to adapt available options and spectrometers to the user's group
-        self.adapt_to_group(self.config.options["group"])
-        # Trigger functions to adapt date selector and naming options to the selected spectrometer
-        self.adapt_to_spec(self.config.options["spec"])
-
-        # Set up window. macos spaces things out more than Windows so give it a bigger window
         if platform.system() == "Windows":
             self.setMinimumSize(QSize(420, 680))
         else:
+            # macOS and Linux space things out more than Windows
             self.setMinimumSize(QSize(450, 780))
 
-    def notify_spectra(self):
-        """Tell the user that spectra were found, both in the app and with a system toast."""
-        notification_text = "Spectra have been found!"
-        self.ui.notification.setText(
-            notification_text + " Ctrl+G to go to. Click to dismiss"
-        )
-        self.ui.notification.setStyleSheet("background-color : limegreen")
-        self.ui.notification.show()
-        self.send_toast(notification_text)
+        # As always with Qt, have to set a central widget and give that widget a
+        # layout, but we won't actually need to access the central widget
+        central_widget = QWidget()
+        self.grid = QGridLayout(central_widget)
+        self.setCentralWidget(central_widget)
 
-    def notify_error(self, copied_list):
-        """Tell the user that an error occurred, both in the app and with a system toast."""
-        self.ui.notification.setStyleSheet("background-color : #cc0010; color : white")
-        try:
-            if "Error" in copied_list[0]:
-                notification_text = "Error: Python " + copied_list[0]
-            else:
-                notification_text = "Error: " + copied_list[0]
-        except IndexError:
-            notification_text = "Unknown error occurred."
-        self.ui.notification.setText(notification_text + " Click to dismiss")
-        self.ui.notification.show()
-        self.send_toast(notification_text)
+        # Compose UI
+        # First put in a plate with the version information
+        version_info = create_version_label(version_header)
+        self.grid.addWidget(version_info, 0, 0, 1, 3)
 
-    def send_toast(self, text):
-        """Spawn a system toast notification."""
-        if (
-            self.opts.since_button.isChecked() is False
-            and platform.system() != "Darwin"
-        ):
-            # Display system notification - doesn't seem to be implemented for macOS
-            # Only if a single date is checked, because with the since function the
-            # system notifications get annoying
-            try:
-                plyer.notification.notify(
-                    title="Hola!",
-                    message=text,
-                    app_name="Mora the Explorer",
-                    timeout=2,
-                )
-            except Exception:
-                pass
+        # User initials entry
+        self.user_entry = rows.FreeEntryField("user:", "(initials)")
+        self.user_entry.set_text(config.options.user)
+        self.user_entry.add_to_grid(self.grid, 1)
 
-    def notification_clicked(self):
-        self.ui.notification.hide()
+        # User name entry
+        self.name_entry = rows.FreeEntryField("name:", None)
+        self.name_entry.set_text(config.options.user_name)
+        self.name_entry.add_to_grid(self.grid, 2)
+        # If config says this should only be active in admin mode, and we aren't
+        # in admin mode, then hide it
+        if config.admin.user_name_is_admin_only and not admin_mode:
+            self.name_entry.hide()
 
-    def notify_update(self, current, available, changelog, path):
-        """Spawn popup to notify user that an update is available, with version info."""
-
-        update_dialog = QMessageBox(self)
-        update_dialog.setWindowTitle("Update available")
-        update_dialog.setText(f"There appears to be a new update available at:\n{path}")
-        update_dialog.setInformativeText(
-            f"Your version is {current}\nThe version on the server is {available}\n{changelog}"
-        )
-        update_dialog.setStandardButtons(QMessageBox.Ignore | QMessageBox.Open)
-        update_dialog.setDefaultButton(QMessageBox.Ignore)
-        choice = update_dialog.exec()
-        if choice == QMessageBox.Open:
-            if path.exists() is True:
-                # Extra quotes necessary because cmd.exe can't handle spaces in path names otherwise
-                url = QUrl.fromLocalFile(path)
-                QDesktopServices.openUrl(url)
-
-    def notify_failed_permissions(self):
-        """Spawn popup to notify user that accessing the mora server failed."""
-
-        logging.info("Permission to access server denied")
-        failed_permission_dialog = QMessageBox(self)
-        failed_permission_dialog.setWindowTitle("Access to mora server denied")
-        failed_permission_dialog.setText("""
-You have been denied permission to access the mora server.
-Check the connection and your authentication details and try again.
-The program will now close.""")
-        failed_permission_dialog.exec()
-        sys.exit()
-
-    def warn_since_function(self):
-        """Spawn popup dialog that dissuades user from using the "since" function regularly."""
-
-        since_message = """
-The function to check multiple days at a time should not be used on a regular basis.
-Please switch back to a single-day check once your search is finished.
-The repeat function is also disabled as long as this option is selected.
-            """
-        QMessageBox.warning(self, "Warning", since_message)
-
-    def group_changed(self):
-        """Find out what the new group is, save it to config, make necessary adjustments."""
-        if self.opts.group_buttons.checkedButton().text() == "other":
-            new_group = self.opts.group_overflow.currentText()
-        else:
-            new_group = self.opts.group_buttons.checkedButton().text()
-        self.config.options["group"] = new_group
-        self.adapt_to_group(new_group)
-        self.opts.save_button.setEnabled(True)
-
-    def adapt_to_group(self, group=None):
-        if group is None:
-            group = self.config.options["group"]
-        if group in self.config.groups["other"]:
-            self.opts.group_overflow.show()
-        else:
-            self.opts.group_overflow.hide()
-        # If nmr group has been selected, disable the initials/solvent naming option
-        # checkboxes as they will be treated as selected anyway, and show the options
-        # for prepending/appending the path
-        if group == "nmr":
-            self.opts.inc_user_checkbox.setEnabled(False)
-            self.opts.nmrcheck_style_checkbox.hide()
-            self.opts.inc_original_checkbox.show()
-            self.opts.inc_original_box.show()
-        else:
-            # Only enable initials checkbox if nmrcheck_style option is not selected,
-            # disable otherwise
-            self.opts.inc_user_checkbox.setEnabled(
-                not self.config.options["nmrcheck_style"]
+        if not admin_mode:
+            # Group entry from an allowed selection, for normal usage
+            self.group_entry = rows.OverflowSelector(
+                "group:",
+                list(config.groups.filter_overflow(False)),
+                list(config.groups.filter_overflow(True)),
             )
-            self.opts.nmrcheck_style_checkbox.show()
-            self.opts.inc_original_checkbox.hide()
-            self.opts.inc_original_box.hide()
-        self.refresh_visible_specs()
-
-    def dest_path_changed(self, new_path):
-        formatted_path = new_path
-        # Best way to ensure cross-platform compatibility is to avoid use of backslashes
-        # and then let pathlib.Path take care of formatting
-        if "\\" in formatted_path:
-            formatted_path = formatted_path.replace("\\", "/")
-        # If the option "copy path" is used in Windows Explorer and then pasted into the
-        # box, the path will be surrounded by quotes, so remove them if there
-        if formatted_path[0] == '"':
-            formatted_path = formatted_path.replace('"', "")
-        self.config.options["dest_path"] = formatted_path
-        self.opts.open_button.show()
-        self.opts.save_button.setEnabled(True)
-
-    def inc_user_switched(self):
-        self.config.options["inc_user"] = self.opts.inc_user_checkbox.isChecked()
-        self.opts.save_button.setEnabled(True)
-
-    def inc_solvent_switched(self):
-        self.config.options["inc_solvent"] = self.opts.inc_solvent_checkbox.isChecked()
-        self.opts.save_button.setEnabled(True)
-
-    def inc_original_changed(self):
-        if self.opts.inc_original_checkbox.isChecked():
-            self.config.options["inc_original"] = self.opts.inc_original_box.currentText()
+            self.group_entry.set_selected(config.options.group)
+            self.group_entry.add_to_grid(self.grid, 3)
         else:
-            self.config.options["inc_original"] = False
+            # Group entry via free-form entry boxes, for admin usage
+            self.group_entry = rows.FreeEntryField("group:", None)
+            self.group_entry.set_text(config.options.group)
+            self.group_entry.add_to_grid(self.grid, 3)
+            self.group_name_entry = rows.FreeEntryField("group name:", None)
+            self.group_name_entry.set_text(config.groups.all.get(config.options.group, ""))
+            self.group_name_entry.add_to_grid(self.grid, 4)
 
-    def nmrcheck_style_switched(self):
-        self.config.options["nmrcheck_style"] = (
-            self.opts.nmrcheck_style_checkbox.isChecked()
+        # Server path
+        self.server_entry = rows.DirSelector("server:")
+        self.server_entry.set_path(config.paths.server())
+        self.server_entry.add_to_grid(self.grid, 5)
+
+        # Destination path
+        self.dest_entry = rows.DirSelector("save in:", "Ctrl+G")
+        self.dest_entry.set_path(config.paths.save)
+        self.dest_entry.add_to_grid(self.grid, 6)
+
+        # Folder name options
+        self.folder_name_options = rows.FolderNameOptions()
+        self.folder_name_options.set_checked(
+            config.options.inc_user,
+            config.options.inc_solvent,
+            config.options.inc_frequency,
+            config.options.inc_original,
         )
-        self.opts.save_button.setEnabled(True)
-        self.opts.inc_user_checkbox.setEnabled(
-            not self.opts.nmrcheck_style_checkbox.isChecked()
-        )
-        self.adapt_to_spec(self.config.options["spec"])
+        self.folder_name_options.add_to_grid(self.grid, 7)
+
+        # Spectrometer selection
+        self.spec_selector = rows.SpectrometerSelector(config.specs)
+        self.refresh_visible_specs()
+        self.spec_selector.set_selected(config.options.spec)
+        self.spec_selector.add_to_grid(self.grid, 8)
+
+        # Repeat options
+        self.repeat_options = rows.RepeatSelector()
+        self.repeat_options.set_repeat_checked(config.options.repeat_switch)
+        self.repeat_options.set_interval(config.options.repeat_delay)
+        self.repeat_options.add_to_grid(self.grid, 9)
+
+        # Save button
+        self.save_button = QPushButton("save options as defaults for next time")
+        # Remains disabled until the config is changed
+        self.save_button.setEnabled(False)
+        self.grid.addWidget(self.save_button, 10, 0, 1, 3)
+
+        # Date selection
+        self.date_selector = rows.DateSelector()
+        self.date_selector.set_multiday(False)
+        self.date_selector.add_to_grid(self.grid, 11)
+
+        # Status bar to start and cancel a check, as well as show the status
+        # during a check
+        self.status_bar = StatusBar()
+        self.status_bar.set_colour(config.appearance.start_button_colour)
+        self.grid.addWidget(self.status_bar, 12, 0, 1, 3)
+
+        # Progress bar for check
+        self.prog_bar = QProgressBar()
+        self.prog_bar.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+        if platform.system() == "Windows" and platform.release() == "11":
+            # Looks bad (with initial Qt Win11 theme at least) so disable text
+            self.prog_bar.setTextVisible(False)
+        self.grid.addWidget(self.prog_bar, 13, 0, 1, 3)
+
+        # Box to display output of check function (list of copied spectra)
+        self.display = Display()
+        self.grid.addWidget(self.display, 14, 0, 1, 3)
+
+        # In-app notification that spectra have been found, dismissable
+        self.notification = QPushButton()
+        self.notification.hide()
+        self.grid.addWidget(self.notification, 15, 0, 1, 3)
 
     def refresh_visible_specs(self):
-        for spec in self.config.specs.keys():
-            allowed = self.config.specs[spec].get("restrict_to")
-            if allowed is None:
-                # No list of groups provided in config so will always be shown to all
-                continue
-            elif self.config.options["group"] in allowed:
-                self.opts.spec_buttons.buttons[spec].show()
+        for spec, spec_info in self.config.specs.items():
+            if self.admin_mode:
+                # All should be available, always
+                self.spec_selector.set_visible(spec, True)
+            elif spec_info.admin_only:
+                self.spec_selector.set_visible(spec, False)
+            # This means an empty list for `restrict_to` means visible to all
+            elif spec_info.restrict_to and self.config.options.group not in spec_info.restrict_to:
+                self.spec_selector.set_visible(spec, False)
             else:
-                self.opts.spec_buttons.buttons[spec].hide()
+                self.spec_selector.set_visible(spec, True)
 
-    def spec_changed(self):
-        self.config.options["spec"] = self.opts.spec_buttons.checkedButton().name
-        self.adapt_to_spec(self.config.options["spec"])
-        self.opts.save_button.setEnabled(True)
+    def adapt_to_spec(self):
+        current_spec = self.spec_selector.selected()
+        spec_info = self.config.specs[current_spec]
+        self.repeat_options.set_repeat_enabled(not spec_info.single_check_only)
+        self.date_selector.set_multiday_enabled(not spec_info.single_check_only)
+        self.date_selector.set_format(spec_info.date_entry)
+       
 
-    def adapt_to_spec(self, spec: str):
-        self.opts.inc_solvent_checkbox.setEnabled(self.config.specs[spec]["allow_solvent"])
-        self.opts.repeat_check_checkbox.setEnabled(
-            not self.config.specs[spec]["single_check_only"]
-        )
-        self.opts.date_selector.setDisplayFormat(self.config.specs[spec]["date_entry"])
-        if self.config.specs[spec]["single_check_only"]:
-            self.opts.only_button.hide()
-            self.opts.since_button.hide()
-        else:
-            self.opts.only_button.show()
-            self.opts.since_button.show()
+#    def notify_spectra(self):
+#        """Tell the user that spectra were found, both in the app and with a system toast."""
+#        notification_text = "Spectra have been found!"
+#        self.ui.notification.setText(
+#            notification_text + " Ctrl+G to go to. Click to dismiss"
+#        )
+#        self.ui.notification.setStyleSheet("background-color : limegreen")
+#        self.ui.notification.show()
+#        self.send_toast(notification_text)
+#
+#    def notify_error(self, copied_list):
+#        """Tell the user that an error occurred, both in the app and with a system toast."""
+#        self.ui.notification.setStyleSheet("background-color : #cc0010; color : white")
+#        try:
+#            if "Error" in copied_list[0]:
+#                notification_text = "Error: Python " + copied_list[0]
+#            else:
+#                notification_text = "Error: " + copied_list[0]
+#        except IndexError:
+#            notification_text = "Unknown error occurred."
+#        self.ui.notification.setText(notification_text + " Click to dismiss")
+#        self.ui.notification.show()
+#        self.send_toast(notification_text)
+#
+#    def send_toast(self, text):
+#        """Spawn a system toast notification."""
+#        if (
+#            self.opts.since_button.isChecked() is False
+#            and platform.system() != "Darwin"
+#        ):
+#            # Display system notification - doesn't seem to be implemented for macOS
+#            # Only if a single date is checked, because with the since function the
+#            # system notifications get annoying
+#            try:
+#                plyer.notification.notify(
+#                    title="Hola!",
+#                    message=text,
+#                    app_name="Mora the Explorer",
+#                    timeout=2,
+#                )
+#            except Exception:
+#                pass
+#
+#    def notification_clicked(self):
+#        self.ui.notification.hide()
+#
+#    def notify_update(self, current, available, changelog, path):
+#        """Spawn popup to notify user that an update is available, with version info."""
+#
+#        update_dialog = QMessageBox(self)
+#        update_dialog.setWindowTitle("Update available")
+#        update_dialog.setText(f"There appears to be a new update available at:\n{path}")
+#        update_dialog.setInformativeText(
+#            f"Your version is {current}\nThe version on the server is {available}\n{changelog}"
+#        )
+#        update_dialog.setStandardButtons(QMessageBox.Ignore | QMessageBox.Open)
+#        update_dialog.setDefaultButton(QMessageBox.Ignore)
+#        choice = update_dialog.exec()
+#        if choice == QMessageBox.Open:
+#            if path.exists() is True:
+#                # Extra quotes necessary because cmd.exe can't handle spaces in path names otherwise
+#                url = QUrl.fromLocalFile(path)
+#                QDesktopServices.openUrl(url)
+#
+#    def notify_failed_permissions(self):
+#        """Spawn popup to notify user that accessing the mora server failed."""
+#
+#        logging.info("Permission to access server denied")
+#        failed_permission_dialog = QMessageBox(self)
+#        failed_permission_dialog.setWindowTitle("Access to mora server denied")
+#        failed_permission_dialog.setText("""
+#You have been denied permission to access the mora server.
+#Check the connection and your authentication details and try again.
+#The program will now close.""")
+#        failed_permission_dialog.exec()
+#        sys.exit()
+#
+#    def warn_since_function(self):
+#        """Spawn popup dialog that dissuades user from using the "since" function regularly."""
+#
+#        since_message = """
+#The function to check multiple days at a time should not be used on a regular basis.
+#Please switch back to a single-day check once your search is finished.
+#The repeat function is also disabled as long as this option is selected.
+#            """
+#        QMessageBox.warning(self, "Warning", since_message)
+#
+#    def group_changed(self):
+#        """Find out what the new group is, save it to config, make necessary adjustments."""
+#        if self.opts.group_buttons.checkedButton().text() == "other":
+#            new_group = self.opts.group_overflow.currentText()
+#        else:
+#            new_group = self.opts.group_buttons.checkedButton().text()
+#        self.config.options["group"] = new_group
+#        self.adapt_to_group(new_group)
+#        self.opts.save_button.setEnabled(True)
+#
+#    def adapt_to_group(self, group=None):
+#        if group is None:
+#            group = self.config.options["group"]
+#        if group in self.config.groups["other"]:
+#            self.opts.group_overflow.show()
+#        else:
+#            self.opts.group_overflow.hide()
+#        # If nmr group has been selected, disable the initials/solvent naming option
+#        # checkboxes as they will be treated as selected anyway, and show the options
+#        # for prepending/appending the path
+#        if group == "nmr":
+#            self.opts.inc_user_checkbox.setEnabled(False)
+#            self.opts.nmrcheck_style_checkbox.hide()
+#            self.opts.inc_original_checkbox.show()
+#            self.opts.inc_original_box.show()
+#        else:
+#            # Only enable initials checkbox if nmrcheck_style option is not selected,
+#            # disable otherwise
+#            self.opts.inc_user_checkbox.setEnabled(
+#                not self.config.options["nmrcheck_style"]
+#            )
+#            self.opts.nmrcheck_style_checkbox.show()
+#            self.opts.inc_original_checkbox.hide()
+#            self.opts.inc_original_box.hide()
+#        self.refresh_visible_specs()
+#
+#    def dest_path_changed(self, new_path):
+#        formatted_path = new_path
+#        # Best way to ensure cross-platform compatibility is to avoid use of backslashes
+#        # and then let pathlib.Path take care of formatting
+#        if "\\" in formatted_path:
+#            formatted_path = formatted_path.replace("\\", "/")
+#        # If the option "copy path" is used in Windows Explorer and then pasted into the
+#        # box, the path will be surrounded by quotes, so remove them if there
+#        if formatted_path[0] == '"':
+#            formatted_path = formatted_path.replace('"', "")
+#        self.config.options["dest_path"] = formatted_path
+#        self.opts.open_button.show()
+#        self.opts.save_button.setEnabled(True)
+#
+#    def inc_user_switched(self):
+#        self.config.options["inc_user"] = self.opts.inc_user_checkbox.isChecked()
+#        self.opts.save_button.setEnabled(True)
+#
+#    def inc_solvent_switched(self):
+#        self.config.options["inc_solvent"] = self.opts.inc_solvent_checkbox.isChecked()
+#        self.opts.save_button.setEnabled(True)
+#
+#    def inc_original_changed(self):
+#        if self.opts.inc_original_checkbox.isChecked():
+#            self.config.options["inc_original"] = self.opts.inc_original_box.currentText()
+#        else:
+#            self.config.options["inc_original"] = False
+#
+#
+#    def spec_changed(self):
+#        self.config.options["spec"] = self.opts.spec_buttons.checkedButton().name
+#        self.adapt_to_spec(self.config.options["spec"])
+#        self.opts.save_button.setEnabled(True)
+#
 
-    def repeat_switched(self):
-        self.config.options["repeat_switch"] = (
-            self.opts.repeat_check_checkbox.isChecked()
-        )
-        self.opts.save_button.setEnabled(True)
-
-    def repeat_delay_changed(self, new_delay):
-        self.config.options["repeat_delay"] = new_delay
-        self.opts.save_button.setEnabled(True)
-
-    def save(self):
-        self.config.save()
-        self.opts.save_button.setEnabled(False)
-
-    def since_function_activated(self):
-        if (
-            self.opts.since_button.isChecked() is True
-            and self.config.options["group"] != "nmr"
-        ):
-            self.warn_since_function()
-            self.opts.repeat_check_checkbox.setEnabled(False)
-            self.config.options["repeat_switch"] = False
-        else:
-            self.opts.repeat_check_checkbox.setEnabled(True)
-            self.config.options["repeat_switch"] = (
-                self.opts.repeat_check_checkbox.isChecked()
-            )
-
-    def set_date_as_today(self):
-        self.opts.date_selector.setDate(date.today())
+#
+#    def repeat_switched(self):
+#        self.config.options["repeat_switch"] = (
+#            self.opts.repeat_check_checkbox.isChecked()
+#        )
+#        self.opts.save_button.setEnabled(True)
+#
+#    def repeat_delay_changed(self, new_delay):
+#        self.config.options["repeat_delay"] = new_delay
+#        self.opts.save_button.setEnabled(True)
+#
+#    def save(self):
+#        self.config.save()
+#        self.opts.save_button.setEnabled(False)
+#
+#    def since_function_activated(self):
+#        if (
+#            self.opts.since_button.isChecked() is True
+#            and self.config.options["group"] != "nmr"
+#        ):
+#            self.warn_since_function()
+#            self.opts.repeat_check_checkbox.setEnabled(False)
+#            self.config.options["repeat_switch"] = False
+#        else:
+#            self.opts.repeat_check_checkbox.setEnabled(True)
+#            self.config.options["repeat_switch"] = (
+#                self.opts.repeat_check_checkbox.isChecked()
+#            )
+#
+#    def set_date_as_today(self):
+#        self.opts.date_selector.setDate(date.today())

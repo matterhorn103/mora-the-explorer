@@ -78,22 +78,30 @@ class Explorer:
         spec_info = self.config.specs[options.spec]
         # Put together the way the folder names should be formatted
         if options.inc_user:
-            name_format = ["user", "sample_info", "experiment"]
+            # The duplication is OK because only the one that is actually in
+            # the measurement title will be included (so it might actually be both)
+            name_format = ["user_name", "user", "sample_info", "experiment"]
         else:
             name_format = ["sample_info", "experiment"]
         if options.inc_solvent:
             name_format.append("solvent")
+        if options.inc_frequency:
+            name_format.append("frequency")
         if options.inc_original:
             name_format.append("folder_name")
-        # Always include the frequency info too if it's available
-        name_format.append("frequency")
+        # The group name might have been set explicitly, but normally we get it
+        # from the groups table
+        if hasattr(options, "group_name"):
+            group_name = options.group_name
+        else:
+            group_name = self.config.groups.all[options.group]
         rules = MetadataRules(
             src_fields=spec_info.title_format,
             conditions={
                 "user": options.user,
                 "user_name": options.user_name,
                 "group": options.group,
-                "group_name": self.config.groups.all[options.group],
+                "group_name": group_name,
             },
             dest_fields=name_format,
         )

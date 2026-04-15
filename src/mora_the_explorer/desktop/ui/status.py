@@ -51,8 +51,12 @@ class StatusBar(QWidget):
 
         self.show_start()
 
-    def set_text(self, text):
+    def set_text(self, text: str):
         self.label.setText(text)
+
+    def set_colour(self, colour: str):
+        """Set the colour of the start button. Takes a hex code as a string."""
+        self.start_button.setStyleSheet(f"background-color : {colour}")
 
     def show_start(self):
         self.start_button.show()

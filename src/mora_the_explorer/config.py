@@ -3,6 +3,7 @@ import dataclasses
 import json
 import logging
 from pathlib import Path
+import platform
 import tomllib
 import tomli_w
 import platformdirs
@@ -34,6 +35,7 @@ class UserOptions:
     group: str
     inc_user: bool
     inc_solvent: bool
+    inc_frequency: bool
     inc_original: bool
     spec: str
     repeat_switch: bool
@@ -50,6 +52,18 @@ class Paths:
     linux: str
     update: str  # Relative to the server paths
     save: str
+
+    def server(self):
+        """Return the server path for the current platform."""
+        getattr(self, platform.system().lower())
+
+    def set_server(self, path: str):
+        """Set the server path for the current platform."""
+        setattr(self, platform.system().lower(), path)
+
+@dataclass
+class AdminOptions:
+    user_name_is_admin_only: bool | None = None
 
 @dataclass
 class Groups:
@@ -70,6 +84,7 @@ class Config:
     [options]
     [appearance]
     [paths]
+    [admin]
     [groups]
     [groups.other]
     [spectrometers.xxx]
@@ -85,7 +100,8 @@ class Config:
 
     The user config usually only has the tables containing the options the user
     sets, such as search options and save destination. It may contain any of the
-    above tables, though.
+    above tables, though, with the exception of the `[admin]` table, which is only
+    read from the app config.
 
     The app config generally specifies all the other details for how the app should
     work, e.g. the information about the available groups and spectrometers, as well
@@ -110,6 +126,7 @@ class Config:
         self.options = UserOptions(**(self.app_config["options"]))
         self.appearance = Appearance(**(self.app_config["appearance"]))
         self.paths = Paths(**(self.app_config["paths"]))
+        self.admin = AdminOptions(**(self.app_config["admin"]))
         # Flatten the list of groups
         all_groups: dict = self.app_config["groups"].copy()
         if "other" in all_groups:

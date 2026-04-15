@@ -15,7 +15,8 @@ user = "mjm"
 user_name = "milner"
 group = "gil"
 inc_user = false
-inc_solvent= false
+inc_solvent = false
+inc_frequency = false
 inc_original = false
 spec = "400er"
 repeat_switch = false
@@ -34,6 +35,10 @@ darwin = "/Volumes/usershare/projects/q_nmr-oc/nmr"  # darwin = macOS
 linux = "~/usershare/projects/q_nmr-oc/nmr"
 update = "mora_the_explorer"  # Where to check for app updates, relative to the server
 save = "~/nmr"  # The location spectra should be copied to
+
+
+[admin]
+user_name_is_admin_only = true
 
 
 [groups]
@@ -101,7 +106,6 @@ check_paths = [
     "<spec_dir>/{%y}-dpx300_{%Y}/<date>",
 ]
 admin_only = true
-allow_solvent = true
 single_check_only = false
 
 [spectrometers.300er]
@@ -122,7 +126,6 @@ restrict_to = [
     "stu",
     "nae",
 ]
-allow_solvent = true
 single_check_only = false
 
 [spectrometers.400er]
@@ -146,7 +149,6 @@ archives = [
 include = [
     "300er",
 ]
-allow_solvent = true
 single_check_only = false
 
 [spectrometers.hf]
@@ -159,5 +161,4 @@ date_entry = "yyyy"
 check_paths = [
     "<spec_dir>/<group_name>/<date>",
 ]
-allow_solvent = false
 single_check_only = true
