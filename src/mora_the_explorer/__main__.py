@@ -179,9 +179,9 @@ def main():
     if args.no_user:
         config.options.inc_user = False
     if args.inc_solvent:
-        config.options.inc_solv = True
+        config.options.inc_solvent= True
     if args.no_solvent:
-        config.options.inc_solv = False
+        config.options.inc_solvent= False
 
     explorer = Explorer(config)
 

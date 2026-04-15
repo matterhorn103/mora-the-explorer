@@ -81,9 +81,9 @@ class Explorer:
             name_format = ["user", "sample_info", "experiment"]
         else:
             name_format = ["sample_info", "experiment"]
-        if options.inc_solv:
+        if options.inc_solvent:
             name_format.append("solvent")
-        if options.inc_path:
+        if options.inc_original:
             name_format.append("folder_name")
         # Always include the frequency info too if it's available
         name_format.append("frequency")

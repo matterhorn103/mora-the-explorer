@@ -33,8 +33,8 @@ class UserOptions:
     user_name: str
     group: str
     inc_user: bool
-    inc_solv: bool
-    inc_path: bool
+    inc_solvent: bool
+    inc_original: bool
     spec: str
     repeat_switch: bool
     repeat_delay: int

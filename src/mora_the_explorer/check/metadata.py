@@ -309,7 +309,7 @@ def generate_folder_name(
 #    metadata: MeasurementMetadata,
 #    inc_group: bool = False,
 #    inc_init: bool = False,
-#    inc_solv: bool = False,
+#    inc_solvent: bool = False,
 #    nmrcheck_style: bool = False,
 #) -> str:
 #    """Format folder name according to the user's choices."""
@@ -347,7 +347,7 @@ def generate_folder_name(
 #            name = metadata.initials + "-" + name
 #        if inc_group is True and metadata.group is not None:
 #            name = metadata.group + "-" + name
-#    if inc_solv is True and metadata.solvent is not None:
+#    if inc_solventis True and metadata.solvent is not None:
 #        name = name + "-" + metadata.solvent
 #    # Add frequency info if available
 #    if metadata.frequency is not None:
@@ -369,8 +369,8 @@ def generate_folder_name(
 #def format_name_admin(
 #    folder,
 #    metadata: MeasurementMetadata,
-#    inc_solv=True,
-#    inc_path=False,
+#    inc_solvent=True,
+#    inc_original=False,
 #) -> str:
 #    """Format folder name in Klaus' desired fashion."""
 #    # First do normally but with everything included
@@ -379,13 +379,13 @@ def generate_folder_name(
 #        metadata,
 #        inc_group=True,
 #        inc_init=True,
-#        inc_solv=inc_solv,
+#        inc_solvent=inc_solvent,
 #    )
 #    # Add location details if requested
-#    if inc_path:
+#    if inc_original:
 #        location = metadata.server_location.replace("/", "_").replace("\\", "_")
-#        if inc_path == "before" or inc_path is True:
+#        if inc_original == "before" or inc_original is True:
 #            name = location + "_" + name
-#        elif inc_path == "after":
+#        elif inc_original == "after":
 #            name = name + "_" + location
 #    return name

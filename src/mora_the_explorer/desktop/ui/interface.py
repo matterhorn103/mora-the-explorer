@@ -20,11 +20,10 @@ from PySide6.QtWidgets import (
     QFileDialog,
 )
 
-class PathSelector:
-    """A UI component for selecting a path."""
+class DirSelector:
+    """A component for selecting a directory."""
 
-    def __init__(self, parent: QWidget, title: str, go_shortcut: str | None = None):
-        self.parent = parent
+    def __init__(self, title: str, go_shortcut: str | None = None):
 
         # Groups four widgets - a title string, an entry field, then two buttons
         self.title = QLabel(title)
@@ -84,10 +83,9 @@ class PathSelector:
 
 
 class FreeEntryField:
-    """A UI component for entering free text."""
+    """A component for entering free text."""
 
-    def __init__(self, parent: QWidget, title: str, comment: str):
-        self.parent = parent
+    def __init__(self, title: str, comment: str):
 
         # Groups three widgets - a title string, an entry field, then a trailing comment
         self.title = QLabel(title)
@@ -112,35 +110,11 @@ class FreeEntryField:
         self.entry_field.setText(text)
 
 
-class GroupButtons(QButtonGroup):
-    def __init__(self, parent, group_ids: Iterable[str], selected_group: str):
-        super().__init__(parent)
-
-        self.main_layout = QHBoxLayout()
-        self.overflow_layout = QHBoxLayout()
-        self.button_list = []
-        for group in group_ids:
-            group_button = QRadioButton(group)
-            self.button_list.append(group_button)
-            if (group == selected_group) or (
-                group == "other" and self.checkedButton() is None
-            ):
-                group_button.setChecked(True)
-            self.addButton(group_button)
-            if len(group_ids) <= 4 or group_ids.index(group) < (len(group_ids) / 2):
-                self.main_layout.addWidget(group_button)
-            elif len(group_ids) > 4 and group_ids.index(group) >= (
-                len(group_ids) / 2
-            ):
-                self.overflow_layout.addWidget(group_button)
-
-
 class OverflowSelector:
-    """A UI component that allows selection via a combination of radio buttons
+    """A component that allows selection via a combination of radio buttons
     for main options and a drop-down list for overflow options."""
 
-    def __init__(self, parent: QWidget, title: str, main: list[str], overflow: list[str]):
-        self.parent = parent
+    def __init__(self, title: str, main: list[str], overflow: list[str]):
 
         # Store the lists of items
         self.main = main
@@ -176,10 +150,41 @@ class OverflowSelector:
         # Add other options to the overflow drop-down
         self.dropdown.addItems(overflow)
 
+    def widgets(self) -> tuple[QLabel, list[QRadioButton], list[QRadioButton], QComboBox]:
+        return self.title, self.button_row1, self.button_row2, self.dropdown
+
     def selected(self) -> str:
         """Get the selected option."""
+        if self.buttons.checkedId() == 100:
+            # This means the "other" button is checked
+            return self.dropdown.currentText()
+        else:
+            return self.main[self.buttons.checkedId()]
 
     def set_selected(self, button: str):
         """Set the selected option."""
+        if button in self.main:
+            i = self.main.index(button)
+            self.buttons.button(i).setChecked(True)
+            self.dropdown.hide()
+        elif button in self.overflow:
+            self.buttons.button(100).setChecked(True)
+            self.dropdown.setCurrentText(button)
+            self.dropdown.show()
+        else:
+            raise ValueError(f"{button} is not a group with a corresponding button!")
 
 
+# The classes above are abstract really, whereas the below are specific to their
+# context and have more stuff hard-coded
+
+class FolderNameOptions:
+    """The component for choices relating to folder name customization."""
+
+    def __init__(self):
+
+        # Four widgets
+        self.title = QLabel("include:")
+        self.user_box = QCheckBox("user")
+        self.solvent_box = QCheckBox("solvent")
+        self.original_box = QCheckBox("original folder name")

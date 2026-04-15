@@ -168,8 +168,8 @@ The repeat function is also disabled as long as this option is selected.
         if group == "nmr":
             self.opts.inc_user_checkbox.setEnabled(False)
             self.opts.nmrcheck_style_checkbox.hide()
-            self.opts.inc_path_checkbox.show()
-            self.opts.inc_path_box.show()
+            self.opts.inc_original_checkbox.show()
+            self.opts.inc_original_box.show()
         else:
             # Only enable initials checkbox if nmrcheck_style option is not selected,
             # disable otherwise
@@ -177,8 +177,8 @@ The repeat function is also disabled as long as this option is selected.
                 not self.config.options["nmrcheck_style"]
             )
             self.opts.nmrcheck_style_checkbox.show()
-            self.opts.inc_path_checkbox.hide()
-            self.opts.inc_path_box.hide()
+            self.opts.inc_original_checkbox.hide()
+            self.opts.inc_original_box.hide()
         self.refresh_visible_specs()
 
     def dest_path_changed(self, new_path):
@@ -199,15 +199,15 @@ The repeat function is also disabled as long as this option is selected.
         self.config.options["inc_user"] = self.opts.inc_user_checkbox.isChecked()
         self.opts.save_button.setEnabled(True)
 
-    def inc_solv_switched(self):
-        self.config.options["inc_solv"] = self.opts.inc_solv_checkbox.isChecked()
+    def inc_solvent_switched(self):
+        self.config.options["inc_solvent"] = self.opts.inc_solvent_checkbox.isChecked()
         self.opts.save_button.setEnabled(True)
 
-    def inc_path_changed(self):
-        if self.opts.inc_path_checkbox.isChecked():
-            self.config.options["inc_path"] = self.opts.inc_path_box.currentText()
+    def inc_original_changed(self):
+        if self.opts.inc_original_checkbox.isChecked():
+            self.config.options["inc_original"] = self.opts.inc_original_box.currentText()
         else:
-            self.config.options["inc_path"] = False
+            self.config.options["inc_original"] = False
 
     def nmrcheck_style_switched(self):
         self.config.options["nmrcheck_style"] = (
@@ -236,7 +236,7 @@ The repeat function is also disabled as long as this option is selected.
         self.opts.save_button.setEnabled(True)
 
     def adapt_to_spec(self, spec: str):
-        self.opts.inc_solv_checkbox.setEnabled(self.config.specs[spec]["allow_solvent"])
+        self.opts.inc_solvent_checkbox.setEnabled(self.config.specs[spec]["allow_solvent"])
         self.opts.repeat_check_checkbox.setEnabled(
             not self.config.specs[spec]["single_check_only"]
         )

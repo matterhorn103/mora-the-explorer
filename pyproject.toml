@@ -9,7 +9,6 @@ dependencies = [
     "darkdetect>=0.8.0",
     "platformdirs>=4.2.0",
     "plyer>=2.1.0",
-    "pillow>=10.3.0",
     "pyside6-essentials>=6.7.0",
     "tomli-w>=1.0.0",
 ]

@@ -133,8 +133,8 @@ class OptionsSelection(QGridLayout):
         self.inc_user_checkbox = QCheckBox("user")
         self.inc_user_checkbox.setChecked(options.inc_user)
 
-        self.inc_solv_checkbox = QCheckBox("solvent")
-        self.inc_solv_checkbox.setChecked(options.inc_solv)
+        self.inc_solvent_checkbox = QCheckBox("solvent")
+        self.inc_solvent_checkbox.setChecked(options.inc_solv)
 
         self.in_filename_label = QLabel("...in filename")
         self.in_filename_label.setAlignment(Qt.AlignCenter)
@@ -144,26 +144,26 @@ class OptionsSelection(QGridLayout):
         self.nmrcheck_style_checkbox.setChecked(options.nmrcheck_style)
 
         # Or, for nmr group, the choice of where to put the path
-        self.inc_path_checkbox = QCheckBox("path")
-        self.inc_path_checkbox.setChecked(bool(options.inc_path))
+        self.inc_original_checkbox = QCheckBox("path")
+        self.inc_original_checkbox.setChecked(bool(options.inc_original))
 
-        self.inc_path_box = QComboBox()
-        inc_path_options = ["before", "after"]
-        self.inc_path_box.addItems(inc_path_options)
+        self.inc_original_box = QComboBox()
+        inc_original_options = ["before", "after"]
+        self.inc_original_box.addItems(inc_original_options)
 
-        if options.inc_path in inc_path_options:
-            self.inc_path_box.setCurrentText(options.inc_path)
+        if options.inc_original in inc_original_options:
+            self.inc_original_box.setCurrentText(options.inc_original)
         else:
-            self.inc_path_box.setCurrentText("after")
+            self.inc_original_box.setCurrentText("after")
 
-        inc_path_layout = QHBoxLayout()
-        inc_path_layout.addWidget(self.inc_path_checkbox)
-        inc_path_layout.addWidget(self.inc_path_box)
+        inc_original_layout = QHBoxLayout()
+        inc_original_layout.addWidget(self.inc_original_checkbox)
+        inc_original_layout.addWidget(self.inc_original_box)
 
         filename_layout = QGridLayout()
         filename_layout.addWidget(self.inc_user_checkbox, 0, 0)
-        filename_layout.addWidget(self.inc_solv_checkbox, 0, 1)
-        filename_layout.addLayout(inc_path_layout, 1, 0)
+        filename_layout.addWidget(self.inc_solvent_checkbox, 0, 1)
+        filename_layout.addLayout(inc_original_layout, 1, 0)
         filename_layout.addWidget(self.nmrcheck_style_checkbox, 2, 0, 1, 2)
 
         self.addWidget(self.include_label, 4, 0)
@@ -303,7 +303,7 @@ class Interface(QVBoxLayout):
         self.addLayout(self.opts)
 
         if not config.specs[config.options.spec].allow_solvent:
-            self.inc_solv_checkbox.setEnabled(False)
+            self.inc_solvent_checkbox.setEnabled(False)
 
         # Status bar to inform user of the current stage of a check
         self.status_bar = StatusBar()

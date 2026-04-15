@@ -56,7 +56,7 @@ class TestCheck:
         explorer = mock_explorer()
         explorer.config.options.spec = "av300"
         explorer.config.options.inc_user = True
-        explorer.config.options.inc_solv = True
+        explorer.config.options.inc_solvent= True
         reporter = explorer.single_check(date(2023, 10, 15))
         print(reporter.output)
         assert reporter.output[0] == "Spectrum found: mjm-500-1-proton-cdcl3"
@@ -67,7 +67,7 @@ class TestCheck:
         explorer = mock_explorer()
         explorer.config.options.spec = "neo400"
         explorer.config.options.inc_user = True
-        explorer.config.options.inc_solv = True
+        explorer.config.options.inc_solvent= True
         reporter = explorer.single_check(date(2023, 10, 15))
         # The spectrum should be found twice but determined to be different spectra,
         # both copied, and automatically numbered as different measurements
@@ -79,7 +79,7 @@ class TestCheck:
         explorer = mock_explorer()
         explorer.config.options.spec = "av300"
         explorer.config.options.inc_user = False
-        explorer.config.options.inc_solv = True
+        explorer.config.options.inc_solvent= True
         reporter = explorer.single_check(date(2023, 10, 15))
         assert reporter.copied[0] == "500-1-proton-cdcl3"
 
@@ -87,6 +87,6 @@ class TestCheck:
         explorer = mock_explorer()
         explorer.config.options.spec = "av300"
         explorer.config.options.inc_user = True
-        explorer.config.options.inc_solv = False
+        explorer.config.options.inc_solvent= False
         reporter = explorer.single_check(date(2023, 10, 15))
         assert reporter.copied[0] == "mjm-500-1-proton"

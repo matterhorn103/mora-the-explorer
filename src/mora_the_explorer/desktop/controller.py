@@ -106,17 +106,17 @@ class Controller:
         self.opts.inc_user_checkbox.stateChanged.connect(
             self.main_window.inc_user_switched
         )
-        self.opts.inc_solv_checkbox.stateChanged.connect(
-            self.main_window.inc_solv_switched
+        self.opts.inc_solvent_checkbox.stateChanged.connect(
+            self.main_window.inc_solvent_switched
         )
         self.opts.nmrcheck_style_checkbox.stateChanged.connect(
             self.main_window.nmrcheck_style_switched
         )
-        self.opts.inc_path_checkbox.stateChanged.connect(
-            self.main_window.inc_path_changed
+        self.opts.inc_original_checkbox.stateChanged.connect(
+            self.main_window.inc_original_changed
         )
-        self.opts.inc_path_box.currentTextChanged.connect(
-            self.main_window.inc_path_changed
+        self.opts.inc_original_box.currentTextChanged.connect(
+            self.main_window.inc_original_changed
         )
         self.opts.spec_buttons.buttonClicked.connect(self.main_window.spec_changed)
         self.opts.repeat_check_checkbox.stateChanged.connect(
