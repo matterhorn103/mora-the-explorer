@@ -5,7 +5,7 @@ import datetime
 from pathlib import Path
 from urllib.parse import quote
 
-from PySide6.QtCore import QTimer, QUrl
+from PySide6.QtCore import QTimer, QUrl, Slot
 from PySide6.QtGui import QDesktopServices
 
 from ..config import Config
@@ -55,8 +55,9 @@ class Controller:
         #self.update_check(self.update_path)
 
         # Connect the key signals
-        #self.main_window.started.connect(self.start_check)
+        self.main_window.started.connect(self.start_check)
 
+    @Slot()
     def start_check(self):
         # Create instance of Explorer (back-end)
         logging.info("Initializing new explorer...")
@@ -73,8 +74,12 @@ class Controller:
                 self.main_window.date_selector.date(),
                 reporter=None, # TODO Make a reporter that passes output back to the GUI
             )
-        for output_line in reporter.output:
-            self.main_window.display.add_entry(output_line)
+        for message in reporter.messages():
+            self.main_window.display.add_entry(message)
+        if reporter.errors():
+            combined_error_message = "\n".join(reporter.errors())
+            self.main_window.notify_error(combined_error_message)
+
 #
 #    def started(self):
 #        self.explorer.queued_checks = 0

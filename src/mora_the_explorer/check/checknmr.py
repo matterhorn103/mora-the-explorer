@@ -18,40 +18,79 @@ from .metadata import (
 
 
 class Reporter(ABC):
+
+    @abstractmethod
+    def status(self) -> str:
+        """Get the current status of the check."""
+        pass
+
     @abstractmethod
     def set_status(self, message: str):
+        """Set the current status of the check."""
         pass
 
     @abstractmethod
     def progress(self) -> int:
+        """Get the current extent of progress as an absolute value."""
         pass
 
     @abstractmethod
     def reset_progress(self):
+        """Set the current progress to zero."""
         pass
 
     @abstractmethod
     def increment_progress(self, increment: int = 1):
+        """Increase the current progress by `increment`."""
         pass
 
     @abstractmethod
     def max_progress(self) -> int:
+        """Get the absolute value of the progress that represents completion, currently."""
         pass
 
     @abstractmethod
     def set_max_progress(self, max: int):
+        """Set the absolute value of the progress that represents completion."""
         pass
 
     @abstractmethod
-    def add_output(self, line: str):
+    def messages(self) -> list[str]:
+        """Get all general messages returned during the check."""
+
+    @abstractmethod
+    def add_message(self, message: str):
+        """Add a general message that should be reported to the user by an appropriate mechanism."""
         pass
+
+    @abstractmethod
+    def copied(self) -> list[str]:
+        """Get the names of all measurement folders copied during the check."""
 
     @abstractmethod
     def add_copied(self, name: str):
+        """Add a measurement folder to the list of copied folders.
+        
+        The name is the name of the folder as saved in the destination location.
+        """
+        pass
+
+    @abstractmethod
+    def errors(self) -> list[str]:
+        """Get all error messages returned during the check."""
+
+    @abstractmethod
+    def add_error(self, error: str):
+        """Add an error message that should be reported to the user by an appropriate mechanism."""
         pass
 
     @abstractmethod
     def finish(self, completion_message: str):
+        """Signal that the check has completed and pass a completion message to the user by an
+        appropriate mechanism.
+        
+        It is expected that the completion message will also be added to the normal list of messages.
+        """
         pass
 
 
@@ -74,7 +113,7 @@ def get_number_spectra(paths: list[Path]):
     return n
 
 
-def compare_spectra(server_folder, dest_folder) -> int:
+def compare_spectra(server_folder, dest_folder) -> tuple[bool, bool]:
     """Check that two spectra with the same name are actually the same measurement and not e.g. different proton measurements.
 
     In the event that the spectra are the same, a check is made to see if everything has
@@ -156,11 +195,10 @@ def compare_spectra(server_folder, dest_folder) -> int:
     return same, incomplete
 
 
-def copy_folder(src: Path, target: Path) -> tuple[str | None, Path | None]:
+def copy_folder(src: Path, target: Path, reporter: Reporter) -> Path | None:
     """Copy a spectra folder over to the target if it isn't already there.
 
-    Returns a string summarizing the result of the operation for the user and
-    the destination that was saved to, if any.
+    Returns the destination that was saved to, if any.
 
     Note that `target` should be the target path of the copied folder, not a directory
     to copy it into.
@@ -197,6 +235,7 @@ def copy_folder(src: Path, target: Path) -> tuple[str | None, Path | None]:
     # Try and fix only partially copied spectra
     if same_spectrum_found is True and incomplete_copy is True:
         logging.info("The existing copy is only partial")
+        reporter.add_message("New files found for: " + target.name)
         for x in src.iterdir():
             # Copy any file or subdirectory that isn't already in destination
             if not (target / x.name).exists():
@@ -206,18 +245,22 @@ def copy_folder(src: Path, target: Path) -> tuple[str | None, Path | None]:
                     elif x.is_file():
                         shutil.copy2(x, target / x.name)
                 except PermissionError:
-                    return ("You do not have permission to write to the given folder", None)
-        return ("New files found for: " + target.name, target.name)
+                    reporter.add_error("You do not have permission to write to the given folder")
+                    return None
+        reporter.add_copied(target.name)
+        return target
     elif same_spectrum_found is False:
         try:
             shutil.copytree(src, target)
         except PermissionError:
             logging.info("No write permission for destination")
-            return ("You do not have permission to write to the given folder", None)
+            reporter.add_error("You do not have permission to write to the given folder")
+            return None
         logging.info(f"Spectrum saved to {target.name}")
-        return ("Spectrum found: " + target.name, target.name)
+        reporter.add_copied(target.name)
+        return target
     else:
-        return None, None
+        return None
 
 
 def check_nmr(
@@ -241,7 +284,7 @@ def check_nmr(
     dest_path = Path(dest)
     if dest_path.exists() is False:
         logging.info("Given destination folder not found!")
-        reporter.add_output("Given destination folder not found!")
+        reporter.add_error("Given destination folder not found!")
     # Confirm server can be reached
     check_paths = []
     not_found = []
@@ -264,7 +307,7 @@ def check_nmr(
         logging.info("No folders could be found!")
         for message in not_found:
             logging.info(message)
-        reporter.add_output("No folders could be found!")
+        reporter.add_error("No folders could be found!")
     else:
         logging.info("The following paths could be reached and will be checked for new spectra:")
         for p in check_paths:
@@ -315,7 +358,7 @@ def check_nmr(
                 if metadata.date is None:
                     metadata.date = date
             except FileNotFoundError:
-                reporter.add_output(f"No metadata could be found for {folder}!")
+                reporter.add_error(f"No metadata could be found for {folder}!")
                 logging.info("No metadata found")
                 reporter.increment_progress()
                 continue
@@ -335,18 +378,12 @@ def check_nmr(
 
             # Copy, add output messages to main output list
             reporter.set_status("Copying…")
-            copy_return_message, copy_dest = copy_folder(folder, dest_path / new_folder_name)
-            if copy_return_message:
-                reporter.add_output(copy_return_message)
-            if copy_dest:
-                reporter.add_copied(copy_dest)
+            _copy_dest = copy_folder(folder, dest_path / new_folder_name, reporter)
 
-            # Update progress bar if a callback object has been given
-            # Make sure there's a noticeable movement after copying a spectrum,
-            # otherwise it looks frozen
-            if reporter is not None:
-                reporter.set_max_progress(reporter.max_progress() + 5)
-                reporter.increment_progress(5)
+            # Update progress bar to make sure there's a noticeable movement after
+            # copying a spectrum, otherwise it looks frozen
+            reporter.set_max_progress(reporter.max_progress() + 5)
+            reporter.increment_progress(5)
             
             # Go back to checking
             reporter.set_status("Checking…")

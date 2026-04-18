@@ -1,6 +1,7 @@
 import datetime
 from pathlib import Path
 import platform
+import sys
 
 from .config import Config
 from .spec import Spectrometer
@@ -13,8 +14,12 @@ class PrintingReporter(Reporter):
         self._progress = 0
         self._max_progress = 0
         self._status = ""
-        self.copied = []
-        self.output = []
+        self._messages = []
+        self._copied = []
+        self._errors = []
+
+    def status(self) -> str:
+        return self._status
 
     def set_status(self, message):
         self._status = message
@@ -24,7 +29,12 @@ class PrintingReporter(Reporter):
         return self._progress
     
     def report_progress(self):
-        print(f"Progress: {round((self._progress / self._max_progress) * 100)}%", end="\r")
+        # If there's nothing to check anyway then obviously we're already finished
+        # Not guarding here causes a divide-by-zero error when no server or folder on it is found
+        if self._max_progress == 0:
+            print(f"Progress: {100}%", end="\r")
+        else:
+            print(f"Progress: {round((self._progress / self._max_progress) * 100)}%", end="\r")
 
     def reset_progress(self):
         self._progress = 0
@@ -41,17 +51,31 @@ class PrintingReporter(Reporter):
         self._max_progress = max
         #print(f"New max progress: {max}")
 
-    def add_output(self, line: str):
-        self.output.append(line)
-        print(line)
+    def messages(self) -> list[str]:
+        return self._messages
+
+    def add_message(self, message: str):
+        self._messages.append(message)
+        print(message)
+
+    def copied(self) -> list[str]:
+        return self._copied
 
     def add_copied(self, name: str):
-        self.copied.append(name)
+        self._copied.append(name)
+        self.add_message(f"Spectrum found: {name}")
+
+    def errors(self) -> list[str]:
+        return self._errors
+
+    def add_error(self, error: str):
+        self._errors.append(error)
+        print(error, file=sys.stderr)
 
     def finish(self, completion_message: str):
         self._progress = self._max_progress
         self.report_progress()
-        self.output.append(completion_message)
+        self._messages.append(completion_message)
         print(completion_message)
 
 
