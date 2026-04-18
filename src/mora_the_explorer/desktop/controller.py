@@ -1,7 +1,7 @@
 import logging
 import platform
 from copy import deepcopy
-from datetime import date
+import datetime
 from pathlib import Path
 from urllib.parse import quote
 
@@ -38,14 +38,7 @@ class Controller:
         2. The contents are compared to the same file that is deposited on the
            server to see if updates are available.
         """
-        self.config = config
         self.version_header = version_header
-
-        # Create new instances of the different singletons
-        # Create instance of Explorer (back-end)
-        #logging.info("Initializing explorer...")
-        #self.explorer = Explorer(config)
-        #logging.info("...complete")
 
         # Create instance of `MainWindow` (front-end), then show it
         logging.info("Initializing user interface...")
@@ -53,153 +46,35 @@ class Controller:
         self.main_window.show()
         logging.info("...complete")
 
-#        # Timer for repeat check, starts checking function when timer runs out
-#        self.timer = QTimer()
-#        self.timer.setSingleShot(True)
-#        self.timer.timeout.connect(self.started)
-#
-#        # Check for updates
-#        self.update_check(self.update_path)
+        ## Timer for repeat check, starts checking function when timer runs out
+        #self.timer = QTimer()
+        #self.timer.setSingleShot(True)
+        #self.timer.timeout.connect(self.started)
 
-#    def update_check(self, update_path: Path):
-#        """Check for updates at location specified."""
-#
-#        logging.info(f"Checking for updates at: {update_path}")
-#        update_path_version_file = update_path / "version.txt"
-#        with open(self.rsrc_dir / "version.txt", encoding="utf-8") as f:
-#            version_no = f.readlines()[2].rstrip()
-#            logging.info(f"Current version: {version_no}")
-#        try:
-#            if update_path_version_file.exists() is True:
-#                with open(update_path_version_file, encoding="utf-8") as f:
-#                    version_file_info = f.readlines()
-#                    newest_version_no = version_file_info[2].rstrip()
-#                    changelog = "".join(version_file_info[5:]).rstrip()
-#                if version_no != newest_version_no:
-#                    self.main_window.notify_update(
-#                        version_no, newest_version_no, changelog, self.update_path
-#                    )
-#        except PermissionError:
-#            self.main_window.notify_failed_permissions()
-#
-#    def connect_signals(self):
-#        """Connect all the signals from the UI elements to the various handlers.
-#
-#        When the effects are only relevant for the UI, the handlers are methods of
-#        the `MainWindow`, while those that trigger backend logic and searching are
-#        connected to methods of `self`.
-#
-#        To allow for a better overview, however, all signals are connected here.
-#        """
-#        # Remember that self.ui = self.main_window.ui
-#        # and self.opts = self.main_window.ui.opts
-#        self.ui.version_box.linkActivated.connect(self.report_bug)
-#        self.opts.initials_entry.textChanged.connect(self.initials_changed)
-#        self.opts.group_buttons.buttonClicked.connect(self.group_changed)
-#        self.opts.other_box.currentTextChanged.connect(self.group_changed)
-#        self.opts.dest_path_input.textChanged.connect(
-#            self.main_window.dest_path_changed
-#        )
-#        self.opts.open_button.clicked.connect(self.open_destination)
-#        self.opts.inc_user_checkbox.stateChanged.connect(
-#            self.main_window.inc_user_switched
-#        )
-#        self.opts.inc_solvent_checkbox.stateChanged.connect(
-#            self.main_window.inc_solvent_switched
-#        )
-#        self.opts.nmrcheck_style_checkbox.stateChanged.connect(
-#            self.main_window.nmrcheck_style_switched
-#        )
-#        self.opts.inc_original_checkbox.stateChanged.connect(
-#            self.main_window.inc_original_changed
-#        )
-#        self.opts.inc_original_box.currentTextChanged.connect(
-#            self.main_window.inc_original_changed
-#        )
-#        self.opts.spec_buttons.buttonClicked.connect(self.main_window.spec_changed)
-#        self.opts.repeat_check_checkbox.stateChanged.connect(
-#            self.main_window.repeat_switched
-#        )
-#        self.opts.repeat_interval.valueChanged.connect(
-#            self.main_window.repeat_delay_changed
-#        )
-#        self.opts.save_button.clicked.connect(self.main_window.save)
-#        self.opts.since_button.toggled.connect(
-#            self.main_window.since_function_activated
-#        )
-#        self.opts.date_selector.dateChanged.connect(self.date_changed)
-#        self.opts.today_button.clicked.connect(self.main_window.set_date_as_today)
-#        self.ui.start_check_button.clicked.connect(self.started)
-#        self.ui.interrupt_button.clicked.connect(self.interrupted)
-#        self.ui.notification.clicked.connect(self.main_window.notification_clicked)
-#
-#    def report_bug(self, mailto_link):
-#        """Open a draft email containing some basic information."""
-#
-#        # Get version number
-#        with open(self.rsrc_dir / "version.txt", encoding="utf-8") as f:
-#            version_no = f.readlines()[2].strip().replace("<br>", "")
-#        # Get system info
-#        os_info = platform.uname()
-#        # Get path to log
-#        log_location = str(logging.getLogger().handlers[0].baseFilename)
-#        email_info = "\n".join([
-#            f"Version: {version_no}",
-#            f"System: {os_info.system} {os_info.release}, {os_info.machine}",
-#            "Description: (please describe your bug)",
-#            f"Log: (please insert the contents of your log here, found at {log_location})",
-#        ])
-#        escaped_info = quote(email_info)
-#        url = QUrl(
-#            f"{mailto_link}?subject=Mora%20the%20Explorer%20bug&body={escaped_info}"
-#        )
-#        QDesktopServices.openUrl(url)
-#
-#    def open_destination(self):
-#        """Show the destination folder for spectra in the system file browser."""
-#
-#        if Path(self.config.options["dest_path"]).exists() is True:
-#            url = QUrl.fromLocalFile(self.config.options["dest_path"])
-#            QDesktopServices.openUrl(url)
-#
-#    def initials_changed(self, new_initials):
-#        """Make necessary adjustments after the user types something in `initials`.
-#
-#        The main effect is simply that the new initials should be saved in the config
-#        and the save button should be activated.
-#
-#        The `nmr` group has the ability to use a wildcard `*` followed by a space in the
-#        initials box to indicate that all groups should be matched for the following
-#        user's initials e.g. `* mjm` will search for spectra of MJM everywhere, not just
-#        in the Studer group's folders.
-#        As a result the maximum length of the initials entry needs to be increased when
-#        the wildcard is used.
-#        """
-#        if len(new_initials) == 0:
-#            # Just reset the max length
-#            self.opts.initials_entry.setMaxLength(3)
-#        else:
-#            if (new_initials[0] == "*") and (self.config.options["group"] == "nmr"):
-#                self.opts.initials_entry.setMaxLength(5)
-#                self.wild_group = True
-#                try:
-#                    new_initials = new_initials.split()[1]
-#                except IndexError:
-#                    new_initials = ""
-#            self.config.options["initials"] = new_initials
-#            self.opts.save_button.setEnabled(True)
-#
-#    def group_changed(self):
-#        self.main_window.group_changed()
-#        self.adapt_paths_to_group(self.config.options["group"])
-#
-#    def adapt_paths_to_group(self, group):
-#        if group != "nmr":
-#            # Make sure wild option is turned off for normal users
-#            self.wild_group = False
-#
-#    def date_changed(self):
-#        self.date_selected = self.opts.date_selector.date().toPython()
+        ## Check for updates
+        #self.update_check(self.update_path)
+
+        # Connect the key signals
+        #self.main_window.started.connect(self.start_check)
+
+    def start_check(self):
+        # Create instance of Explorer (back-end)
+        logging.info("Initializing new explorer...")
+        self.explorer = Explorer(deepcopy(self.main_window.config))
+        logging.info("...complete")
+
+        if not self.main_window.date_selector.multiday():
+            reporter = self.explorer.single_check(
+                self.main_window.date_selector.date(),
+                reporter=None, # TODO Make a reporter that passes output back to the GUI
+            )
+        else:
+            reporter = self.explorer.multiday_check(
+                self.main_window.date_selector.date(),
+                reporter=None, # TODO Make a reporter that passes output back to the GUI
+            )
+        for output_line in reporter.output:
+            self.main_window.display.add_entry(output_line)
 #
 #    def started(self):
 #        self.explorer.queued_checks = 0
@@ -222,6 +97,27 @@ class Controller:
 #                status_bar=self.ui.status_bar,
 #                completion_handler=self.check_ended,
 #            )
+
+#    def update_check(self, update_path: Path):
+#        """Check for updates at location specified."""
+#
+#        logging.info(f"Checking for updates at: {update_path}")
+#        update_path_version_file = update_path / "version.txt"
+#        with open(self.rsrc_dir / "version.txt", encoding="utf-8") as f:
+#            version_no = f.readlines()[2].rstrip()
+#            logging.info(f"Current version: {version_no}")
+#        try:
+#            if update_path_version_file.exists() is True:
+#                with open(update_path_version_file, encoding="utf-8") as f:
+#                    version_file_info = f.readlines()
+#                    newest_version_no = version_file_info[2].rstrip()
+#                    changelog = "".join(version_file_info[5:]).rstrip()
+#                if version_no != newest_version_no:
+#                    self.main_window.notify_update(
+#                        version_no, newest_version_no, changelog, self.update_path
+#                    )
+#        except PermissionError:
+#            self.main_window.notify_failed_permissions()
 #
 #    def check_ended(self, copied_list):
 #        self.explorer.queued_checks -= 1

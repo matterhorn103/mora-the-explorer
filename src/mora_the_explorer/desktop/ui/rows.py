@@ -380,8 +380,11 @@ class RepeatSelector(RowComponent):
         self.repeat_box.setChecked(repeat)
 
     def set_repeat_enabled(self, enabled: bool):
-        """Set the repeat function box to be enabled or disabled."""
+        """Set the checkbox and interval spinbox to be enabled or disabled."""
+        if not enabled:
+            self.repeat_box.setChecked(False)
         self.repeat_box.setEnabled(enabled)
+        self.interval_box.setEnabled(enabled)
 
     def interval(self) -> int:
         """Get the current repeat interval."""

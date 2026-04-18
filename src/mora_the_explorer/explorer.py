@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+import datetime
 from pathlib import Path
 import platform
 
@@ -107,7 +107,7 @@ class Explorer:
         )
         return rules
 
-    def single_check(self, date: date, reporter: Reporter | None = None) -> Reporter:
+    def single_check(self, date: datetime.date, reporter: Reporter | None = None) -> Reporter:
         """Conduct a check of a single date.
         
         Returns the `Reporter` it was passed, or the default `PrintingReporter`
@@ -161,7 +161,7 @@ class Explorer:
         return reporter
 
     def multiday_check(
-        self, initial_date: date, reporter: Reporter | None = None,
+        self, initial_date: datetime.date, reporter: Reporter | None = None,
     ) -> Reporter:
         """Check multiple days in sequence.
         
@@ -172,10 +172,10 @@ class Explorer:
         # If the caller didn't provide a reporter, just create a basic one
         reporter = reporter if reporter else PrintingReporter()
 
-        end_date = date.today() + timedelta(days=1)
+        end_date = datetime.date.today() + datetime.timedelta(days=1)
         date_to_check = initial_date
         while date_to_check != end_date:
             self.single_check(date_to_check, reporter)
-            date_to_check += timedelta(days=1)
+            date_to_check += datetime.timedelta(days=1)
 
         return reporter
