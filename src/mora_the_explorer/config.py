@@ -55,7 +55,7 @@ class Paths:
 
     def server(self):
         """Return the server path for the current platform."""
-        getattr(self, platform.system().lower())
+        return getattr(self, platform.system().lower())
 
     def set_server(self, path: str):
         """Set the server path for the current platform."""

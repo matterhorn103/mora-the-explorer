@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 import datetime
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QUrl
+from PySide6.QtCore import Qt, QUrl, Slot
 from PySide6.QtGui import QDesktopServices, QShortcut, QKeySequence
 from PySide6.QtWidgets import (
     QMainWindow,
@@ -74,6 +74,7 @@ class DirSelector(RowComponent):
         """Set the path in the entry field."""
         self.entry_field.setText(str(path))
 
+    @Slot()
     def pick_path(self):
         """Open a file dialog for the user to select a directory on the system.
         
@@ -82,6 +83,7 @@ class DirSelector(RowComponent):
         choice = QFileDialog.getExistingDirectory(self.pick_button, "Select Folder", str(Path.home()))
         self.set_path(choice)
 
+    @Slot()
     def go_to(self):
         """Opens the path in the system file explorer."""
 
@@ -229,6 +231,7 @@ class OverflowSelector(RowComponent):
         else:
             raise ValueError(f"{option} does not have a corresponding button!")
         
+    @Slot()
     def _on_button_click(self, id: int):
         """Adapt to a change in the checked button."""
         if id == 100:
@@ -443,6 +446,7 @@ class DateSelector(RowComponent):
     def set_date(self, date: datetime.date):
         self.date_selector.setDate(date)
 
+    @Slot()
     def set_to_today(self):
         self.set_date(datetime.date.today())
 

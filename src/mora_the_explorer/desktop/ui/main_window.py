@@ -2,7 +2,7 @@ import logging
 import platform
 from urllib.parse import quote
 
-from PySide6.QtCore import Qt, QSize, QUrl, Signal
+from PySide6.QtCore import Qt, QSize, QUrl, Signal, Slot
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QMainWindow,
@@ -44,15 +44,15 @@ class MainWindow(QMainWindow):
     e.g. a `Controller`.
     """
 
+    # A couple of signals we can emit for a Controller to intercept
+    started = Signal()
+    interrupted = Signal()
+
     def __init__(self, config: Config, version_header: str, admin_mode: bool):
         super().__init__()
 
         self.config = config
         self.admin_mode = admin_mode
-
-        # A couple of signals we can emit
-        self.started = Signal()
-        self.interrupted = Signal()
 
         self.setWindowTitle("Mora the Explorer")
 
@@ -172,7 +172,7 @@ class MainWindow(QMainWindow):
         self.grid.addWidget(self.notification, 15, 0, 1, 3)
 
         # Connect all the signals and slots
-        self.version_info.linkActivated.connect(self.report_bug)
+        self.version_info.linkActivated.connect(self._on_bug_report_link_clicked)
         self.user_entry.entry_field.textEdited.connect(self._on_user_changed)
         if admin_mode:
             self.group_entry.entry_field.textEdited.connect(self._on_group_changed)
@@ -220,48 +220,23 @@ class MainWindow(QMainWindow):
     def notify_spectra(self):
         """Tell the user that spectra were found, both in the app and with a system toast."""
         notification_text = "Spectra have been found!"
-        self.ui.notification.setText(
+        self.notification.setText(
             notification_text + " Ctrl+G to go to. Click to dismiss"
         )
-        self.ui.notification.setStyleSheet("background-color : limegreen")
-        self.ui.notification.show()
+        self.notification.setStyleSheet("background-color : limegreen")
+        self.notification.show()
         #self.send_toast(notification_text)
 
-    def report_bug(self, mailto_link):
-        """Open a draft email containing some basic information."""
-
-        # Get version number
-        with open(self.rsrc_dir / "version.txt", encoding="utf-8") as f:
-            version_no = f.readlines()[2].strip().replace("<br>", "")
-        # Get system info
-        os_info = platform.uname()
-        # Get path to log
-        log_location = str(logging.getLogger().handlers[0].baseFilename)
-        email_info = "\n".join([
-            f"Version: {version_no}",
-            f"System: {os_info.system} {os_info.release}, {os_info.machine}",
-            "Description: (please describe your bug)",
-            f"Log: (please insert the contents of your log here, found at {log_location})",
-        ])
-        escaped_info = quote(email_info)
-        url = QUrl(
-            f"{mailto_link}?subject=Mora%20the%20Explorer%20bug&body={escaped_info}"
-        )
-        QDesktopServices.openUrl(url)
-
-    #def notify_error(self, copied_list):
-    #    """Tell the user that an error occurred, both in the app and with a system toast."""
-    #    self.ui.notification.setStyleSheet("background-color : #cc0010; color : white")
-    #    try:
-    #        if "Error" in copied_list[0]:
-    #            notification_text = "Error: Python " + copied_list[0]
-    #        else:
-    #            notification_text = "Error: " + copied_list[0]
-    #    except IndexError:
-    #        notification_text = "Unknown error occurred."
-    #    self.ui.notification.setText(notification_text + " Click to dismiss")
-    #    self.ui.notification.show()
-    #    self.send_toast(notification_text)
+    def notify_error(self, error: str | None):
+        """Tell the user that an error occurred, both in the app and with a system toast."""
+        self.notification.setStyleSheet("background-color : #cc0010; color : white")
+        if error:
+            notification_text = "Error: Python " + error
+        else:
+            notification_text = "Unknown error occurred."
+        self.notification.setText(notification_text + " Click to dismiss")
+        self.notification.show()
+        #self.send_toast(notification_text)
 
     #def send_toast(self, text: str):
     #    """Spawn a system toast notification."""
@@ -301,14 +276,40 @@ class MainWindow(QMainWindow):
                 QDesktopServices.openUrl(url)
 
     # Slots
+    @Slot()
+    def _on_bug_report_link_clicked(self, mailto_link: str):
+        """Open a draft email containing some basic information."""
+
+        # Get version number
+        with open(self.rsrc_dir / "version.txt", encoding="utf-8") as f:
+            version_no = f.readlines()[2].strip().replace("<br>", "")
+        # Get system info
+        os_info = platform.uname()
+        # Get path to log
+        log_location = str(logging.getLogger().handlers[0].baseFilename)
+        email_info = "\n".join([
+            f"Version: {version_no}",
+            f"System: {os_info.system} {os_info.release}, {os_info.machine}",
+            "Description: (please describe your bug)",
+            f"Log: (please insert the contents of your log here, found at {log_location})",
+        ])
+        escaped_info = quote(email_info)
+        url = QUrl(
+            f"{mailto_link}?subject=Mora%20the%20Explorer%20bug&body={escaped_info}"
+        )
+        QDesktopServices.openUrl(url)
+
+    @Slot()
     def _on_user_changed(self):
         self.config.options.user = self.user_entry.text()
         self.save_button.setEnabled(True)
 
+    @Slot()
     def _on_name_changed(self):
         self.config.options.user_name = self.name_entry.text()
         self.save_button.setEnabled(True)
 
+    @Slot()
     def _on_group_changed(self):
         if self.admin_mode:
             group = self.group_entry.text()
@@ -321,16 +322,19 @@ class MainWindow(QMainWindow):
             self.refresh_visible_specs()
         self.save_button.setEnabled(True)
 
+    @Slot()
     def _on_group_name_changed(self):
         self.config.options.group_name = self.group_name_entry.text()
         self.save_button.setEnabled(True)
 
+    @Slot()
     def _on_server_path_changed(self):
         self.config.paths.set_server(self.server_entry.path())
         self.save_button.setEnabled(True)
 
+    @Slot()
     def _on_dest_path_changed(self):
-        self.config.paths.save(self.dest_entry.path())
+        self.config.paths.save = self.dest_entry.path()
         self.save_button.setEnabled(True)
 
     #def _on_dest_path_changed(self, new_path):
@@ -347,50 +351,61 @@ class MainWindow(QMainWindow):
     #    self.opts.open_button.show()
     #    self.save_button.setEnabled(True)
 
+    @Slot()
     def _on_inc_user_toggled(self):
         self.config.options.inc_user = self.folder_name_options.inc_user()
         self.save_button.setEnabled(True)
 
+    @Slot()
     def _on_inc_solvent_toggled(self):
         self.config.options.inc_solvent = self.folder_name_options.inc_solvent()
         self.save_button.setEnabled(True)
 
+    @Slot()
     def _on_inc_frequency_toggled(self):
         self.config.options.inc_frequency = self.folder_name_options.inc_frequency()
         self.save_button.setEnabled(True)
     
+    @Slot()
     def _on_inc_original_toggled(self):
         self.config.options.inc_original = self.folder_name_options.inc_original()
         self.save_button.setEnabled(True)
 
+    @Slot()
     def _on_spec_changed(self):
         self.config.options.spec = self.spec_selector.selected()
         self.adapt_to_spec()
         self.save_button.setEnabled(True)
 
+    @Slot()
     def _on_repeat_toggled(self):
         self.config.options.repeat_switch = self.repeat_options.repeat()
         self.save_button.setEnabled(True)
 
+    @Slot()
     def _on_repeat_delay_changed(self):
         self.config.options.repeat_delay = self.repeat_options.interval()
         self.save_button.setEnabled(True)
 
+    @Slot()
     def _on_save_button_clicked(self):
         self.config.save()
         self.save_button.setEnabled(False)
 
+    @Slot()
     def _on_multiday_toggled(self):
         if self.date_selector.multiday():
             self.repeat_options.set_repeat_enabled(False)
         else:
             self.adapt_to_spec()
 
+    @Slot()
     def _on_start_button_clicked(self):
         self.started.emit()
 
+    @Slot()
     def _on_notification_clicked(self):
-        self.ui.notification.hide()
+        self.notification.hide()
 
 #    def notify_failed_permissions(self):
 #        """Spawn popup to notify user that accessing the mora server failed."""
