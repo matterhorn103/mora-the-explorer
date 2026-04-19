@@ -56,6 +56,9 @@ class MetadataRules:
         Again, the list of strings is considered as a list of variable names.
         strftime formatting strings beginning with `%` are replaced by the
         appropriately formatted component of the date.
+        If an entry in the list is another sublist of strings, the first variable
+        in the sublist with a value will be used i.e. they are treated as mutually
+        exclusive.
 
         For example, if the above title had been supplemented by metadata from
         the spectrum files such that a few other variables were available:
@@ -199,13 +202,30 @@ def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetada
     metadata.experiment = details_split[0]
     metadata.solvent = details_split[1]
 
+    # Get magnet frequency
+    uxnmr_info_file = folder / "uxnmr.info"
+    if uxnmr_info_file.exists():
+        with open(uxnmr_info_file, encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("1H-frequency"):
+                    # Line has format "1H-frequency : 300.26 MHz"
+                    metadata.frequency = int(float(line.split()[2]))
+                    break
+
     return metadata
 
 
 def get_metadata_agilent(folder: Path, rules: MetadataRules) -> MeasurementMetadata:
-    # Find out magnet strength, set to None initially
-    magnet_freq = None
-    while magnet_freq is None:
+    title = folder.name
+    metadata = MeasurementMetadata.from_title(title, rules)
+    metadata.path = str(folder)
+    metadata.folder_name = folder.name
+    metadata.manufacturer = Manufacturer.AGILENT
+    # One folder contains multiple measurements
+    metadata.experiment = "set"
+
+    # Get magnet strength
+    while metadata.frequency is None:
         for subfolder in folder.iterdir():
             text_file = subfolder / "text"
             if text_file.exists():
@@ -221,14 +241,20 @@ def get_metadata_agilent(folder: Path, rules: MetadataRules) -> MeasurementMetad
                         # Only want numbers, naturally
                         if char.isdigit():
                             magnet_freq += char
+                    metadata.frequency = int(magnet_freq)
         break
-
-    title = folder.name
-    metadata = MeasurementMetadata.from_title(title, rules)
-    metadata.path = str(folder)
-    metadata.folder_name = folder.name
-    metadata.manufacturer = Manufacturer.AGILENT
-    metadata.frequency = int(magnet_freq)
+    
+    # Get solvent
+    sample_info_file = folder / "dirinfo/macdir/sampleinfo"
+    if sample_info_file.exists():
+        with open(sample_info_file, encoding="utf-8") as f:
+            sample_info = f.read()
+        # Contains a line in the format "SOLVENT: cdcl3"
+        try:
+            solvent = sample_info.splitlines()[3].split()[1]
+            metadata.solvent = solvent
+        except Exception:
+            pass
 
     return metadata
 
@@ -253,6 +279,10 @@ def generate_folder_name(
     """Format folder name according to the prescribed rules."""
     parts = []
     for field in rules.dest_fields:
+        if isinstance(field, list):
+            for mutually_exclusive_field in field:
+                if getattr(metadata, mutually_exclusive_field, None) is not None:
+                    field = mutually_exclusive_field
         if field.startswith("%"):
             # strftime formatting strings beginning with `%` are replaced by the
             # appropriately formatted component of the date
@@ -271,6 +301,7 @@ def generate_folder_name(
                 continue
             else:
                 # Use unknown in its place
+                print(f"{field} is unknown")
                 parts.append("unknown")
     # Join with desired separator, normalize to all lower case
     name = rules.dest_sep.join(parts).lower()

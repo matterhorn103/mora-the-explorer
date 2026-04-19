@@ -92,9 +92,8 @@ class Explorer:
         spec_info = self.config.specs[options.spec]
         # Put together the way the folder names should be formatted
         if options.inc_user:
-            # The duplication is OK because only the one that is actually in
-            # the measurement title will be included (so it might actually be both)
-            name_format = ["user_name", "user", "sample_info", "experiment"]
+            # Treat user name and user as mutually exclusive, prioritise the user
+            name_format = [["user", "user_name"], "sample_info", "experiment"]
         else:
             name_format = ["sample_info", "experiment"]
         if options.inc_solvent:

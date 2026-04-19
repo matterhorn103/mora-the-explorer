@@ -88,13 +88,26 @@ class TestExplorer:
         reporter = explorer.single_check(date(2023, 10, 15))
         assert reporter.copied()[0] == "mjm-500-1-proton"
 
+    def test_with_freq(self):
+        explorer = mock_explorer()
+        explorer.config.options.spec = "av300"
+        explorer.config.options.inc_user = True
+        explorer.config.options.inc_solvent = False
+        explorer.config.options.inc_frequency = True
+        reporter = explorer.single_check(date(2023, 10, 15))
+        # Note that only this specific spectrum has the uxnmr.info file in the mock server setup
+        assert reporter.copied()[0] == "mjm-500-1-proton-300"
+        reporter = explorer.single_check(date(2023, 10, 16))
+        # Whereas this one doesn't
+        assert reporter.copied()[0] == "mjm-501-1-proton-unknown"
+
     def test_agilent(self):
         explorer = mock_explorer()
         explorer.config.options.spec = "v600"
         explorer.config.options.inc_user = True
-        explorer.config.options.inc_solvent = False
+        explorer.config.options.inc_solvent = True
         reporter = explorer.single_check(date(2023, 10, 15))
-        assert reporter.copied()[0] == "mjm-500-1"
+        assert reporter.copied()[0] == "mjm-500-1-set-cdcl3"
 
     def test_agilent_with_freq(self):
         explorer = mock_explorer()
@@ -103,4 +116,4 @@ class TestExplorer:
         explorer.config.options.inc_solvent = False
         explorer.config.options.inc_frequency = True
         reporter = explorer.single_check(date(2023, 10, 15))
-        assert reporter.copied()[0] == "mjm-500-1-600"
+        assert reporter.copied()[0] == "mjm-500-1-set-600"

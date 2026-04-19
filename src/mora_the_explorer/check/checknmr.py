@@ -373,7 +373,7 @@ def check_nmr(
                 logging.info("Spectrum matches search query!")
 
             # Formatting
-            new_folder_name = generate_folder_name(metadata, rules)
+            new_folder_name = generate_folder_name(metadata, rules, drop_missing=False)
 
             # Copy, add output messages to main output list
             reporter.set_status("Comparing metadata…")

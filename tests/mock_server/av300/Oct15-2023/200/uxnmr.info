@@ -1,0 +1,103 @@
+CONFIGURATION INFORMATION
+=========================
+
+Path         : /opt/topspin3.2pl7/conf/instr/spect/uxnmr.info
+Date         : Mon Oct 14 14:38:13 2024
+Release      : TOPSPIN Version 3.2-pl7
+Installed in : /opt/topspin3.2pl7
+Host         : av300
+OS           : CentOS Linux release 7.9.2009 (Core)
+CPU          : Intel(R) Xeon(R) CPU E5-1620 v3 @ 3.50GHz (8 cores at 1900 MHz with Hyperthreading)
+User         : av1 (av1)
+Description  : Avance-AV 300
+Location     : Organisch-Chemisches Institut Muenster
+System       : Avance-AV NMR spectrometer
+1H-frequency : 300.26 MHz
+Order Number : HH008006
+Configured in: /opt/topspin3.2pl7/conf/instr/spect
+
+#--------------------
+#  FCU configuration:
+#--------------------
+board # 1 :
+	MEMORY 0x1ff000	(=511 k Words)
+	PAL-Version 0x104 = new version (EC level 07 or more)
+board # 2 :
+	MEMORY 0x1ff000	(=511 k Words)
+	PAL-Version 0x104 = new version (EC level 07 or more)
+board # 3 :
+	MEMORY 0x1ff000	(=511 k Words)
+	PAL-Version 0x104 = new version (EC level 07 or more)
+board # 4 :
+	MEMORY 0x1ff000	(=511 k Words)
+	PAL-Version 0x104 = new version (EC level 07 or more)
+
+DRU: DEB_DEFAULT 
+- TCP/IP address = 149.236.99.77
+- Firmware Version = 151014
+
+Gcu: GCU3_SlowIF
+
+AQS: connected to spect:/dev/tty10
+  _Slot_ SBSB _____________________Board_____________________
+  Number Addr Type HW-VS FW-VS ID  ECL Name   Description
+  -----------------------------------------------------------
+     2   0x10 0x72   0x3    AW  R  3.0 REC-1  AQS RXAD400 Z102116/539 ECL 03.00
+     3   0x34  0x2   0x1        X  5.3 REF-1  REF-400 Reference Board for AQS Receiver
+     4   0x24 0x10   0x4    BH  S  6.2 SGU-1  AQS SGU400 Z003642/04302 ECL 6.2
+     5   0x25 0x10   0x4    BH  S  6.2 SGU-2  AQS SGU400 Z003642/04301 ECL 6.2
+     9   0x36  0x5     0        A  6.0 BLA-1  BLA2BB 150/60 20-400 W1345049/1713 ECL 6
+    11   0x1a  0x9     0        C  3.0 ACB-S  ACB Standard
+    23   0x20 0xc6     0        B  1.2 AQS/2  AQS/2 chassis
+    25   0x20  0x7     0        B      MASTER AQS Rack Master
+  Logical Receiver/SGU configuration:
+
+
+Router: 1 AQS-Minirouter
+
+
+Amplifiers (AQS configuration):
+  RO  Amplifier  Module  Nucleus  Power/W  Switchbox Name PN/SN/FW
+   1      1         1        B      150    N         BLA2BB 150/60 20-400 W1345049/1713/-
+   2      1         2        B       60    N         BLA2BB 150/60 20-400 W1345049/1713/-
+   3      2         1       2H       20    N         BSMS 2HTX -/-/-
+
+
+
+BSMS: BSMS/2 connected to ethernet
+- TCP/IP address = 149.236.99.21
+- ELCB firmware version = 20150423
+- GAB current limits = 0.0/X, 0.0/Y, 10.0/Z (in A)
+- SCB channels = 20
+- Shim System = BOSS1-SB
+- 2HTX Amplifier: connected to router output 3
+- Lock: installed
+
+Bruker Automatic Changer: device connected to spect:/dev/tty06
+- Capacity: 60 holders
+- Firmware: 20040805
+- use BACS air  = yes
+- BACS sx delay = 10 s
+- Sample Rail fast changer mode = no
+
+Eurotherm VTU: device connected to spect:/dev/tty05
+
+Preamplifiers :
+HPPR: - HPPR/2 preamplifier connected to spect:/dev/tty10
+    Type      : HPPR/2
+    Controller: Application firmware = AQ
+                15 LEDs for tuning, 15 LEDs for matching
+    Module  1 : 1H/2H 1H (virtual 50 Ohm reference: 24.2%/77.0deg)
+                 PN=Z003958, SN=00135 from 20061109
+    Module  2 : 1H/2H 2H (virtual 50 Ohm reference: 44.6%/-64.4deg)
+                 PN=Z003958, SN=00135 from 20061109
+    Module  3 : XBB19F 2HS
+                 PN=Z003502, SN=00110 from 20060925
+
+
+Frequency generation:
+- F1: for SGU
+- F2: for SGU
+
+
+
