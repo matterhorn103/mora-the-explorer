@@ -343,10 +343,12 @@ def check_nmr(
                     and "user" in rules.conditions
                     and rules.conditions["user"] not in folder.name
                 ):
+                    logging.info("User missing from folder name - skipping detailed metadata analysis")
                     reporter.increment_progress()
                     continue
                 # Otherwise resolve the metadata fully
                 metadata = get_metadata(folder, rules, manufacturer)
+                logging.info(f"Measurement title: {metadata.title}")
                 # Some things are not typically resolved by the get_metadata function
                 # but can be supplied because we know them already
                 metadata.manufacturer = manufacturer
@@ -384,6 +386,6 @@ def check_nmr(
             reporter.set_status("Checking…")
 
     now = datetime.datetime.now().strftime("%H:%M:%S")
-    completed_statement = f"Check completed at {now}"
+    completed_statement = f"Check of {date} completed at {now}"
     logging.info(completed_statement)
     reporter.finish(completed_statement)

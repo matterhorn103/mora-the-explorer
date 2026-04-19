@@ -95,6 +95,7 @@ class MeasurementMetadata:
     folder_name: str | None = None
     manufacturer: Manufacturer | None = None
     date: datetime.date | None = None
+    title: str | None = None
     user: str | None = None
     user_name: str | None = None
     group: str | None = None
@@ -145,6 +146,9 @@ class MeasurementMetadata:
             extracted["sample_info"] = []
 
         result = MeasurementMetadata(**extracted)
+
+        # Add the original title too
+        result.title = title
 
         return result
     

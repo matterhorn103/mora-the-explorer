@@ -20,7 +20,7 @@ class TestCheck:
         title = "stu mjm 213-4 repeat"
         metadata = MeasurementMetadata.from_title(title, self.bruker_rules)
         assert metadata == MeasurementMetadata(
-            group="stu", user="mjm", sample_info=["213", "4", "repeat"]
+            group="stu", user="mjm", sample_info=["213", "4", "repeat"], title=title,
         )
     
     def test_bruker_name_gen(self):
@@ -35,7 +35,9 @@ class TestCheck:
     def test_agilent_title_extraction(self):
         title = "mjm304-1-ß"
         metadata = MeasurementMetadata.from_title(title, self.agilent_rules)
-        assert metadata == MeasurementMetadata(user="mjm", sample_info=["304", "1", "ß"])
+        assert metadata == MeasurementMetadata(
+            user="mjm", sample_info=["304", "1", "ß"], title=title,
+        )
     
     def test_agilent_name_gen(self):
         metadata = MeasurementMetadata(user="mjm", sample_info=["304", "1", "ß"])
