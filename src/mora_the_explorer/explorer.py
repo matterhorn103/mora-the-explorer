@@ -86,14 +86,6 @@ class Explorer:
     def __init__(self, config: Config):
         self.config = config
 
-        # Set up multithreading; MaxThreadCount limited to 1 as checks don't run
-        # properly if multiple run concurrently
-        #self.threadpool = QThreadPool()
-        #self.threadpool.setMaxThreadCount(1)
-
-        # Initialize number of queued checks
-        self.queued_checks = 0
-
     def generate_rules(self) -> MetadataRules:
         """Generate metadata handling rules based on the curent configuration."""
         options = self.config.options

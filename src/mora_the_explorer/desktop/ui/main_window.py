@@ -196,6 +196,8 @@ class MainWindow(QMainWindow):
         # Connect the start/cancel buttons directly to the main window's own signals
         self.status_bar.start_button.clicked.connect(self.started)
         self.status_bar.cancel_button.clicked.connect(self.cancelled)
+        # Also hide the notification if a new check is started
+        self.status_bar.start_button.clicked.connect(self.notification.hide)
 
     def refresh_visible_specs(self):
         """Make sure the available spectrometers reflect what's allowed for the current group."""
@@ -220,17 +222,16 @@ class MainWindow(QMainWindow):
         self.date_selector.set_format(spec_info.date_entry)
 
     def notify_spectra(self):
-        """Tell the user that spectra were found, both in the app and with a system toast."""
+        """Inform the user that spectra were found."""
         notification_text = "Spectra have been found!"
         self.notification.setText(
             notification_text + " Ctrl+G to go to. Click to dismiss"
         )
         self.notification.setStyleSheet("background-color : limegreen")
         self.notification.show()
-        #self.send_toast(notification_text)
 
     def notify_error(self, error: str | None):
-        """Tell the user that an error occurred, both in the app and with a system toast."""
+        """Inform the user that an error occurred."""
         self.notification.setStyleSheet("background-color : #cc0010; color : white")
         if error:
             notification_text = "Error: Python " + error
@@ -238,7 +239,6 @@ class MainWindow(QMainWindow):
             notification_text = "Unknown error occurred."
         self.notification.setText(notification_text + " Click to dismiss")
         self.notification.show()
-        #self.send_toast(notification_text)
 
     #def send_toast(self, text: str):
     #    """Spawn a system toast notification."""
@@ -339,20 +339,6 @@ class MainWindow(QMainWindow):
         self.config.paths.save = self.dest_entry.path()
         self.save_button.setEnabled(True)
 
-    #def _on_dest_path_changed(self, new_path):
-    #    formatted_path = new_path
-    #    # Best way to ensure cross-platform compatibility is to avoid use of backslashes
-    #    # and then let pathlib.Path take care of formatting
-    #    if "\\" in formatted_path:
-    #        formatted_path = formatted_path.replace("\\", "/")
-    #    # If the option "copy path" is used in Windows Explorer and then pasted into the
-    #    # box, the path will be surrounded by quotes, so remove them if there
-    #    if formatted_path[0] == '"':
-    #        formatted_path = formatted_path.replace('"', "")
-    #    self.config.options["dest_path"] = formatted_path
-    #    self.opts.open_button.show()
-    #    self.save_button.setEnabled(True)
-
     @Slot()
     def _on_inc_user_toggled(self):
         self.config.options.inc_user = self.folder_name_options.inc_user()
@@ -404,26 +390,3 @@ class MainWindow(QMainWindow):
     @Slot()
     def _on_notification_clicked(self):
         self.notification.hide()
-
-#    def notify_failed_permissions(self):
-#        """Spawn popup to notify user that accessing the mora server failed."""
-#
-#        logging.info("Permission to access server denied")
-#        failed_permission_dialog = QMessageBox(self)
-#        failed_permission_dialog.setWindowTitle("Access to mora server denied")
-#        failed_permission_dialog.setText("""
-#You have been denied permission to access the mora server.
-#Check the connection and your authentication details and try again.
-#The program will now close.""")
-#        failed_permission_dialog.exec()
-#        sys.exit()
-#
-#    def warn_since_function(self):
-#        """Spawn popup dialog that dissuades user from using the "since" function regularly."""
-#
-#        since_message = """
-#The function to check multiple days at a time should not be used on a regular basis.
-#Please switch back to a single-day check once your search is finished.
-#The repeat function is also disabled as long as this option is selected.
-#            """
-#        QMessageBox.warning(self, "Warning", since_message)

@@ -91,18 +91,6 @@ class DirSelector(RowComponent):
         if target.exists():
             QDesktopServices.openUrl(QUrl.fromLocalFile(target))
 
-        #self.dest_path_label = QLabel("save in:")
-#
-        #self.dest_path_input = 
-        #self.dest_path_input.setText(dest_path)
-#
-        #self.open_button = QPushButton("go to")
-        #self.open_button.setShortcut("Ctrl+G")
-        ## Disable button if path hasn't yet been specified to stop new users thinking it
-        ## should be used to select a folder
-        #if dest_path == "copy full path here":
-        #    self.open_button.hide()
-
 
 class FreeEntryField(RowComponent):
     """A component for entering free text."""

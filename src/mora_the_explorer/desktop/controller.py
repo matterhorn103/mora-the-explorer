@@ -1,6 +1,8 @@
+import datetime
 import logging
 from copy import deepcopy
-import datetime
+from packaging.version import Version
+from pathlib import Path
 
 from PySide6.QtCore import QObject, QTimer, Signal, Slot, QThread
 from PySide6.QtWidgets import QApplication
@@ -83,8 +85,7 @@ class QtReporter(Reporter):
         self._progress = self._max_progress
         self.signals.progress_set.emit(self._max_progress)
         self._messages.append(completion_message)
-        self.signals.day_checked.emit(completion_message)
-        
+        self.signals.day_checked.emit(completion_message)  
     
 
 class QtExplorer(Explorer, QObject):
@@ -148,7 +149,7 @@ class Controller(QObject):
            server to see if updates are available.
         """
         super().__init__()
-        self.version_header = version_header
+        self.version = Version(version_header.splitlines()[2])
 
         # Create instance of `MainWindow` (front-end), then show it
         logging.info("Initializing user interface...")
@@ -156,8 +157,9 @@ class Controller(QObject):
         self.main_window.show()
         logging.info("...complete")
 
-        ## Check for updates
-        #self.update_check(self.update_path)
+        # Check for updates
+        update_path = Path(config.paths.server()) / config.paths.update
+        self.update_check(update_path)
 
         # Connect the key signals
         self.main_window.started.connect(self.check_requested)
@@ -256,23 +258,24 @@ class Controller(QObject):
         self.explorer_thread.quit()  # Tells it to stop
         self.explorer_thread.wait()  # Waits until it has actually done so
 
-#    def update_check(self, update_path: Path):
-#        """Check for updates at location specified."""
-#
-#        logging.info(f"Checking for updates at: {update_path}")
-#        update_path_version_file = update_path / "version.txt"
-#        with open(self.rsrc_dir / "version.txt", encoding="utf-8") as f:
-#            version_no = f.readlines()[2].rstrip()
-#            logging.info(f"Current version: {version_no}")
-#        try:
-#            if update_path_version_file.exists() is True:
-#                with open(update_path_version_file, encoding="utf-8") as f:
-#                    version_file_info = f.readlines()
-#                    newest_version_no = version_file_info[2].rstrip()
-#                    changelog = "".join(version_file_info[5:]).rstrip()
-#                if version_no != newest_version_no:
-#                    self.main_window.notify_update(
-#                        version_no, newest_version_no, changelog, self.update_path
-#                    )
-#        except PermissionError:
-#            self.main_window.notify_failed_permissions()
+    def update_check(self, update_path: Path):
+        """Check for updates at the specified location."""
+
+        logging.info(f"Checking for updates at: {update_path}")
+        update_path_version_file = update_path / "version.txt"
+        try:
+            if update_path_version_file.exists() is True:
+                with open(update_path_version_file, encoding="utf-8") as f:
+                    version_info = f.read()
+            else:
+                logging.info(f"No remote version information found at {update_path_version_file}")
+                return
+        except PermissionError:
+            logging.info("The user does not have the required permissions to access the server!")
+            return
+        remote_version = Version(version_info.splitlines()[2])
+        changelog = "\n".join(version_info.splitlines()[5:])
+        if self.version < remote_version:
+            self.main_window.notify_update(
+                self.version, remote_version, changelog, self.update_path
+            )
