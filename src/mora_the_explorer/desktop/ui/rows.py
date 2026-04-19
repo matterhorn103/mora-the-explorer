@@ -1,13 +1,11 @@
 """Components for the rows of the interface."""
 
-from abc import ABC, abstractmethod
 import datetime
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QUrl, Slot
+from PySide6.QtCore import QObject, Qt, QUrl, Signal, Slot
 from PySide6.QtGui import QDesktopServices, QShortcut, QKeySequence
 from PySide6.QtWidgets import (
-    QMainWindow,
     QPushButton,
     QRadioButton,
     QButtonGroup,
@@ -26,20 +24,28 @@ from PySide6.QtWidgets import (
 from ...spec import Spectrometer
 
 
-class RowComponent(ABC):
+class RowComponent(QObject):
     """A logical grouping of widgets that take up one, or in some cases two, rows
     in the UI, and together set a single option or kind of option."""
 
-    @abstractmethod
+    def __init__(self):
+        super().__init__()
+
     def add_to_grid(self, grid: QGridLayout, row: int):
-        """Add the row's widgets and layouts to the row specified of `grid`."""
-        pass
+        """Add the row's widgets and layouts to the row specified of `grid`.
+        
+        This method should be overridden by subclasses.
+        """
+        raise NotImplementedError
 
 
 class DirSelector(RowComponent):
     """A component for selecting a directory."""
 
+    changed = Signal()
+
     def __init__(self, title: str, go_shortcut: str | None = None):
+        super().__init__()
 
         # Groups four widgets - a title string, an entry field, then two buttons
         self.title = QLabel(title)
@@ -59,6 +65,9 @@ class DirSelector(RowComponent):
         if go_shortcut:
             self.go_shortcut = QShortcut(QKeySequence(go_shortcut), self.entry_field)
             self.go_shortcut.activated.connect(self.go_to)
+
+        # Connect a change in the field to the instance's signal
+        self.entry_field.textChanged.connect(self.changed)
 
     def add_to_grid(self, grid: QGridLayout, row: int):
         grid.addWidget(self.title, row, 0)
@@ -95,7 +104,10 @@ class DirSelector(RowComponent):
 class FreeEntryField(RowComponent):
     """A component for entering free text."""
 
+    changed = Signal()
+
     def __init__(self, title: str, comment: str | None):
+        super().__init__()
 
         # Groups three widgets - a title string, an entry field, then a trailing comment
         self.title = QLabel(title)
@@ -109,6 +121,11 @@ class FreeEntryField(RowComponent):
 
         # Right align the title (but centre vertically)
         self.title.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        # Connect a change in the field to the instance's signal
+        # Use textEdited so that setting it programmatically doesn't trigger it,
+        # only changes made by the user
+        self.entry_field.textEdited.connect(self.changed)
 
     def add_to_grid(self, grid: QGridLayout, row: int):
         grid.addWidget(self.title, row, 0)
@@ -143,7 +160,12 @@ class OverflowSelector(RowComponent):
     """A component that allows selection via a combination of radio buttons
     for main options and a drop-down list for overflow options."""
 
+    # A signal to indicate when the choice has changed, regardless of whether the
+    # change was in the buttons or the drop-down
+    changed = Signal()
+
     def __init__(self, title: str, main: list[str], overflow: list[str]):
+        super().__init__()
 
         # Store the lists of items
         self.main = main
@@ -193,6 +215,10 @@ class OverflowSelector(RowComponent):
         # Have the overflow drop-down be shown when appropriate
         self.buttons.idClicked.connect(self._on_button_click)
 
+        # Connect a change in either the buttons or the drop-down to the instance's signal
+        self.buttons.buttonClicked.connect(self.changed)
+        self.dropdown.currentIndexChanged.connect(self.changed)
+
     def add_to_grid(self, grid: QGridLayout, row: int):
         grid.addWidget(self.title, row, 0)
         grid.addLayout(self.button_stack, row, 1)
@@ -235,11 +261,15 @@ class OverflowSelector(RowComponent):
 class FolderNameOptions(RowComponent):
     """The component for choices relating to folder name customization."""
 
+    # A signal emitted whenever any of the options are toggled
+    changed = Signal()
+
     def __init__(self):
+        super().__init__()
 
         # Three widgets
         self.title = QLabel("include:")
-        self.boxes = QGridLayout()
+        self.box_grid = QGridLayout()
         #self.comment = QLabel("…in folder name")
 
         # Right align the title (but top align vertically)
@@ -247,51 +277,57 @@ class FolderNameOptions(RowComponent):
         # Centre the comment (but top align vertically)
         #self.comment.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
 
-        # Layout contains three check boxes
-        self.user_box = QCheckBox("user")
-        self.exp_box = QCheckBox("experiment")
-        self.solvent_box = QCheckBox("solvent")
-        self.frequency_box = QCheckBox("frequency")
-        self.original_box = QCheckBox("original folder name")
-        self.boxes.addWidget(self.user_box, 0, 0)
-        self.boxes.addWidget(self.exp_box, 0, 1)
-        self.boxes.addWidget(self.solvent_box, 0, 2)
-        self.boxes.addWidget(self.frequency_box, 1, 0)
-        self.boxes.addWidget(self.original_box, 1, 1)
+        # The set of options and the labels that should go next to the checkboxes
+        # `Config` contains a flag for each option with an `inc_` prefix e.g. inc_user
+        self.options = {
+            "user": "user",
+            "experiment": "experiment",
+            "solvent": "solvent",
+            "frequency": "frequency",
+            "original": "original name",
+        }
+        self.boxes = {}
+
+        # Create the checkboxes, add them to the rows, connect up the signals
+        for i, (option, label) in enumerate(self.options.items()):
+            box = QCheckBox(label)
+            self.boxes[option] = box
+            # Fill the first row until half or more of the boxes have been added
+            # First item in new row is thus the item with i == (n + 1) // 2
+            first_i_in_row2 = (len(self.options) + 1) // 2
+            if i < first_i_in_row2:
+                self.box_grid.addWidget(box, 0, i)
+            else:
+                self.box_grid.addWidget(box, 1, i - first_i_in_row2)
+            box.toggled.connect(self.changed)
 
     def add_to_grid(self, grid: QGridLayout, row: int):
         grid.addWidget(self.title, row, 0)
-        grid.addLayout(self.boxes, row, 1)
-        #grid.addLayout(self.boxes, row, 1, 1, 2)
+        # Up to six options fit within the central column
+        if len(self.options) <= 6:
+            grid.addLayout(self.box_grid, row, 1)
+        # More than that and we need to expand into the third column
+        else:
+            grid.addLayout(self.box_grid, row, 1, 1, 2)
         #grid.addWidget(self.comment, row, 2)
     
-    def inc_user(self) -> bool:
-        return self.user_box.isChecked()
+    def checked(self) -> dict[str, bool]:
+        """Get the status of all the checkboxes."""
+        return {k: self.boxes[k].isChecked() for k in self.options.keys()}
     
-    def inc_experiment(self) -> bool:
-        return self.exp_box.isChecked()
-    
-    def inc_solvent(self) -> bool:
-        return self.solvent_box.isChecked()
-    
-    def inc_frequency(self) -> bool:
-        return self.frequency_box.isChecked()
-    
-    def inc_original(self) -> bool:
-        return self.original_box.isChecked()
-    
-    def set_checked(self, user: bool, experiment: bool, solvent: bool, frequency: bool, original: bool):
-        self.user_box.setChecked(user)
-        self.exp_box.setChecked(experiment)
-        self.solvent_box.setChecked(solvent)
-        self.frequency_box.setChecked(frequency)
-        self.original_box.setChecked(original)
+    def set_checked(self, **kwargs: bool):
+        """Set the status of all the checkboxes."""
+        for k, v in kwargs.items():
+            self.boxes[k].setChecked(v)
 
 
 class SpectrometerSelector(RowComponent):
     """The component for choosing the spectrometer to search."""
 
+    changed = Signal()
+
     def __init__(self, specs: dict[str, Spectrometer]):
+        super().__init__()
 
         # Store the items
         self.specs = list(specs.keys())
@@ -313,6 +349,8 @@ class SpectrometerSelector(RowComponent):
 
         # Right align the title (but top align vertically)
         self.title.setAlignment(Qt.AlignRight | Qt.AlignTop)
+
+        self.buttons.buttonClicked.connect(self.changed)
 
     def add_to_grid(self, grid: QGridLayout, row: int):
         grid.addWidget(self.title, row, 0)
@@ -342,7 +380,10 @@ class SpectrometerSelector(RowComponent):
 class RepeatSelector(RowComponent):
     """The component used to instruct to repeat the search after a chosen interval."""
 
+    changed = Signal()
+
     def __init__(self):
+        super().__init__()
 
         # Groups two items: a title and a row of mixed widgets
         self.title = QLabel("repeat:")
@@ -363,6 +404,10 @@ class RepeatSelector(RowComponent):
 
         # A delay of 0 or a negative value would be meaningless
         self.interval_box.setMinimum(1)
+
+        # Emit signal whenever either the status is toggled or the interval is changed
+        self.repeat_box.toggled.connect(self.changed)
+        self.interval_box.valueChanged.connect(self.changed)
 
     def add_to_grid(self, grid: QGridLayout, row: int):
         grid.addWidget(self.title, row, 0)
@@ -396,7 +441,10 @@ class DateSelector(RowComponent):
     """The component used to select the date to be checked and to specify single
     or multi-day check mode."""
 
+    changed = Signal()
+
     def __init__(self):
+        super().__init__()
 
         # Groups three items: a title, a row of mixed widgets, and a button to
         # set the date to the current day
@@ -428,6 +476,9 @@ class DateSelector(RowComponent):
 
         # Right align the title (but centre vertically)
         self.title.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        self.date_button_group.buttonClicked.connect(self.changed)
+        self.date_selector.userDateChanged.connect(self.changed)
 
     def add_to_grid(self, grid: QGridLayout, row: int):
         grid.addWidget(self.title, row, 0)

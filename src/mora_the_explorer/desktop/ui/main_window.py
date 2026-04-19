@@ -119,11 +119,9 @@ class MainWindow(QMainWindow):
         # Folder name options
         self.folder_name_options = rows.FolderNameOptions()
         self.folder_name_options.set_checked(
-            config.options.inc_user,
-            config.options.inc_experiment,
-            config.options.inc_solvent,
-            config.options.inc_frequency,
-            config.options.inc_original,
+            # Each option `user`, `solvent` etc. has a corresponding `inc_user`, `inc_solvent`
+            # etc. flag in the config
+            **{k: getattr(config.options, f"inc_{k}") for k in self.folder_name_options.options.keys()}
         )
         self.folder_name_options.add_to_grid(self.grid, 7)
 
@@ -175,31 +173,25 @@ class MainWindow(QMainWindow):
 
         # Connect all the signals and slots
         self.version_info.linkActivated.connect(self._on_bug_report_link_clicked)
-        self.user_entry.entry_field.textEdited.connect(self._on_user_changed)
+        self.user_entry.changed.connect(self._on_user_changed)
+        self.group_entry.changed.connect(self._on_group_changed)
         if admin_mode:
-            self.group_entry.entry_field.textEdited.connect(self._on_group_changed)
-            self.group_name_entry.entry_field.textEdited.connect(self._on_group_name_changed)
-        else:
-            self.group_entry.buttons.buttonClicked.connect(self._on_group_changed)
-            self.group_entry.dropdown.currentIndexChanged.connect(self._on_group_changed)
-        self.server_entry.entry_field.textChanged.connect(self._on_server_path_changed)
-        self.dest_entry.entry_field.textChanged.connect(self._on_dest_path_changed)
-        self.folder_name_options.user_box.toggled.connect(self._on_inc_user_toggled)
-        self.folder_name_options.exp_box.toggled.connect(self._on_inc_experiment_toggled)
-        self.folder_name_options.solvent_box.toggled.connect(self._on_inc_solvent_toggled)
-        self.folder_name_options.frequency_box.toggled.connect(self._on_inc_frequency_toggled)
-        self.folder_name_options.original_box.toggled.connect(self._on_inc_original_toggled)
-        self.spec_selector.buttons.buttonClicked.connect(self._on_spec_changed)
-        self.repeat_options.repeat_box.toggled.connect(self._on_repeat_toggled)
-        self.repeat_options.interval_box.valueChanged.connect(self._on_repeat_delay_changed)
+            self.group_name_entry.changed.connect(self._on_group_name_changed)
+        self.server_entry.changed.connect(self._on_server_path_changed)
+        self.dest_entry.changed.connect(self._on_dest_path_changed)
+        self.folder_name_options.changed.connect(self._on_folder_name_options_changed)
+        self.spec_selector.changed.connect(self._on_spec_changed)
+        self.repeat_options.changed.connect(self._on_repeat_changed)
         self.save_button.clicked.connect(self._on_save_button_clicked)
+        # Connect specifically to the multiday buttons not the overall changed signal
+        # because we don't need to do anything when the date is changed
         self.date_selector.date_button_group.buttonClicked.connect(self._on_multiday_toggled)
         #self.date_selector.date_selector.userDateChanged.connect(self._on_date_changed)
         self.notification.clicked.connect(self._on_notification_clicked)
         # Connect the start/cancel buttons directly to the main window's own signals
         self.status_bar.start_button.clicked.connect(self.started)
         self.status_bar.cancel_button.clicked.connect(self.cancelled)
-        # Also hide the notification if a new check is started
+        # When a new check is started also hide any notification
         self.status_bar.start_button.clicked.connect(self.notification.hide)
 
         # A shortcut to switch to and from admin mode
@@ -347,28 +339,10 @@ class MainWindow(QMainWindow):
         self.save_button.setEnabled(True)
 
     @Slot()
-    def _on_inc_user_toggled(self):
-        self.config.options.inc_user = self.folder_name_options.inc_user()
-        self.save_button.setEnabled(True)
-
-    @Slot()
-    def _on_inc_experiment_toggled(self):
-        self.config.options.inc_experiment = self.folder_name_options.inc_experiment()
-        self.save_button.setEnabled(True)
-
-    @Slot()
-    def _on_inc_solvent_toggled(self):
-        self.config.options.inc_solvent = self.folder_name_options.inc_solvent()
-        self.save_button.setEnabled(True)
-
-    @Slot()
-    def _on_inc_frequency_toggled(self):
-        self.config.options.inc_frequency = self.folder_name_options.inc_frequency()
-        self.save_button.setEnabled(True)
-    
-    @Slot()
-    def _on_inc_original_toggled(self):
-        self.config.options.inc_original = self.folder_name_options.inc_original()
+    def _on_folder_name_options_changed(self):
+        # Returns {"user": True, "experiment": False, ...}
+        for k, v in self.folder_name_options.checked().items():
+            setattr(self.config.options, f"inc_{k}", v)
         self.save_button.setEnabled(True)
 
     @Slot()
@@ -378,12 +352,8 @@ class MainWindow(QMainWindow):
         self.save_button.setEnabled(True)
 
     @Slot()
-    def _on_repeat_toggled(self):
+    def _on_repeat_changed(self):
         self.config.options.repeat_switch = self.repeat_options.repeat()
-        self.save_button.setEnabled(True)
-
-    @Slot()
-    def _on_repeat_delay_changed(self):
         self.config.options.repeat_delay = self.repeat_options.interval()
         self.save_button.setEnabled(True)
 
