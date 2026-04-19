@@ -1,9 +1,11 @@
-from datetime import datetime
+import datetime
+from pathlib import Path
 
 from mora_the_explorer.check.metadata import MetadataRules, MeasurementMetadata, Manufacturer, generate_folder_name
+from mora_the_explorer.check.paths import get_check_paths
+from .test_config import mock_config
 
-
-class TestCheck:
+class TestMetadata:
 
     bruker_rules = MetadataRules(
         ["group", "user:3"],
@@ -28,7 +30,7 @@ class TestCheck:
             group="stu", user="mjm", sample_info=["213", "4", "repeat"]
         )
         metadata.manufacturer = Manufacturer.BRUKER
-        metadata.date = datetime.today()
+        metadata.date = datetime.date.today()
         name = generate_folder_name(metadata, self.bruker_rules)
         assert name == "mjm-213-4-repeat"
 
@@ -43,3 +45,19 @@ class TestCheck:
         metadata = MeasurementMetadata(user="mjm", sample_info=["304", "1", "ß"])
         name = generate_folder_name(metadata, self.agilent_rules)
         assert name == "mjm-304-1-0xdf"
+
+
+class TestPaths:
+
+    def test_agilent_path_gen(self):
+        config = mock_config()
+        spec = "v600"
+        spec_info = config.specs[spec]
+        check_paths = get_check_paths(
+            spec_info,
+            Path(config.paths.linux),
+            check_date=datetime.date(2023, 10, 15),
+            groups={"stu": "studer"},
+        )
+        print(check_paths)
+        assert check_paths[0] == Path(config.paths.linux) / "v600/studer/2023"

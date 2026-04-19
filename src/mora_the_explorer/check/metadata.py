@@ -101,7 +101,7 @@ class MeasurementMetadata:
     group: str | None = None
     group_name: str | None = None
     experiment: str | None = None
-    frequency: str | None = None
+    frequency: int | None = None
     solvent: str | None = None
     sample_info: list[str] | None = None
     # Access fields programmatically using `getattr(mdata, field)` or `mdata.asdict()`
@@ -212,7 +212,15 @@ def get_metadata_agilent(folder: Path, rules: MetadataRules) -> MeasurementMetad
                 with open(text_file, encoding="utf-8") as f:
                     spectrum_info = f.read().splitlines()
                     line_with_freq_split = spectrum_info[3].split(",")
-                    magnet_freq = line_with_freq_split[0]
+                    # I assume that what we get here is the configured name of the spectrometer,
+                    # and it's just that the convention in Münster is to call them s600, v500 etc.,
+                    # so I don't know how portable this is
+                    spec_name = line_with_freq_split[0]
+                    magnet_freq = ""
+                    for char in spec_name:
+                        # Only want numbers, naturally
+                        if char.isdigit():
+                            magnet_freq += char
         break
 
     title = folder.name
@@ -220,7 +228,7 @@ def get_metadata_agilent(folder: Path, rules: MetadataRules) -> MeasurementMetad
     metadata.path = str(folder)
     metadata.folder_name = folder.name
     metadata.manufacturer = Manufacturer.AGILENT
-    metadata.frequency = magnet_freq
+    metadata.frequency = int(magnet_freq)
 
     return metadata
 
@@ -257,7 +265,7 @@ def generate_folder_name(
             # What do we do if the user wants something in the folder name but
             # we don't have that information?
             if value is not None:
-                parts.append(value)
+                parts.append(str(value))
             elif drop_missing:
                 # Just don't include it at all
                 continue

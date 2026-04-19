@@ -53,7 +53,7 @@ class TestExplorer:
         explorer = mock_explorer()
         explorer.config.options.spec = "av300"
         explorer.config.options.inc_user = True
-        explorer.config.options.inc_solvent= True
+        explorer.config.options.inc_solvent = True
         reporter = explorer.single_check(date(2023, 10, 15))
         print(reporter.messages())
         assert reporter.messages()[0] == "Spectrum found: mjm-500-1-proton-cdcl3"
@@ -64,7 +64,7 @@ class TestExplorer:
         explorer = mock_explorer()
         explorer.config.options.spec = "neo400"
         explorer.config.options.inc_user = True
-        explorer.config.options.inc_solvent= True
+        explorer.config.options.inc_solvent = True
         reporter = explorer.single_check(date(2023, 10, 15))
         # The spectrum should be found twice but determined to be different spectra,
         # both copied, and automatically numbered as different measurements
@@ -76,7 +76,7 @@ class TestExplorer:
         explorer = mock_explorer()
         explorer.config.options.spec = "av300"
         explorer.config.options.inc_user = False
-        explorer.config.options.inc_solvent= True
+        explorer.config.options.inc_solvent = True
         reporter = explorer.single_check(date(2023, 10, 15))
         assert reporter.copied()[0] == "500-1-proton-cdcl3"
 
@@ -84,6 +84,23 @@ class TestExplorer:
         explorer = mock_explorer()
         explorer.config.options.spec = "av300"
         explorer.config.options.inc_user = True
-        explorer.config.options.inc_solvent= False
+        explorer.config.options.inc_solvent = False
         reporter = explorer.single_check(date(2023, 10, 15))
         assert reporter.copied()[0] == "mjm-500-1-proton"
+
+    def test_agilent(self):
+        explorer = mock_explorer()
+        explorer.config.options.spec = "v600"
+        explorer.config.options.inc_user = True
+        explorer.config.options.inc_solvent = False
+        reporter = explorer.single_check(date(2023, 10, 15))
+        assert reporter.copied()[0] == "mjm-500-1"
+
+    def test_agilent_with_freq(self):
+        explorer = mock_explorer()
+        explorer.config.options.spec = "v600"
+        explorer.config.options.inc_user = True
+        explorer.config.options.inc_solvent = False
+        explorer.config.options.inc_frequency = True
+        reporter = explorer.single_check(date(2023, 10, 15))
+        assert reporter.copied()[0] == "mjm-500-1-600"

@@ -92,7 +92,7 @@ spec_dir = "v600"
 title_format = [ "user:3" ]
 date = "%Y"
 check_paths = [
-    "<spec_dir>/<group name>/<date>",
+    "<spec_dir>/<group_name>/<date>",
 ]
 manufacturer = "agilent"
 display_name = "v600 (agilent)"
