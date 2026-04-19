@@ -3,7 +3,7 @@ import platform
 from urllib.parse import quote
 
 from PySide6.QtCore import Qt, QSize, QUrl, Signal, Slot
-from PySide6.QtGui import QDesktopServices
+from PySide6.QtGui import QDesktopServices, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QMainWindow,
     QWidget,
@@ -47,6 +47,7 @@ class MainWindow(QMainWindow):
     # A couple of signals we can emit for a Controller to intercept
     started = Signal()
     cancelled = Signal()
+    admin_mode_toggled = Signal()
 
     def __init__(self, config: Config, version_header: str, admin_mode: bool):
         super().__init__()
@@ -198,6 +199,10 @@ class MainWindow(QMainWindow):
         self.status_bar.cancel_button.clicked.connect(self.cancelled)
         # Also hide the notification if a new check is started
         self.status_bar.start_button.clicked.connect(self.notification.hide)
+
+        # A shortcut to switch to and from admin mode
+        admin_shortcut = QShortcut(QKeySequence("Ctrl+Shift+A"), self)
+        admin_shortcut.activated.connect(self.admin_mode_toggled)
 
     def refresh_visible_specs(self):
         """Make sure the available spectrometers reflect what's allowed for the current group."""

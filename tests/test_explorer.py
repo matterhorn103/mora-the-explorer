@@ -107,7 +107,7 @@ class TestExplorer:
         explorer.config.options.inc_user = True
         explorer.config.options.inc_solvent = True
         reporter = explorer.single_check(date(2023, 10, 15))
-        assert reporter.copied()[0] == "mjm-500-1-set-cdcl3"
+        assert reporter.copied()[0] == "mjm-500-1-various-cdcl3"
 
     def test_agilent_with_freq(self):
         explorer = mock_explorer()
@@ -116,4 +116,4 @@ class TestExplorer:
         explorer.config.options.inc_solvent = False
         explorer.config.options.inc_frequency = True
         reporter = explorer.single_check(date(2023, 10, 15))
-        assert reporter.copied()[0] == "mjm-500-1-set-600"
+        assert reporter.copied()[0] == "mjm-500-1-various-600"

@@ -27,6 +27,7 @@ class ReporterSignals(QObject):
     error_reported = Signal(str)
     day_checked = Signal(str)
 
+
 class QtReporter(Reporter):
     """A Reporter that emits Qt signals in response to events, making it suitable
     for reporting back from a background thread."""
@@ -149,27 +150,51 @@ class Controller(QObject):
            server to see if updates are available.
         """
         super().__init__()
+        self.version_header = version_header
         self.version = Version(version_header.splitlines()[2])
 
-        # Create instance of `MainWindow` (front-end), then show it
-        logging.info("Initializing user interface...")
+        # Create instance of `MainWindow` (front-end)
+        logging.info("Initializing user interface…")
         self.main_window = MainWindow(config, version_header, admin_mode)
+        # Connect the key signals
+        self.main_window.started.connect(self.check_requested)
+        self.main_window.cancelled.connect(self.cancel_scheduled_check)
+        self.main_window.admin_mode_toggled.connect(self.toggle_admin_mode)
+        # Show it
         self.main_window.show()
-        logging.info("...complete")
+        logging.info("…complete")
 
         # Check for updates
         update_path = Path(config.paths.server()) / config.paths.update
         self.update_check(update_path)
-
-        # Connect the key signals
-        self.main_window.started.connect(self.check_requested)
-        self.main_window.cancelled.connect(self.cancel_scheduled_check)
 
         # Create a separate background thread to run checks in (necessary to avoid
         # the GUI freezing during a check)
         self.explorer_thread = QThread()
         # We need to make sure that it gets quit at the same time as the app
         QApplication.instance().aboutToQuit.connect(self.cleanup)
+
+    def update_check(self, update_path: Path):
+        """Check for updates at the specified location."""
+
+        logging.info(f"Checking for updates at: {update_path}")
+        update_path_version_file = update_path / "version.txt"
+        try:
+            if update_path_version_file.exists() is True:
+                with open(update_path_version_file, encoding="utf-8") as f:
+                    version_info = f.read()
+            else:
+                logging.info(f"No remote version information found at {update_path_version_file}")
+                return
+        except PermissionError:
+            logging.info("The user does not have the required permissions to access the server!")
+            return
+        remote_version = Version(version_info.splitlines()[2])
+        changelog = "\n".join(version_info.splitlines()[5:])
+        if self.version < remote_version:
+            self.main_window.notify_update(
+                self.version, remote_version, changelog, self.update_path
+            )
 
     def new_reporter(self) -> QtReporter:
         """Get a new QtReporter with its signals connected to the appropriate slots in the UI."""
@@ -258,24 +283,19 @@ class Controller(QObject):
         self.explorer_thread.quit()  # Tells it to stop
         self.explorer_thread.wait()  # Waits until it has actually done so
 
-    def update_check(self, update_path: Path):
-        """Check for updates at the specified location."""
-
-        logging.info(f"Checking for updates at: {update_path}")
-        update_path_version_file = update_path / "version.txt"
-        try:
-            if update_path_version_file.exists() is True:
-                with open(update_path_version_file, encoding="utf-8") as f:
-                    version_info = f.read()
-            else:
-                logging.info(f"No remote version information found at {update_path_version_file}")
-                return
-        except PermissionError:
-            logging.info("The user does not have the required permissions to access the server!")
-            return
-        remote_version = Version(version_info.splitlines()[2])
-        changelog = "\n".join(version_info.splitlines()[5:])
-        if self.version < remote_version:
-            self.main_window.notify_update(
-                self.version, remote_version, changelog, self.update_path
-            )
+    @Slot()
+    def toggle_admin_mode(self):
+        logging.info("Admin mode toggled – reinitializing user interface…")
+        current_config = self.main_window.config
+        currently_admin = self.main_window.admin_mode
+        # Close old window
+        self.main_window.close()
+        self.main_window = None  # So that the Qt reference is dropped and it's destroyed
+        # Build new window in opposite mode
+        self.main_window = MainWindow(current_config, self.version_header, not currently_admin)
+        # Reconnect the key signals
+        self.main_window.started.connect(self.check_requested)
+        self.main_window.cancelled.connect(self.cancel_scheduled_check)
+        self.main_window.admin_mode_toggled.connect(self.toggle_admin_mode)
+        self.main_window.show()
+        logging.info("...complete")

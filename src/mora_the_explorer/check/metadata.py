@@ -222,7 +222,7 @@ def get_metadata_agilent(folder: Path, rules: MetadataRules) -> MeasurementMetad
     metadata.folder_name = folder.name
     metadata.manufacturer = Manufacturer.AGILENT
     # One folder contains multiple measurements
-    metadata.experiment = "set"
+    metadata.experiment = "various"
 
     # Get magnet strength
     while metadata.frequency is None:
