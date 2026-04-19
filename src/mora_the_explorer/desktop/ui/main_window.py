@@ -120,6 +120,7 @@ class MainWindow(QMainWindow):
         self.folder_name_options = rows.FolderNameOptions()
         self.folder_name_options.set_checked(
             config.options.inc_user,
+            config.options.inc_experiment,
             config.options.inc_solvent,
             config.options.inc_frequency,
             config.options.inc_original,
@@ -184,6 +185,7 @@ class MainWindow(QMainWindow):
         self.server_entry.entry_field.textChanged.connect(self._on_server_path_changed)
         self.dest_entry.entry_field.textChanged.connect(self._on_dest_path_changed)
         self.folder_name_options.user_box.toggled.connect(self._on_inc_user_toggled)
+        self.folder_name_options.exp_box.toggled.connect(self._on_inc_experiment_toggled)
         self.folder_name_options.solvent_box.toggled.connect(self._on_inc_solvent_toggled)
         self.folder_name_options.frequency_box.toggled.connect(self._on_inc_frequency_toggled)
         self.folder_name_options.original_box.toggled.connect(self._on_inc_original_toggled)
@@ -347,6 +349,11 @@ class MainWindow(QMainWindow):
     @Slot()
     def _on_inc_user_toggled(self):
         self.config.options.inc_user = self.folder_name_options.inc_user()
+        self.save_button.setEnabled(True)
+
+    @Slot()
+    def _on_inc_experiment_toggled(self):
+        self.config.options.inc_experiment = self.folder_name_options.inc_experiment()
         self.save_button.setEnabled(True)
 
     @Slot()

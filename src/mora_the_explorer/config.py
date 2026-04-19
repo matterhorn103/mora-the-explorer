@@ -34,6 +34,7 @@ class UserOptions:
     user_name: str
     group: str
     inc_user: bool
+    inc_experiment: bool
     inc_solvent: bool
     inc_frequency: bool
     inc_original: bool

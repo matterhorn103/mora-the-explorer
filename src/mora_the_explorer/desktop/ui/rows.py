@@ -249,11 +249,13 @@ class FolderNameOptions(RowComponent):
 
         # Layout contains three check boxes
         self.user_box = QCheckBox("user")
+        self.exp_box = QCheckBox("experiment")
         self.solvent_box = QCheckBox("solvent")
         self.frequency_box = QCheckBox("frequency")
         self.original_box = QCheckBox("original folder name")
         self.boxes.addWidget(self.user_box, 0, 0)
-        self.boxes.addWidget(self.solvent_box, 0, 1)
+        self.boxes.addWidget(self.exp_box, 0, 1)
+        self.boxes.addWidget(self.solvent_box, 0, 2)
         self.boxes.addWidget(self.frequency_box, 1, 0)
         self.boxes.addWidget(self.original_box, 1, 1)
 
@@ -266,6 +268,9 @@ class FolderNameOptions(RowComponent):
     def inc_user(self) -> bool:
         return self.user_box.isChecked()
     
+    def inc_experiment(self) -> bool:
+        return self.exp_box.isChecked()
+    
     def inc_solvent(self) -> bool:
         return self.solvent_box.isChecked()
     
@@ -275,8 +280,9 @@ class FolderNameOptions(RowComponent):
     def inc_original(self) -> bool:
         return self.original_box.isChecked()
     
-    def set_checked(self, user: bool, solvent: bool, frequency: bool, original: bool):
+    def set_checked(self, user: bool, experiment: bool, solvent: bool, frequency: bool, original: bool):
         self.user_box.setChecked(user)
+        self.exp_box.setChecked(experiment)
         self.solvent_box.setChecked(solvent)
         self.frequency_box.setChecked(frequency)
         self.original_box.setChecked(original)

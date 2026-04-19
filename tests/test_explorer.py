@@ -88,6 +88,15 @@ class TestExplorer:
         reporter = explorer.single_check(date(2023, 10, 15))
         assert reporter.copied()[0] == "mjm-500-1-proton"
 
+    def test_no_experiment(self):
+        explorer = mock_explorer()
+        explorer.config.options.spec = "av300"
+        explorer.config.options.inc_user = True
+        explorer.config.options.inc_solvent = False
+        explorer.config.options.inc_experiment = False
+        reporter = explorer.single_check(date(2023, 10, 15))
+        assert reporter.copied()[0] == "mjm-500-1"
+
     def test_with_freq(self):
         explorer = mock_explorer()
         explorer.config.options.spec = "av300"

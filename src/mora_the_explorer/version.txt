@@ -6,6 +6,7 @@ License: GPLv3
 Changes in version 2.0.0:
 - Update for move to new server
 - Big rewrite, codebase is now much more structured and maintainable
+- Inclusion of experiment in folder name is now optional
 - Solvent and frequency metadata available on all spectrometers
 - Option to include the original folder name
 - Buttons to select paths using the system file explorer

@@ -3,6 +3,7 @@ user = "mjm"
 user_name = "milner"
 group = "stu"
 inc_user = false
+inc_experiment = true
 inc_solvent = true
 inc_frequency = false
 inc_original = false

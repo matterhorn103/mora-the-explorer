@@ -93,9 +93,11 @@ class Explorer:
         # Put together the way the folder names should be formatted
         if options.inc_user:
             # Treat user name and user as mutually exclusive, prioritise the user
-            name_format = [["user", "user_name"], "sample_info", "experiment"]
+            name_format = [["user", "user_name"], "sample_info"]
         else:
-            name_format = ["sample_info", "experiment"]
+            name_format = ["sample_info"]
+        if options.inc_experiment:
+            name_format.append("experiment")
         if options.inc_solvent:
             name_format.append("solvent")
         if options.inc_frequency:
