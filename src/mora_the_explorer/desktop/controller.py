@@ -1,12 +1,9 @@
 import logging
-import platform
 from copy import deepcopy
 import datetime
-from pathlib import Path
-from urllib.parse import quote
 
-from PySide6.QtCore import QObject, QTimer, QUrl, Signal, Slot
-from PySide6.QtGui import QDesktopServices
+from PySide6.QtCore import QObject, QTimer, Signal, Slot, QThread
+from PySide6.QtWidgets import QApplication
 
 from ..check.checknmr import Reporter
 from ..config import Config
@@ -26,8 +23,7 @@ class ReporterSignals(QObject):
     message_sent = Signal(str)
     folder_copied = Signal(str)
     error_reported = Signal(str)
-    finished = Signal(str)
-
+    day_checked = Signal(str)
 
 class QtReporter(Reporter):
     """A Reporter that emits Qt signals in response to events, making it suitable
@@ -74,7 +70,7 @@ class QtReporter(Reporter):
     
     def add_copied(self, name: str):
         self._copied.append(name)
-        self.signals.folder_copied.emit(name)
+        self.signals.folder_copied.emit(f"Spectrum found: {name}")
 
     def errors(self) -> list[str]:
         return self._errors
@@ -87,10 +83,40 @@ class QtReporter(Reporter):
         self._progress = self._max_progress
         self.signals.progress_set.emit(self._max_progress)
         self._messages.append(completion_message)
-        self.signals.finished.emit(completion_message)
+        self.signals.day_checked.emit(completion_message)
+        
+    
+
+class QtExplorer(Explorer, QObject):
+    """An `Explorer` that can be run in a separate `QThread`.
+
+    Effectively what Qt documentation would usually refer to as a "Worker".
+    
+    Has a slot to begin checks (both single- and multi-day) from a different thread,
+    and a signal that indicates that the check has finished and the `QtExplorer`
+    can be moved back to the main thread.
+
+    Note that the reporter used for the check stays in its thread (i.e. the main
+    GUI thread) and it is not necessary for it to be moved.
+    """
+
+    check_finished = Signal()
+
+    def __init__(self, config: Config):
+        QObject.__init__(self)
+        Explorer.__init__(self, config)
+
+    @Slot()
+    def start_check(self, multiday: bool, date: datetime.date, reporter: QtReporter):
+        if multiday:
+            self.multiday_check(date, reporter)
+        else:
+            self.single_check(date, reporter)
+        # Signal completion
+        self.check_finished.emit()
 
 
-class Controller:
+class Controller(QObject):
     """The bridge between the desktop app's interface and the searching backend.
     
     A `Controller` coordinates the creation of, and interaction between, all the
@@ -105,9 +131,13 @@ class Controller:
     freezing the GUI.
     """
 
-    timer: QTimer
+    # A signal used to trigger a QtExplorer in a separate thread to start its check
+    start_check = Signal(bool, datetime.date, QtReporter)
 
-    def __init__(self, config: Config, version_header: str):
+    timer: QTimer
+    explorer: QtExplorer
+
+    def __init__(self, config: Config, version_header: str, admin_mode: bool = False):
         """Create a new `Controller` along with a new associated `MainWindow`
         instance.
         
@@ -117,11 +147,12 @@ class Controller:
         2. The contents are compared to the same file that is deposited on the
            server to see if updates are available.
         """
+        super().__init__()
         self.version_header = version_header
 
         # Create instance of `MainWindow` (front-end), then show it
         logging.info("Initializing user interface...")
-        self.main_window = MainWindow(config, version_header, admin_mode=False)
+        self.main_window = MainWindow(config, version_header, admin_mode)
         self.main_window.show()
         logging.info("...complete")
 
@@ -129,8 +160,14 @@ class Controller:
         #self.update_check(self.update_path)
 
         # Connect the key signals
-        self.main_window.started.connect(self.start_check)
+        self.main_window.started.connect(self.check_requested)
         self.main_window.cancelled.connect(self.cancel_scheduled_check)
+
+        # Create a separate background thread to run checks in (necessary to avoid
+        # the GUI freezing during a check)
+        self.explorer_thread = QThread()
+        # We need to make sure that it gets quit at the same time as the app
+        QApplication.instance().aboutToQuit.connect(self.cleanup)
 
     def new_reporter(self) -> QtReporter:
         """Get a new QtReporter with its signals connected to the appropriate slots in the UI."""
@@ -144,35 +181,39 @@ class Controller:
         reporter.signals.message_sent.connect(self.main_window.display.add_entry)
         reporter.signals.folder_copied.connect(self.main_window.display.add_entry)
         reporter.signals.error_reported.connect(self.main_window.display.add_entry)
-        # Send the completion message to the display on finish
-        reporter.signals.finished.connect(self.main_window.display.add_entry)
-        # Also trigger the completion handler
-        reporter.signals.finished.connect(self.check_ended)
+        # Send the completion message to the display when a single day's check finishes
+        reporter.signals.day_checked.connect(self.main_window.display.add_entry)
+        # We don't actually want to trigger `self.check_ended` yet though,
+        # because a multi-day check "finishes" several individual checks using
+        # the same QtReporter
+        # Instead the Controller will look for a signal from the QtExplorer
 
         return reporter
 
     @Slot()
-    def start_check(self):
+    def check_requested(self):
         self.main_window.status_bar.set_status("Initializing…")
         self.main_window.status_bar.show_status()
 
-        # Create instance of Explorer (back-end)
+        # Create instance of QtExplorer (back-end)
         logging.info("Initializing new explorer...")
-        self.explorer = Explorer(deepcopy(self.main_window.config))
+        self.explorer = QtExplorer(deepcopy(self.main_window.config))
+        # Move it to the background thread
+        self.explorer.moveToThread(self.explorer_thread)
+        # Connect up the signals
+        self.start_check.connect(self.explorer.start_check)
+        self.explorer.check_finished.connect(self.check_ended)
+        self.explorer_thread.start()
         logging.info("...complete")
 
+        # Create a fresh reporter
         self.reporter = self.new_reporter()
-
-        if not self.main_window.date_selector.multiday():
-            self.explorer.single_check(
-                self.main_window.date_selector.date(),
-                self.reporter,
-            )
-        else:
-            self.explorer.multiday_check(
-                self.main_window.date_selector.date(),
-                self.reporter,
-            )
+        # Then actually trigger the explorer to start a check via our signal
+        self.start_check.emit(
+            self.main_window.date_selector.multiday(),
+            self.main_window.date_selector.date(),
+            self.reporter,
+        )
     
     @Slot()
     def check_ended(self):
@@ -189,10 +230,10 @@ class Controller:
         # explorer should have captured the UI state at the time the check was started
         if self.explorer.config.options.repeat_switch:
             self.main_window.status_bar.show_cancel()
-            # Start new timer that will trigger start_check() once it runs out
+            # Start new timer that will request a (completely) new check once it runs out
             self.timer = QTimer()
             self.timer.setSingleShot(True)
-            self.timer.timeout.connect(self.start_check)
+            self.timer.timeout.connect(self.check_requested)
             # Could have used the current value in the UI here, shouldn't really matter
             self.timer.start(self.explorer.config.options.repeat_delay * 60 * 1000)
             logging.info(f"Timer started for next check, scheduled to begin in {self.explorer.config.options.repeat_delay} min")
@@ -200,11 +241,20 @@ class Controller:
             self.main_window.status_bar.show_start()
             logging.info("Task complete")
 
+        # Destroy the explorer
+        self.explorer.deleteLater()
+        self.explorer = None
+
     @Slot()
     def cancel_scheduled_check(self):
         self.timer.stop()
         self.main_window.status_bar.show_start()
         logging.info("Scheduled check cancelled")
+
+    @Slot()
+    def cleanup(self):
+        self.explorer_thread.quit()  # Tells it to stop
+        self.explorer_thread.wait()  # Waits until it has actually done so
 
 #    def update_check(self, update_path: Path):
 #        """Check for updates at location specified."""
