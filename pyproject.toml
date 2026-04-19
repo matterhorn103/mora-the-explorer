@@ -1,6 +1,6 @@
 [project]
 name = "mora-the-explorer"
-version = "1.8.1"
+version = "2.0.0b"
 description = "A small program for downloading NMR spectra at the Organic Chemistry department at the University of Münster"
 authors = [
     { name = "Matthew Milner", email = "matterhorn103@proton.me" }
@@ -8,7 +8,6 @@ authors = [
 dependencies = [
     "darkdetect>=0.8.0",
     "platformdirs>=4.9.6",
-    "plyer>=2.1.0",
     "pyside6-essentials>=6.11.0",
     "tomli-w>=1.2.0",
 ]
