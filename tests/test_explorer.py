@@ -1,37 +1,6 @@
 from datetime import date
-from pathlib import Path
-from shutil import rmtree
 
-from mora_the_explorer import Config, Explorer
-
-
-TEST_DIR = Path(__file__).parent
-MOCK_SERVER = TEST_DIR / "mock_server"
-MOCK_DEST = TEST_DIR / "nmr"
-
-def empty_folder(path: Path):
-    for x in path.iterdir():
-        if x.is_file():
-            x.unlink()
-        elif x.is_dir():
-            rmtree(x)
-
-
-def mock_explorer() -> Explorer:
-    mock_app = TEST_DIR / "mock_app_config.toml"
-    mock_user = TEST_DIR / "mock_user_config.toml"
-    MOCK_DEST.mkdir(exist_ok=True)
-    empty_folder(MOCK_DEST)
-
-    config = Config(mock_app, mock_user)
-    config.paths.windows = str(MOCK_SERVER)
-    config.paths.darwin = str(MOCK_SERVER)
-    config.paths.linux = str(MOCK_SERVER)
-    config.paths.save = str(MOCK_DEST)
-
-    explorer = Explorer(config)
-
-    return explorer
+from . import mock_explorer
 
 
 class TestExplorer:
@@ -45,19 +14,20 @@ class TestExplorer:
         # Use a fictitious user so we don't match anything
         explorer.config.options.user = "aaa"
         reporter = explorer.single_check(date(2023, 10, 16))
-        assert len(reporter.messages()) > 0
+        # Nothing should have been found, should only be a single "check finished" message
         assert len(reporter.copied()) == 0
+        assert len(reporter.messages()) == 1
 
     def test_single_check_with_copy(self):
-        # Check that the spectrum mjm-500-1-proton is found as expected
         explorer = mock_explorer()
         explorer.config.options.spec = "av300"
         explorer.config.options.inc_user = True
         explorer.config.options.inc_solvent = True
         reporter = explorer.single_check(date(2023, 10, 15))
-        print(reporter.messages())
+        # A single spectrum, mjm-500-1, should be found
+        assert len(reporter.copied()) == 1
+        assert reporter.copied() == ["mjm-500-1-proton-cdcl3"]
         assert reporter.messages()[0] == "Spectrum found: mjm-500-1-proton-cdcl3"
-        assert reporter.copied()[0] == "mjm-500-1-proton-cdcl3"
 
     def test_400er_checks_300er(self):
         # Check that checking the neo400 also checks the av300
@@ -68,9 +38,10 @@ class TestExplorer:
         reporter = explorer.single_check(date(2023, 10, 15))
         # The spectrum should be found twice but determined to be different spectra,
         # both copied, and automatically numbered as different measurements
-        print(reporter.copied())
-        assert reporter.copied()[0] == "mjm-500-1-proton-cdcl3"
-        assert reporter.copied()[1] == "mjm-500-1-proton-cdcl3-2"
+        assert sorted(reporter.copied()) == [
+            "mjm-500-1-proton-cdcl3",
+            "mjm-500-1-proton-cdcl3-2",
+        ]
 
     def test_no_initials(self):
         explorer = mock_explorer()
@@ -78,7 +49,8 @@ class TestExplorer:
         explorer.config.options.inc_user = False
         explorer.config.options.inc_solvent = True
         reporter = explorer.single_check(date(2023, 10, 15))
-        assert reporter.copied()[0] == "500-1-proton-cdcl3"
+        # A single spectrum, mjm-500-1, should be found
+        assert reporter.copied() == ["500-1-proton-cdcl3"]
 
     def test_no_solvent(self):
         explorer = mock_explorer()
@@ -86,7 +58,8 @@ class TestExplorer:
         explorer.config.options.inc_user = True
         explorer.config.options.inc_solvent = False
         reporter = explorer.single_check(date(2023, 10, 15))
-        assert reporter.copied()[0] == "mjm-500-1-proton"
+        # A single spectrum, mjm-500-1, should be found
+        assert reporter.copied() == ["mjm-500-1-proton"]
 
     def test_no_experiment(self):
         explorer = mock_explorer()
@@ -95,7 +68,8 @@ class TestExplorer:
         explorer.config.options.inc_solvent = False
         explorer.config.options.inc_experiment = False
         reporter = explorer.single_check(date(2023, 10, 15))
-        assert reporter.copied()[0] == "mjm-500-1"
+        # A single spectrum, mjm-500-1, should be found
+        assert reporter.copied() == ["mjm-500-1"]
 
     def test_with_freq(self):
         explorer = mock_explorer()
@@ -104,11 +78,17 @@ class TestExplorer:
         explorer.config.options.inc_solvent = False
         explorer.config.options.inc_frequency = True
         reporter = explorer.single_check(date(2023, 10, 15))
-        # Note that only this specific spectrum has the uxnmr.info file in the mock server setup
-        assert reporter.copied()[0] == "mjm-500-1-proton-300"
+        # A single spectrum, mjm-500-1, should be found
+        assert reporter.copied() == ["mjm-500-1-proton-300"]
+        # Note that only that specific spectrum has the uxnmr.info file in the mock server setup
         reporter = explorer.single_check(date(2023, 10, 16))
-        # Whereas this one doesn't
-        assert reporter.copied()[0] == "mjm-501-1-proton-unknown"
+        # Whereas these ones don't, so all have the frequency as unknown
+        print(reporter.copied())
+        assert sorted(reporter.copied()) == [
+            "mjm-501-1-proton-unknown",
+            "mjm-501-2-carbon-unknown",
+            "mjm-501-2-proton-unknown",
+        ]
 
     def test_agilent(self):
         explorer = mock_explorer()
@@ -116,7 +96,7 @@ class TestExplorer:
         explorer.config.options.inc_user = True
         explorer.config.options.inc_solvent = True
         reporter = explorer.single_check(date(2023, 10, 15))
-        assert reporter.copied()[0] == "mjm-500-1-various-cdcl3"
+        assert reporter.copied() == ["mjm-500-1-various-cdcl3"]
 
     def test_agilent_with_freq(self):
         explorer = mock_explorer()
@@ -125,4 +105,4 @@ class TestExplorer:
         explorer.config.options.inc_solvent = False
         explorer.config.options.inc_frequency = True
         reporter = explorer.single_check(date(2023, 10, 15))
-        assert reporter.copied()[0] == "mjm-500-1-various-600"
+        assert reporter.copied() == ["mjm-500-1-various-600"]

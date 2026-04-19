@@ -301,7 +301,6 @@ def generate_folder_name(
                 continue
             else:
                 # Use unknown in its place
-                print(f"{field} is unknown")
                 parts.append("unknown")
     # Join with desired separator, normalize to all lower case
     name = rules.dest_sep.join(parts).lower()

@@ -1,15 +1,12 @@
 from pathlib import Path
 
-from mora_the_explorer import Config, get_rsrc_dir, USER_CONFIG_PATH
+from mora_the_explorer import Config, get_rsrc_dir
 
-TEST_DIR = Path(__file__).parent
-MOCK_APP_CONFIG = TEST_DIR / "mock_app_config.toml"
-MOCK_USER_CONFIG = TEST_DIR / "mock_user_config.toml"
+from . import TEST_DIR, MOCK_APP_CONFIG, mock_config
+
+
 MOCK_NEW_CONFIG = TEST_DIR / "new_user_config.toml"
 
-def mock_config() -> Config:
-    """Creates a `Config` from the two mock config files written for testing."""
-    return Config(MOCK_APP_CONFIG, MOCK_USER_CONFIG)
 
 def fresh_config(app_config_file: Path = MOCK_APP_CONFIG) -> Config:
     """Simulates the situation where no user config yet exists and so a fresh one
@@ -18,7 +15,7 @@ def fresh_config(app_config_file: Path = MOCK_APP_CONFIG) -> Config:
     """
     # Make sure the temp user config doesn't exist yet
     if MOCK_NEW_CONFIG.exists():
-            MOCK_NEW_CONFIG.unlink()
+        MOCK_NEW_CONFIG.unlink()
     return Config(app_config_file, MOCK_NEW_CONFIG)
 
 class TestConfig:
@@ -49,13 +46,6 @@ class TestConfig:
         config = mock_config()
         assert config.options.user == "mjm"  # App config has "mmu", user config has "mjm"
         assert Path(config.paths.linux).expanduser() == Path.home()/"dfs/nmr"  # App config has "~/usershare/projects/q_nmr-oc/nmr"
-        assert Path(config.paths.save).expanduser() == Path.home()/"nmr"  # App config has "~/Documents/nmr"
-
-    def test_init_real_user(self):
-        # Test config object creation using the real system user config location
-        config = Config(MOCK_APP_CONFIG, USER_CONFIG_PATH)
-        # Note that in order to pass this value must have been set in your actual
-        # local user config!
         assert Path(config.paths.save).expanduser() == Path.home()/"nmr"  # App config has "~/Documents/nmr"
 
     def test_init_real_app_and_user(self):
