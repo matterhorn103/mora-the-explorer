@@ -230,6 +230,7 @@ def copy_folder(src: Path, target: Path, reporter: Reporter) -> Path | None:
     # Try and fix only partially copied spectra
     if same_spectrum_found is True and incomplete_copy is True:
         logging.info("The existing copy is only partial")
+        reporter.set_status("Copying additional files…")
         reporter.add_message("New files found for: " + target.name)
         for x in src.iterdir():
             # Copy any file or subdirectory that isn't already in destination
@@ -245,6 +246,7 @@ def copy_folder(src: Path, target: Path, reporter: Reporter) -> Path | None:
         reporter.add_copied(target.name)
         return target
     elif same_spectrum_found is False:
+        reporter.set_status("Copying…")
         try:
             shutil.copytree(src, target)
         except PermissionError:
@@ -374,7 +376,7 @@ def check_nmr(
             new_folder_name = generate_folder_name(metadata, rules)
 
             # Copy, add output messages to main output list
-            reporter.set_status("Copying…")
+            reporter.set_status("Comparing metadata…")
             _copy_dest = copy_folder(folder, dest_path / new_folder_name, reporter)
 
             # Update progress bar to make sure there's a noticeable movement after
