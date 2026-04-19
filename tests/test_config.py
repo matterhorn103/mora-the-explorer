@@ -18,6 +18,7 @@ def fresh_config(app_config_file: Path = MOCK_APP_CONFIG) -> Config:
         MOCK_NEW_CONFIG.unlink()
     return Config(app_config_file, MOCK_NEW_CONFIG)
 
+
 class TestConfig:
     def test_init_no_user(self):
         # Test if the defaults are set according to the (mock) app config
@@ -45,13 +46,19 @@ class TestConfig:
         # Test that app settings from a (mock) user config override the app config
         config = mock_config()
         assert config.options.user == "mjm"  # App config has "mmu", user config has "mjm"
-        assert Path(config.paths.linux).expanduser() == Path.home()/"dfs/nmr"  # App config has "~/usershare/projects/q_nmr-oc/nmr"
-        assert Path(config.paths.save).expanduser() == Path.home()/"nmr"  # App config has "~/Documents/nmr"
+        assert (
+            Path(config.paths.linux).expanduser() == Path.home() / "dfs/nmr"
+        )  # App config has "~/usershare/projects/q_nmr-oc/nmr"
+        assert (
+            Path(config.paths.save).expanduser() == Path.home() / "nmr"
+        )  # App config has "~/Documents/nmr"
 
     def test_init_real_app_and_user(self):
         # Test config object creation using the proper app config and a fresh user config
         config = fresh_config(get_rsrc_dir() / "config.toml")
-        assert "rav" in config.groups.all  # Mock app config only has "gil", "glo", "stu", "biochemie", "pharmazie"
+        assert (
+            "rav" in config.groups.all
+        )  # Mock app config only has "gil", "glo", "stu", "biochemie", "pharmazie"
 
 
 class TestGroups:
@@ -78,7 +85,7 @@ class TestGroups:
             "glo": "glorius",
             "stu": "studer",
         }
-    
+
     def test_filter_overflow(self):
         config = mock_config()
         assert config.groups.filter_overflow(True) == {

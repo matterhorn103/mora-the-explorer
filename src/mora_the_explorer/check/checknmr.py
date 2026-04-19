@@ -18,7 +18,6 @@ from .metadata import (
 
 
 class Reporter(ABC):
-
     @abstractmethod
     def set_status(self, message: str):
         """Set the current status of the check."""
@@ -65,7 +64,7 @@ class Reporter(ABC):
     @abstractmethod
     def add_copied(self, name: str):
         """Add a measurement folder to the list of copied folders.
-        
+
         The name is the name of the folder as saved in the destination location.
         """
         pass
@@ -83,7 +82,7 @@ class Reporter(ABC):
     def finish(self, completion_message: str):
         """Signal that the check has completed and pass a completion message to the user by an
         appropriate mechanism.
-        
+
         It is expected that the completion message will also be added to the normal list of messages.
         """
         pass
@@ -96,9 +95,9 @@ def get_number_spectra(paths: list[Path]):
     """
     # Can't remember why it was done this way, I guess the hf check used to be done
     # differently to how it is today
-    #if paths is None:
+    # if paths is None:
     #    n = sum(1 for x in path.iterdir() if x.is_dir())
-    #else:
+    # else:
     #    n = 0
     #    for path in paths:
     #        n += sum(1 for x in path.iterdir() if x.is_dir())
@@ -226,7 +225,7 @@ def copy_folder(src: Path, target: Path, reporter: Reporter) -> Path | None:
                 # and have arrived at a new unique name, so we need to copy the
                 # spectrum and use this unique name
                 break
-    
+
     # Try and fix only partially copied spectra
     if same_spectrum_found is True and incomplete_copy is True:
         logging.info("The existing copy is only partial")
@@ -345,7 +344,9 @@ def check_nmr(
                     and "user" in rules.conditions
                     and rules.conditions["user"] not in folder.name
                 ):
-                    logging.info("User missing from folder name - skipping detailed metadata analysis")
+                    logging.info(
+                        "User missing from folder name - skipping detailed metadata analysis"
+                    )
                     reporter.increment_progress()
                     continue
                 # Otherwise resolve the metadata fully
@@ -383,7 +384,7 @@ def check_nmr(
             # copying a spectrum, otherwise it looks frozen
             reporter.set_max_progress(reporter.max_progress() + 5)
             reporter.increment_progress(5)
-            
+
             # Go back to checking
             reporter.set_status("Checking…")
 

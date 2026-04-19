@@ -15,10 +15,11 @@ from .ui.main_window import MainWindow
 
 class ReporterSignals(QObject):
     """The collected signals for a `QtReporter`.
-    
+
     This is necessary because `QtReporter` can't inherit from both `Reporter` and
     `QObject`, but signals need to be class attributes.
     """
+
     status_set = Signal(str)
     progress_set = Signal(int)
     max_progress_set = Signal(int)
@@ -46,38 +47,38 @@ class QtReporter(Reporter):
 
     def progress(self) -> int:
         return self._progress
-    
+
     def reset_progress(self):
         self.signals.progress_set.emit(0)
-    
+
     def increment_progress(self, increment: int = 1):
         self._progress += increment
         self.signals.progress_set.emit(self._progress)
 
     def max_progress(self) -> int:
         return self._max_progress
-    
+
     def set_max_progress(self, max: int):
         self._max_progress = max
         self.signals.max_progress_set.emit(max)
 
     def messages(self) -> list[str]:
         return self._messages
-    
+
     def add_message(self, message: str):
         self._messages.append(message)
         self.signals.message_sent.emit(message)
 
     def copied(self) -> list[str]:
         return self._copied
-    
+
     def add_copied(self, name: str):
         self._copied.append(name)
         self.signals.folder_copied.emit(f"Spectrum found: {name}")
 
     def errors(self) -> list[str]:
         return self._errors
-    
+
     def add_error(self, error: str):
         self._errors.append(error)
         self.signals.error_reported.emit(error)
@@ -86,14 +87,14 @@ class QtReporter(Reporter):
         self._progress = self._max_progress
         self.signals.progress_set.emit(self._max_progress)
         self._messages.append(completion_message)
-        self.signals.day_checked.emit(completion_message)  
-    
+        self.signals.day_checked.emit(completion_message)
+
 
 class QtExplorer(Explorer, QObject):
     """An `Explorer` that can be run in a separate `QThread`.
 
     Effectively what Qt documentation would usually refer to as a "Worker".
-    
+
     Has a slot to begin checks (both single- and multi-day) from a different thread,
     and a signal that indicates that the check has finished and the `QtExplorer`
     can be moved back to the main thread.
@@ -120,7 +121,7 @@ class QtExplorer(Explorer, QObject):
 
 class Controller(QObject):
     """The bridge between the desktop app's interface and the searching backend.
-    
+
     A `Controller` coordinates the creation of, and interaction between, all the
     components necessary to run the GUI app and run searches.
     It has an associated `MainWindow` which holds and owns the `Config` that is
@@ -142,7 +143,7 @@ class Controller(QObject):
     def __init__(self, config: Config, version_header: str, admin_mode: bool = False):
         """Create a new `Controller` along with a new associated `MainWindow`
         instance.
-        
+
         `version_header` has two functions:
         1. The first five lines are displayed to the user at the top of the app,
            providing information about the version, author, license etc.
@@ -241,7 +242,7 @@ class Controller(QObject):
             self.main_window.date_selector.date(),
             self.reporter,
         )
-    
+
     @Slot()
     def check_ended(self):
         # Send a notification if there was an error or if new spectra were found
@@ -263,7 +264,9 @@ class Controller(QObject):
             self.timer.timeout.connect(self.check_requested)
             # Could have used the current value in the UI here, shouldn't really matter
             self.timer.start(self.explorer.config.options.repeat_delay * 60 * 1000)
-            logging.info(f"Timer started for next check, scheduled to begin in {self.explorer.config.options.repeat_delay} min")
+            logging.info(
+                f"Timer started for next check, scheduled to begin in {self.explorer.config.options.repeat_delay} min"
+            )
         else:
             self.main_window.status_bar.show_start()
             logging.info("Task complete")

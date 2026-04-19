@@ -8,7 +8,7 @@ from .spinner import WaitingSpinner
 class StatusBar(QWidget):
     """A bar that, depending on the current state, either presents a button to start a check,
     a button to cancel a pending check, or the status of the check in progress."""
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

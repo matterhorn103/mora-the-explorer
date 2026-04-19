@@ -263,9 +263,7 @@ class WaitingSpinner(QWidget):
 
     def _update_timer(self) -> None:
         """Update the spinning speed of the WaitingSpinner."""
-        self._timer.setInterval(
-            int(1000 / (self._number_of_lines * self._revolutions_per_second))
-        )
+        self._timer.setInterval(int(1000 / (self._number_of_lines * self._revolutions_per_second)))
 
     def _update_position(self) -> None:
         """Center WaitingSpinner on parent widget."""
@@ -298,9 +296,7 @@ class WaitingSpinner(QWidget):
         if count_distance == 0:
             return color
         min_alpha_f = min_opacity / 100.0
-        distance_threshold = int(
-            math.ceil((total_nr_of_lines - 1) * trail_fade_perc / 100.0)
-        )
+        distance_threshold = int(math.ceil((total_nr_of_lines - 1) * trail_fade_perc / 100.0))
         if count_distance > distance_threshold:
             color.setAlphaF(min_alpha_f)
         else:

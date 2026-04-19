@@ -12,21 +12,25 @@ from .spec import Manufacturer, Spectrometer
 
 
 #: The OS-appropriate place for the config file.
-#: 
+#:
 #: Should be:
 #: - Windows:  c:/Users/<user>/AppData/Roaming/mora_the_explorer/config.toml
 #: - macOS:    /Users/<user>/Library/Application Support/mora_the_explorer/config.toml
 #: - Linux:    /home/<user>/.config/mora_the_explorer/config.toml
-USER_CONFIG_PATH = Path(
-    platformdirs.user_config_dir(
-        "mora_the_explorer",
-        roaming=True,
-        ensure_exists=True,
+USER_CONFIG_PATH = (
+    Path(
+        platformdirs.user_config_dir(
+            "mora_the_explorer",
+            roaming=True,
+            ensure_exists=True,
+        )
     )
-) / "config.toml"
+    / "config.toml"
+)
 
 
 # Dataclasses that hold the configuration in a structured fashion
+
 
 @dataclass
 class UserOptions:
@@ -42,9 +46,11 @@ class UserOptions:
     repeat_switch: bool
     repeat_delay: int
 
+
 @dataclass
 class Appearance:
     start_button_colour: str
+
 
 @dataclass
 class Paths:
@@ -62,9 +68,11 @@ class Paths:
         """Set the server path for the current platform."""
         setattr(self, platform.system().lower(), path)
 
+
 @dataclass
 class AdminOptions:
     user_name_is_admin_only: bool | None = None
+
 
 @dataclass
 class Groups:
@@ -75,6 +83,7 @@ class Groups:
         """Get only the groups marked or not marked as overflow groups."""
 
         return {k: v for k, v in self.all.items() if (k in self.overflow) is overflow}
+
 
 class Config:
     """A container for the combined app and user configuration data.
@@ -150,9 +159,7 @@ class Config:
             logging.info(f"User configuration loaded from: {user_config_file}")
         # User options used to be stored in config.json pre v1.7, so also check for it
         elif user_config_file.with_name("config.json").exists():
-            self.user_config = self.load_user_config_json(
-                user_config_file.with_name("config.json")
-            )
+            self.user_config = self.load_user_config_json(user_config_file.with_name("config.json"))
             logging.info("Old config.json found, read, and converted to config.toml")
         else:
             self.user_config = {}
@@ -229,6 +236,6 @@ class Config:
 
         with open(path, "wb") as f:
             tomli_w.dump(to_save, f)
-        
+
         logging.info(f"The following user options were saved to {path}:")
         logging.info(self.user_config)

@@ -39,14 +39,14 @@ def main():
         "-v",
         "--verbose",
         action="store_true",
-        help=f"print log entries to stdout instead of {LOG_FILE}"
+        help=f"print log entries to stdout instead of {LOG_FILE}",
     )
 
     interactive_parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
-        help=f"print log entries to stdout instead of {LOG_FILE}"
+        help=f"print log entries to stdout instead of {LOG_FILE}",
     )
 
     check_parser.add_argument(
@@ -63,7 +63,7 @@ def main():
         "-v",
         "--verbose",
         action="store_true",
-        help=f"print log entries to stdout instead of {LOG_FILE}"
+        help=f"print log entries to stdout instead of {LOG_FILE}",
     )
     check_parser.add_argument(
         "-c",
@@ -135,7 +135,7 @@ def main():
             encoding="utf-8",
             level=logging.INFO,
         )
-    
+
     app_config = get_rsrc_dir() / "config.toml"
     if args.config:
         # Load provided config
@@ -147,6 +147,7 @@ def main():
     if args.command == "launch":
         logging.info("Launching GUI from command line")
         from .desktop import App
+
         app = App(config)
         app.run()
         # Event loop will continue until the program is closed
@@ -163,7 +164,7 @@ def main():
         config.options.group = ""
     else:
         config.options.group = args.group
-    
+
     if args.user == "*":
         config.options.user = ""
     else:
@@ -179,9 +180,9 @@ def main():
     if args.no_user:
         config.options.inc_user = False
     if args.inc_solvent:
-        config.options.inc_solvent= True
+        config.options.inc_solvent = True
     if args.no_solvent:
-        config.options.inc_solvent= False
+        config.options.inc_solvent = False
 
     explorer = Explorer(config)
 

@@ -32,7 +32,7 @@ dev = [
 #    "src/mora_the_explorer/config.toml"
 #]
 
-[tool.pytest.ini_options]
+[tool.pytest]
 addopts = [
     "--import-mode=importlib",
 ]
@@ -43,3 +43,7 @@ log_file_level = "DEBUG"
 #pythonpath = [
 #  "."
 #]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"

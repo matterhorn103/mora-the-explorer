@@ -31,7 +31,7 @@ def create_version_label(version_header: str) -> QLabel:
 
 class MainWindow(QMainWindow):
     """The main window of the QtWidgets user interface.
-    
+
     The main window is the parent of all the widgets and layouts, and holds all the
     row components.
     It connects all the wiring of the intra-UI logic e.g. responses to user
@@ -121,7 +121,10 @@ class MainWindow(QMainWindow):
         self.folder_name_options.set_checked(
             # Each option `user`, `solvent` etc. has a corresponding `inc_user`, `inc_solvent`
             # etc. flag in the config
-            **{k: getattr(config.options, f"inc_{k}") for k in self.folder_name_options.options.keys()}
+            **{
+                k: getattr(config.options, f"inc_{k}")
+                for k in self.folder_name_options.options.keys()
+            }
         )
         self.folder_name_options.add_to_grid(self.grid, 7)
 
@@ -186,7 +189,7 @@ class MainWindow(QMainWindow):
         # Connect specifically to the multiday buttons not the overall changed signal
         # because we don't need to do anything when the date is changed
         self.date_selector.date_button_group.buttonClicked.connect(self._on_multiday_toggled)
-        #self.date_selector.date_selector.userDateChanged.connect(self._on_date_changed)
+        # self.date_selector.date_selector.userDateChanged.connect(self._on_date_changed)
         self.notification.clicked.connect(self._on_notification_clicked)
         # Connect the start/cancel buttons directly to the main window's own signals
         self.status_bar.start_button.clicked.connect(self.started)
@@ -223,9 +226,7 @@ class MainWindow(QMainWindow):
     def notify_spectra(self):
         """Inform the user that spectra were found."""
         notification_text = "Spectra have been found!"
-        self.notification.setText(
-            notification_text + " Ctrl+G to go to. Click to dismiss"
-        )
+        self.notification.setText(notification_text + " Ctrl+G to go to. Click to dismiss")
         self.notification.setStyleSheet("background-color : limegreen")
         self.notification.show()
 
@@ -239,7 +240,7 @@ class MainWindow(QMainWindow):
         self.notification.setText(notification_text + " Click to dismiss")
         self.notification.show()
 
-    #def send_toast(self, text: str):
+    # def send_toast(self, text: str):
     #    """Spawn a system toast notification."""
     #    if (
     #        self.opts.since_button.isChecked() is False
@@ -288,16 +289,16 @@ class MainWindow(QMainWindow):
         os_info = platform.uname()
         # Get path to log
         log_location = str(logging.getLogger().handlers[0].baseFilename)
-        email_info = "\n".join([
-            f"Version: {version_no}",
-            f"System: {os_info.system} {os_info.release}, {os_info.machine}",
-            "Description: (please describe your bug)",
-            f"Log: (please insert the contents of your log here, found at {log_location})",
-        ])
-        escaped_info = quote(email_info)
-        url = QUrl(
-            f"{mailto_link}?subject=Mora%20the%20Explorer%20bug&body={escaped_info}"
+        email_info = "\n".join(
+            [
+                f"Version: {version_no}",
+                f"System: {os_info.system} {os_info.release}, {os_info.machine}",
+                "Description: (please describe your bug)",
+                f"Log: (please insert the contents of your log here, found at {log_location})",
+            ]
         )
+        escaped_info = quote(email_info)
+        url = QUrl(f"{mailto_link}?subject=Mora%20the%20Explorer%20bug&body={escaped_info}")
         QDesktopServices.openUrl(url)
 
     @Slot()

@@ -10,6 +10,7 @@ from .check import get_check_paths, check_nmr, MetadataRules, Reporter
 
 class PrintingReporter(Reporter):
     """A basic Reporter that just prints all status updates, progress etc. to stdout."""
+
     def __init__(self):
         self._progress = 0
         self._max_progress = 0
@@ -24,7 +25,7 @@ class PrintingReporter(Reporter):
 
     def progress(self) -> int:
         return self._progress
-    
+
     def report_progress(self):
         # If there's nothing to check anyway then obviously we're already finished
         # Not guarding here causes a divide-by-zero error when no server or folder on it is found
@@ -35,7 +36,7 @@ class PrintingReporter(Reporter):
 
     def reset_progress(self):
         self._progress = 0
-        #self.report_progress()
+        # self.report_progress()
 
     def increment_progress(self, increment: int = 1):
         self._progress += increment
@@ -46,7 +47,7 @@ class PrintingReporter(Reporter):
 
     def set_max_progress(self, max: int):
         self._max_progress = max
-        #print(f"New max progress: {max}")
+        # print(f"New max progress: {max}")
 
     def messages(self) -> list[str]:
         return self._messages
@@ -124,7 +125,7 @@ class Explorer:
 
     def single_check(self, date: datetime.date, reporter: Reporter | None = None) -> Reporter:
         """Conduct a check of a single date.
-        
+
         Returns the `Reporter` it was passed, or the default `PrintingReporter`
         that was created if none was passed.
         """
@@ -140,9 +141,7 @@ class Explorer:
                 spec.include[i] = self.config.specs[s]
 
         # Get platform dependent server path
-        server_path = Path(
-            getattr(self.config.paths, platform.system().lower())
-        ).expanduser()
+        server_path = Path(getattr(self.config.paths, platform.system().lower())).expanduser()
         dest_path = Path(self.config.paths.save).expanduser()
 
         # If a specific group hasn't been selected, check all groups i.e. treat as wild
@@ -150,7 +149,9 @@ class Explorer:
         if not self.config.options.group:
             groups = self.config.groups.all
         else:
-            groups = {k: v for k, v in self.config.groups.all.items() if k == self.config.options.group}
+            groups = {
+                k: v for k, v in self.config.groups.all.items() if k == self.config.options.group
+            }
 
         check_paths = get_check_paths(
             spec_info=spec,
@@ -163,7 +164,7 @@ class Explorer:
         options = self.config.options
         rules = self.generate_rules()
         spec = self.config.specs[options.spec]
-        
+
         check_nmr(
             src=check_paths,
             dest=dest_path,
@@ -176,10 +177,12 @@ class Explorer:
         return reporter
 
     def multiday_check(
-        self, initial_date: datetime.date, reporter: Reporter | None = None,
+        self,
+        initial_date: datetime.date,
+        reporter: Reporter | None = None,
     ) -> Reporter:
         """Check multiple days in sequence.
-        
+
         Uses a single `Reporter` for all days – either the passed one or a simple
         `PrintingReporter` created by default.
         """

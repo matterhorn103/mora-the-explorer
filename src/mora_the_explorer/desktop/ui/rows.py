@@ -33,7 +33,7 @@ class RowComponent(QObject):
 
     def add_to_grid(self, grid: QGridLayout, row: int):
         """Add the row's widgets and layouts to the row specified of `grid`.
-        
+
         This method should be overridden by subclasses.
         """
         raise NotImplementedError
@@ -51,15 +51,15 @@ class DirSelector(RowComponent):
         self.title = QLabel(title)
         self.entry_field = QLineEdit()
         self.pick_button = QPushButton("pick")
-        #self.go_button = QPushButton("go to")
-        #self.go_button.hide()
+        # self.go_button = QPushButton("go to")
+        # self.go_button.hide()
 
         # Right align the title
         self.title.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
         # Set the method that is called when the buttons are pressed
         self.pick_button.clicked.connect(self.pick_path)
-        #self.go_button.clicked.connect(self.go_to)
+        # self.go_button.clicked.connect(self.go_to)
 
         # Set a shortcut for the "go to" button, if desired
         if go_shortcut:
@@ -73,7 +73,7 @@ class DirSelector(RowComponent):
         grid.addWidget(self.title, row, 0)
         grid.addWidget(self.entry_field, row, 1)
         grid.addWidget(self.pick_button, row, 2)
-        #grid.addWidget(self.go_button, row, 2)
+        # grid.addWidget(self.go_button, row, 2)
 
     def path(self) -> str:
         """Get the current path (as a string) in the entry field."""
@@ -86,10 +86,12 @@ class DirSelector(RowComponent):
     @Slot()
     def pick_path(self):
         """Open a file dialog for the user to select a directory on the system.
-        
+
         The file dialog is shown centred over the `parent` window.
         """
-        choice = QFileDialog.getExistingDirectory(self.pick_button, "Select Folder", str(Path.home()))
+        choice = QFileDialog.getExistingDirectory(
+            self.pick_button, "Select Folder", str(Path.home())
+        )
         self.set_path(choice)
 
     @Slot()
@@ -132,11 +134,11 @@ class FreeEntryField(RowComponent):
         grid.addWidget(self.entry_field, row, 1)
         if self.comment:
             grid.addWidget(self.comment, row, 2)
-    
+
     def text(self) -> str:
         """Get the current text in the entry field."""
         return self.entry_field.text()
-    
+
     def set_text(self, text: str):
         """Set the text in the entry field."""
         self.entry_field.setText(text)
@@ -170,7 +172,7 @@ class OverflowSelector(RowComponent):
         # Store the lists of items
         self.main = main
         self.overflow = overflow
-        
+
         # A button group to handle the logic of the buttons as one set even if
         # they are split over multiple lines
         self.buttons = QButtonGroup()
@@ -208,7 +210,7 @@ class OverflowSelector(RowComponent):
                 self.button_row1.addWidget(button)
             else:
                 self.button_row2.addWidget(button)
-        
+
         # Add other options to the overflow drop-down
         self.dropdown.addItems(overflow)
 
@@ -244,7 +246,7 @@ class OverflowSelector(RowComponent):
             self.dropdown.setEnabled(True)
         else:
             raise ValueError(f"{option} does not have a corresponding button!")
-        
+
     @Slot()
     def _on_button_click(self, id: int):
         """Adapt to a change in the checked button."""
@@ -258,6 +260,7 @@ class OverflowSelector(RowComponent):
 # The classes above are abstract really, whereas the below are specific to their
 # context and have more stuff hard-coded
 
+
 class FolderNameOptions(RowComponent):
     """The component for choices relating to folder name customization."""
 
@@ -270,12 +273,12 @@ class FolderNameOptions(RowComponent):
         # Three widgets
         self.title = QLabel("include:")
         self.box_grid = QGridLayout()
-        #self.comment = QLabel("…in folder name")
+        # self.comment = QLabel("…in folder name")
 
         # Right align the title (but top align vertically)
         self.title.setAlignment(Qt.AlignRight | Qt.AlignTop)
         # Centre the comment (but top align vertically)
-        #self.comment.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        # self.comment.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
 
         # The set of options and the labels that should go next to the checkboxes
         # `Config` contains a flag for each option with an `inc_` prefix e.g. inc_user
@@ -309,12 +312,12 @@ class FolderNameOptions(RowComponent):
         # More than that and we need to expand into the third column
         else:
             grid.addLayout(self.box_grid, row, 1, 1, 2)
-        #grid.addWidget(self.comment, row, 2)
-    
+        # grid.addWidget(self.comment, row, 2)
+
     def checked(self) -> dict[str, bool]:
         """Get the status of all the checkboxes."""
         return {k: self.boxes[k].isChecked() for k in self.options.keys()}
-    
+
     def set_checked(self, **kwargs: bool):
         """Set the status of all the checkboxes."""
         for k, v in kwargs.items():
@@ -367,7 +370,7 @@ class SpectrometerSelector(RowComponent):
             self.buttons.button(i).setChecked(True)
         else:
             raise ValueError(f"{spec} is not a spectrometer with a corresponding button!")
-        
+
     def set_visible(self, spec: str, visible: bool):
         """Sets the `visible` property on the corresponding button for `spec`."""
         if spec in self.specs:
@@ -412,11 +415,11 @@ class RepeatSelector(RowComponent):
     def add_to_grid(self, grid: QGridLayout, row: int):
         grid.addWidget(self.title, row, 0)
         grid.addLayout(self.repeat_row, row, 1)
-    
+
     def repeat(self) -> bool:
         """Whether the repeat function is activated."""
         return self.repeat_box.isChecked()
-    
+
     def set_repeat_checked(self, repeat: bool):
         """Set the repeat function box to be checked or unchecked."""
         self.repeat_box.setChecked(repeat)
@@ -487,7 +490,7 @@ class DateSelector(RowComponent):
 
     def date(self) -> datetime.date:
         return self.date_selector.date().toPython()
-    
+
     def set_date(self, date: datetime.date):
         self.date_selector.setDate(date)
 
@@ -498,22 +501,21 @@ class DateSelector(RowComponent):
     def set_format(self, format: str):
         """Set the display format of the date."""
         self.date_selector.setDisplayFormat(format)
-    
+
     def multiday(self) -> bool:
         """Whether the since function is activated."""
-        return (self.date_button_group.checkedButton() is self.since_button)
-    
+        return self.date_button_group.checkedButton() is self.since_button
+
     def set_multiday(self, multiday: bool):
         """Set the mode to be multi or single day."""
         if multiday:
             self.since_button.setChecked(True)
         else:
             self.only_button.setChecked(True)
-    
+
     def set_multiday_enabled(self, enabled: bool):
         """Set the multiday mode to be available or not."""
         self.only_button.setEnabled(enabled)
         self.since_button.setEnabled(enabled)
         if not enabled:
             self.only_button.setChecked(True)
-

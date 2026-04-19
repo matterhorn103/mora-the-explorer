@@ -94,24 +94,16 @@ class SpinnerConfigurator(QWidget):
         self.btn_show_init = QPushButton("Show init args")
 
         # Connects
-        self.sb_roundness.valueChanged.connect(
-            lambda x: setattr(self.spinner, "roundness", x)
-        )
+        self.sb_roundness.valueChanged.connect(lambda x: setattr(self.spinner, "roundness", x))
         self.sb_opacity.valueChanged.connect(
             lambda x: setattr(self.spinner, "minimum_trail_opacity", x)
         )
         self.sb_fadeperc.valueChanged.connect(
             lambda x: setattr(self.spinner, "trail_fade_percentage", x)
         )
-        self.sb_lines.valueChanged.connect(
-            lambda x: setattr(self.spinner, "number_of_lines", x)
-        )
-        self.sb_line_length.valueChanged.connect(
-            lambda x: setattr(self.spinner, "line_length", x)
-        )
-        self.sb_line_width.valueChanged.connect(
-            lambda x: setattr(self.spinner, "line_width", x)
-        )
+        self.sb_lines.valueChanged.connect(lambda x: setattr(self.spinner, "number_of_lines", x))
+        self.sb_line_length.valueChanged.connect(lambda x: setattr(self.spinner, "line_length", x))
+        self.sb_line_width.valueChanged.connect(lambda x: setattr(self.spinner, "line_width", x))
         self.sb_inner_radius.valueChanged.connect(
             lambda x: setattr(self.spinner, "inner_radius", x)
         )
@@ -220,16 +212,12 @@ def set_palette(my_app):
     dark_palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.Text, disabled_color)
     dark_palette.setColor(QtGui.QPalette.Button, dark_color)
     dark_palette.setColor(QtGui.QPalette.ButtonText, white_color)
-    dark_palette.setColor(
-        QtGui.QPalette.Disabled, QtGui.QPalette.ButtonText, disabled_color
-    )
+    dark_palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.ButtonText, disabled_color)
     dark_palette.setColor(QtGui.QPalette.BrightText, QtGui.QColor(187, 134, 252))
     dark_palette.setColor(QtGui.QPalette.Link, QtGui.QColor(187, 134, 252))
     dark_palette.setColor(QtGui.QPalette.Highlight, QtGui.QColor(187, 134, 252))
     dark_palette.setColor(QtGui.QPalette.HighlightedText, QtGui.QColor(255, 255, 255))
-    dark_palette.setColor(
-        QtGui.QPalette.Disabled, QtGui.QPalette.HighlightedText, disabled_color
-    )
+    dark_palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.HighlightedText, disabled_color)
     my_app.setPalette(dark_palette)
     my_app.setStyleSheet(
         "QToolTip { color: #ffffff; background-color: rgb(187, 134, 252); border: 0px solid white; }"

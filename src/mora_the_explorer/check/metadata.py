@@ -9,6 +9,7 @@ from typing import Self
 
 from ..spec import Manufacturer
 
+
 class MetadataRules:
     """Specifies rules for extracting and proliferating measurement metadata, as
     well as the required values for a match."""
@@ -109,7 +110,6 @@ class MeasurementMetadata:
     sample_info: list[str] | None = None
     # Access fields programmatically using `getattr(mdata, field)` or `mdata.asdict()`
 
-
     @classmethod
     def from_title(cls, title: str, rules: MetadataRules) -> Self:
         # Split by every occurrence of one or more of -, _, or whitespace (or
@@ -154,11 +154,10 @@ class MeasurementMetadata:
         result.title = title
 
         return result
-    
 
     def matches_rules(self, rules: MetadataRules) -> bool:
         """Check if the metadata match a set of rules.
-        
+
         If the expected value given is `None`, any value is considered a match.
         Similarly, if a condition is given and the corresponding variable has no
         value (it is still set to `None`), the condition is treated as met.
@@ -243,7 +242,7 @@ def get_metadata_agilent(folder: Path, rules: MetadataRules) -> MeasurementMetad
                             magnet_freq += char
                     metadata.frequency = int(magnet_freq)
         break
-    
+
     # Get solvent
     sample_info_file = folder / "dirinfo/macdir/sampleinfo"
     if sample_info_file.exists():

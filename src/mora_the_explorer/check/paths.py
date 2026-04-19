@@ -29,24 +29,18 @@ def get_check_paths(
     # Replace the variable fields enclosed in <> angle brackets
     check_path_list: list[Path] = []
     for path in raw_path_list:
-        path = (path
-            .replace("<spec_dir>", spec_info.spec_dir)
-            .replace("<date>", date)
-        )
+        path = path.replace("<spec_dir>", spec_info.spec_dir).replace("<date>", date)
         # {} fields for datetime format strings can be subbed all at once
         path = check_date.strftime(path).replace("{", "").replace("}", "")
         to_add = []
         for group, group_name in groups.items():
-            to_add.append(path
-                .replace("<group>", group)
-                .replace("<group_name>", group_name)
-            )
+            to_add.append(path.replace("<group>", group).replace("<group_name>", group_name))
         check_path_list.extend(to_add)
-    
+
     # Turn into Path objects
     check_path_list = [server_path / p for p in check_path_list]
     # Go over the list to make sure we only bother checking paths that exist
-    #check_path_list = [p for p in check_path_list if p.exists()]
+    # check_path_list = [p for p in check_path_list if p.exists()]
 
     # Include other spectrometers if indicated
     for included_spec in spec_info.include:
@@ -57,5 +51,5 @@ def get_check_paths(
             groups,
         )
         check_path_list.extend(included_spec_paths)
-    
+
     return check_path_list

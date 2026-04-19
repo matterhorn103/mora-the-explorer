@@ -42,7 +42,7 @@ class App:
 
         # Create singleton instance of `Controller` to handle the various components
         self.controller = Controller(config, version_header)
-        
+
         if darkdetect.isDark() is True and platform.system() == "Windows":
             self.set_dark_mode()
 
@@ -75,7 +75,7 @@ class App:
 
     def run(self) -> int:
         """Run the Mora the Explorer desktop application.
-        
+
         Returns the error code produced by `QApplication.exec()`.
         """
 

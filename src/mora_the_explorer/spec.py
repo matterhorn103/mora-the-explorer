@@ -47,6 +47,7 @@ class Spectrometer:
     - <group_name>    (the chosen group's name)
     - any strftime formatting string, with % characters, enclosed in {}
     """
+
     manufacturer: Manufacturer
     display_name: str
     spec_dir: str
@@ -59,4 +60,3 @@ class Spectrometer:
     restrict_to: list[str] = field(default_factory=list)
     admin_only: bool = False
     single_check_only: bool = False
-
