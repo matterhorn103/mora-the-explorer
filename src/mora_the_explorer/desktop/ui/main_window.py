@@ -46,7 +46,7 @@ class MainWindow(QMainWindow):
 
     # A couple of signals we can emit for a Controller to intercept
     started = Signal()
-    interrupted = Signal()
+    cancelled = Signal()
 
     def __init__(self, config: Config, version_header: str, admin_mode: bool):
         super().__init__()
@@ -192,8 +192,10 @@ class MainWindow(QMainWindow):
         self.save_button.clicked.connect(self._on_save_button_clicked)
         self.date_selector.date_button_group.buttonClicked.connect(self._on_multiday_toggled)
         #self.date_selector.date_selector.userDateChanged.connect(self._on_date_changed)
-        self.status_bar.start_button.clicked.connect(self._on_start_button_clicked)
         self.notification.clicked.connect(self._on_notification_clicked)
+        # Connect the start/cancel buttons directly to the main window's own signals
+        self.status_bar.start_button.clicked.connect(self.started)
+        self.status_bar.cancel_button.clicked.connect(self.cancelled)
 
     def refresh_visible_specs(self):
         """Make sure the available spectrometers reflect what's allowed for the current group."""
@@ -398,10 +400,6 @@ class MainWindow(QMainWindow):
             self.repeat_options.set_repeat_enabled(False)
         else:
             self.adapt_to_spec()
-
-    @Slot()
-    def _on_start_button_clicked(self):
-        self.started.emit()
 
     @Slot()
     def _on_notification_clicked(self):

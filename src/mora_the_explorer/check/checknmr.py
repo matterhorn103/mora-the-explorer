@@ -20,11 +20,6 @@ from .metadata import (
 class Reporter(ABC):
 
     @abstractmethod
-    def status(self) -> str:
-        """Get the current status of the check."""
-        pass
-
-    @abstractmethod
     def set_status(self, message: str):
         """Set the current status of the check."""
         pass

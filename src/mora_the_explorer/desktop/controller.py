@@ -5,12 +5,89 @@ import datetime
 from pathlib import Path
 from urllib.parse import quote
 
-from PySide6.QtCore import QTimer, QUrl, Slot
+from PySide6.QtCore import QObject, QTimer, QUrl, Signal, Slot
 from PySide6.QtGui import QDesktopServices
 
+from ..check.checknmr import Reporter
 from ..config import Config
 from ..explorer import Explorer
 from .ui.main_window import MainWindow
+
+
+class ReporterSignals(QObject):
+    """The collected signals for a `QtReporter`.
+    
+    This is necessary because `QtReporter` can't inherit from both `Reporter` and
+    `QObject`, but signals need to be class attributes.
+    """
+    status_set = Signal(str)
+    progress_set = Signal(int)
+    max_progress_set = Signal(int)
+    message_sent = Signal(str)
+    folder_copied = Signal(str)
+    error_reported = Signal(str)
+    finished = Signal(str)
+
+
+class QtReporter(Reporter):
+    """A Reporter that emits Qt signals in response to events, making it suitable
+    for reporting back from a background thread."""
+
+    def __init__(self):
+        super().__init__()
+        self._progress = 0
+        self._max_progress = 0
+        self._messages = []
+        self._copied = []
+        self._errors = []
+        self.signals = ReporterSignals()
+
+    def set_status(self, message: str):
+        self.signals.status_set.emit(message)
+
+    def progress(self) -> int:
+        return self._progress
+    
+    def reset_progress(self):
+        self.signals.progress_set.emit(0)
+    
+    def increment_progress(self, increment: int = 1):
+        self._progress += increment
+        self.signals.progress_set.emit(self._progress)
+
+    def max_progress(self) -> int:
+        return self._max_progress
+    
+    def set_max_progress(self, max: int):
+        self._max_progress = max
+        self.signals.max_progress_set.emit(max)
+
+    def messages(self) -> list[str]:
+        return self._messages
+    
+    def add_message(self, message: str):
+        self._messages.append(message)
+        self.signals.message_sent.emit(message)
+
+    def copied(self) -> list[str]:
+        return self._copied
+    
+    def add_copied(self, name: str):
+        self._copied.append(name)
+        self.signals.folder_copied.emit(name)
+
+    def errors(self) -> list[str]:
+        return self._errors
+    
+    def add_error(self, error: str):
+        self._errors.append(error)
+        self.signals.error_reported.emit(error)
+
+    def finish(self, completion_message: str):
+        self._progress = self._max_progress
+        self.signals.progress_set.emit(self._max_progress)
+        self._messages.append(completion_message)
+        self.signals.finished.emit(completion_message)
 
 
 class Controller:
@@ -27,6 +104,8 @@ class Controller:
     The `Explorer` search method is then launched in a second thread, to avoid
     freezing the GUI.
     """
+
+    timer: QTimer
 
     def __init__(self, config: Config, version_header: str):
         """Create a new `Controller` along with a new associated `MainWindow`
@@ -46,62 +125,86 @@ class Controller:
         self.main_window.show()
         logging.info("...complete")
 
-        ## Timer for repeat check, starts checking function when timer runs out
-        #self.timer = QTimer()
-        #self.timer.setSingleShot(True)
-        #self.timer.timeout.connect(self.started)
-
         ## Check for updates
         #self.update_check(self.update_path)
 
         # Connect the key signals
         self.main_window.started.connect(self.start_check)
+        self.main_window.cancelled.connect(self.cancel_scheduled_check)
+
+    def new_reporter(self) -> QtReporter:
+        """Get a new QtReporter with its signals connected to the appropriate slots in the UI."""
+
+        reporter = QtReporter()
+
+        # Connect the signals
+        reporter.signals.status_set.connect(self.main_window.status_bar.set_status)
+        reporter.signals.progress_set.connect(self.main_window.prog_bar.setValue)
+        reporter.signals.max_progress_set.connect(self.main_window.prog_bar.setMaximum)
+        reporter.signals.message_sent.connect(self.main_window.display.add_entry)
+        reporter.signals.folder_copied.connect(self.main_window.display.add_entry)
+        reporter.signals.error_reported.connect(self.main_window.display.add_entry)
+        # Send the completion message to the display on finish
+        reporter.signals.finished.connect(self.main_window.display.add_entry)
+        # Also trigger the completion handler
+        reporter.signals.finished.connect(self.check_ended)
+
+        return reporter
 
     @Slot()
     def start_check(self):
+        self.main_window.status_bar.set_status("Initializing…")
+        self.main_window.status_bar.show_status()
+
         # Create instance of Explorer (back-end)
         logging.info("Initializing new explorer...")
         self.explorer = Explorer(deepcopy(self.main_window.config))
         logging.info("...complete")
 
+        self.reporter = self.new_reporter()
+
         if not self.main_window.date_selector.multiday():
-            reporter = self.explorer.single_check(
+            self.explorer.single_check(
                 self.main_window.date_selector.date(),
-                reporter=None, # TODO Make a reporter that passes output back to the GUI
+                self.reporter,
             )
         else:
-            reporter = self.explorer.multiday_check(
+            self.explorer.multiday_check(
                 self.main_window.date_selector.date(),
-                reporter=None, # TODO Make a reporter that passes output back to the GUI
+                self.reporter,
             )
-        for message in reporter.messages():
-            self.main_window.display.add_entry(message)
-        if reporter.errors():
-            combined_error_message = "\n".join(reporter.errors())
+    
+    @Slot()
+    def check_ended(self):
+        # Send a notification if there was an error or if new spectra were found
+        if self.reporter.errors():
+            combined_error_message = "\n".join(self.reporter.errors())
             self.main_window.notify_error(combined_error_message)
+        elif self.reporter.copied():
+            self.main_window.notify_spectra()
+        # Otherwise no notification
 
-#
-#    def started(self):
-#        self.explorer.queued_checks = 0
-#        if (
-#            self.opts.only_button.isChecked() is True
-#            or self.specs[self.config.options["spec"]]["single_check_only"] is True
-#        ):
-#            self.explorer.single_check(
-#                self.date_selected,
-#                self.wild_group,
-#                prog_bar=self.ui.prog_bar,
-#                status_bar=self.ui.status_bar,
-#                completion_handler=self.check_ended,
-#            )
-#        elif self.opts.since_button.isChecked() is True:
-#            self.explorer.multiday_check(
-#                self.date_selected,
-#                self.wild_group,
-#                prog_bar=self.ui.prog_bar,
-#                status_bar=self.ui.status_bar,
-#                completion_handler=self.check_ended,
-#            )
+        # Behaviour for repeat check function
+        # Should only be `True` if it was allowed to be, as the config passed to the
+        # explorer should have captured the UI state at the time the check was started
+        if self.explorer.config.options.repeat_switch:
+            self.main_window.status_bar.show_cancel()
+            # Start new timer that will trigger start_check() once it runs out
+            self.timer = QTimer()
+            self.timer.setSingleShot(True)
+            self.timer.timeout.connect(self.start_check)
+            # Could have used the current value in the UI here, shouldn't really matter
+            self.timer.start(self.explorer.config.options.repeat_delay * 60 * 1000)
+            logging.info(f"Timer started for next check, scheduled to begin in {self.explorer.config.options.repeat_delay} min")
+        else:
+            self.main_window.status_bar.show_start()
+            logging.info("Task complete")
+
+    @Slot()
+    def cancel_scheduled_check(self):
+        self.timer.stop()
+        self.main_window.status_bar.show_start()
+        logging.info("Scheduled check cancelled")
 
 #    def update_check(self, update_path: Path):
 #        """Check for updates at location specified."""
@@ -123,52 +226,3 @@ class Controller:
 #                    )
 #        except PermissionError:
 #            self.main_window.notify_failed_permissions()
-#
-#    def check_ended(self, copied_list):
-#        self.explorer.queued_checks -= 1
-#        # Set progress to 100% just in case it didn't reach it for whatever reason
-#        self.ui.prog_bar.setMaximum(1)
-#        self.ui.prog_bar.setValue(1)
-#        # Will only not be true if an unknown error occurred
-#        # In all other cases len will be at least 2
-#        if len(copied_list) > 1:
-#            # At least one spectrum was found
-#            if copied_list[1][:5] == "Spect":
-#                copied_list.pop(0)
-#                self.main_window.notify_spectra(copied_list)
-#            # No spectra were found but check completed successfully
-#            elif copied_list[1][:5] == "Check":
-#                pass
-#            # Some exception was raised
-#            elif copied_list[0] == "Exception":
-#                copied_list.pop(0)
-#                self.main_window.notify_error(copied_list)
-#            # Known error occurred
-#            else:
-#                copied_list.pop(0)
-#                self.main_window.notify_error(copied_list)
-#        else:
-#            # Unknown error occurred but exception wasn't raised, output of check
-#            # function was returned without appending anything to copied_list
-#            copied_list.pop(0)
-#            self.main_window.notify_error(copied_list)
-#        # Display output
-#        for entry in copied_list:
-#            self.ui.display.add_entry(entry)
-#        # Behaviour for repeat check function, deactivate for hf spectrometer
-#        # See also self.timer in init function
-#        if (self.config.options["repeat_switch"] is True) and (
-#            self.specs[self.config.options["spec"]]["single_check_only"] is False
-#        ):
-#            self.explorer.queued_checks += 1
-#            self.ui.status_bar.show_cancel()
-#            # Start new timer that will trigger started() once it runs out
-#            self.timer.start(int(self.config.options["repeat_delay"]) * 60 * 1000)
-#        # Enable start check button again, but only if all queued checks have finished
-#        if self.explorer.queued_checks == 0:
-#            self.ui.status_bar.show_start()
-#            logging.info("Task complete")
-#
-#    def interrupted(self):
-#        self.timer.stop()
-#        self.ui.status_bar.show_start()

@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Slot
 from PySide6.QtWidgets import QScrollArea, QVBoxLayout, QWidget, QLabel, QSizePolicy
 
 
@@ -29,6 +29,7 @@ class Display(QScrollArea):
         self.scrollbar.setSingleStep(line_height)
         self.scrollbar.setPageStep(3 * line_height)
 
+    @Slot()
     def add_entry(self, entry: str):
         """Add a line of text to the display."""
         entry_label = QLabel(entry)

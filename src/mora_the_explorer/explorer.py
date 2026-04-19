@@ -18,9 +18,6 @@ class PrintingReporter(Reporter):
         self._copied = []
         self._errors = []
 
-    def status(self) -> str:
-        return self._status
-
     def set_status(self, message):
         self._status = message
         print(message)
@@ -63,7 +60,8 @@ class PrintingReporter(Reporter):
 
     def add_copied(self, name: str):
         self._copied.append(name)
-        self.add_message(f"Spectrum found: {name}")
+        self._messages.append(f"Spectrum found: {name}")
+        print(f"Spectrum found: {name}")
 
     def errors(self) -> list[str]:
         return self._errors

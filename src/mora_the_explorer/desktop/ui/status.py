@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Slot
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QWidget, QGridLayout, QLabel, QPushButton
 
@@ -6,6 +6,9 @@ from .spinner import WaitingSpinner
 
 
 class StatusBar(QWidget):
+    """A bar that, depending on the current state, either presents a button to start a check,
+    a button to cancel a pending check, or the status of the check in progress."""
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -51,14 +54,18 @@ class StatusBar(QWidget):
 
         self.show_start()
 
-    def set_text(self, text: str):
-        self.label.setText(text)
-
     def set_colour(self, colour: str):
         """Set the colour of the start button. Takes a hex code as a string."""
         self.start_button.setStyleSheet(f"background-color : {colour}")
 
+    @Slot()
+    def set_status(self, text: str):
+        """Update the text shown as the current status."""
+        self.label.setText(text)
+
+    @Slot()
     def show_start(self):
+        """Show the start button and hide the status and cancel button."""
         self.start_button.show()
         self.label.hide()
         self.spinner.hide()
@@ -66,6 +73,7 @@ class StatusBar(QWidget):
         self.cancel_button.hide()
 
     def show_status(self):
+        """Show the status and hide the start and cancel buttons."""
         self.start_button.hide()
         self.label.show()
         self.spinner.show()
@@ -73,6 +81,7 @@ class StatusBar(QWidget):
         self.cancel_button.hide()
 
     def show_cancel(self):
+        """Show the cancel button and hide the status and start button."""
         self.start_button.hide()
         self.label.hide()
         self.spinner.hide()
