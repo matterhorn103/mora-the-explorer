@@ -7,13 +7,13 @@ authors = [
 ]
 dependencies = [
     "darkdetect>=0.8.0",
-    "platformdirs>=4.2.0",
+    "platformdirs>=4.9.6",
     "plyer>=2.1.0",
-    "pyside6-essentials>=6.7.0",
-    "tomli-w>=1.0.0",
+    "pyside6-essentials>=6.11.0",
+    "tomli-w>=1.2.0",
 ]
 readme = "README.md"
-requires-python = ">= 3.12"
+requires-python = ">= 3.13"
 
 [project.scripts]
 mora-the-explorer = "mora_the_explorer.__main__:main"
@@ -24,7 +24,7 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "pyinstaller>=6.6.0",
+    "pyinstaller>=6.19.0",
     "pytest>=9.0.3",
 ]
 
