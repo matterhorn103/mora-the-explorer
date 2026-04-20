@@ -82,7 +82,7 @@ class MainWindow(QMainWindow):
         self.user_entry.add_to_grid(self.grid, 1)
 
         # User name entry
-        self.name_entry = rows.FreeEntryField("Name:", None)
+        self.name_entry = rows.FreeEntryField("User name:", None)
         self.name_entry.set_text(config.options.user_name)
         self.name_entry.add_to_grid(self.grid, 2)
         # If config says this should only be active in admin mode, and we aren't
@@ -100,7 +100,7 @@ class MainWindow(QMainWindow):
             self.group_entry.set_selected(config.options.group)
             self.group_entry.add_to_grid(self.grid, 3)
         else:
-            # Group entry via free-form entry boxes, for admin usage
+            # Group entry via free-form entry boxes, for admin use
             self.group_entry = rows.FreeEntryField("Group:", None)
             self.group_entry.set_text(config.options.group)
             self.group_entry.add_to_grid(self.grid, 3)
@@ -136,22 +136,31 @@ class MainWindow(QMainWindow):
         self.spec_selector.set_selected(config.options.spec)
         self.spec_selector.add_to_grid(self.grid, 8)
 
+        # Match pattern customization via a free-form entry box, for admin use
+        if admin_mode:
+            from PySide6.QtGui import QFontDatabase
+            self.pattern_entry = rows.FreeEntryField("Pattern:", "(to match)")
+            # Display the list as space-separated strings
+            self.pattern_entry.set_text(" ".join(config.specs[config.options.spec].title_format))
+            self.pattern_entry.entry_field.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
+            self.pattern_entry.add_to_grid(self.grid, 9)
+
         # Repeat options
         self.repeat_options = rows.RepeatSelector()
         self.repeat_options.set_repeat_checked(config.options.repeat_switch)
         self.repeat_options.set_interval(config.options.repeat_delay)
-        self.repeat_options.add_to_grid(self.grid, 9)
+        self.repeat_options.add_to_grid(self.grid, 10)
 
         # Save button
         self.save_button = QPushButton("Save options as defaults for next time")
         # Remains disabled until the config is changed
         self.save_button.setEnabled(False)
-        self.grid.addWidget(self.save_button, 10, 0, 1, 3)
+        self.grid.addWidget(self.save_button, 11, 0, 1, 3)
 
         # Date selection
         self.date_selector = rows.DateSelector()
         self.date_selector.set_multiday(False)
-        self.date_selector.add_to_grid(self.grid, 11)
+        self.date_selector.add_to_grid(self.grid, 12)
 
         # Status bar to start and cancel a check, as well as show the status
         # during a check
@@ -165,16 +174,16 @@ class MainWindow(QMainWindow):
         if platform.system() == "Windows" and platform.release() == "11":
             # Looks bad (with initial Qt Win11 theme at least) so disable text
             self.prog_bar.setTextVisible(False)
-        self.grid.addWidget(self.prog_bar, 13, 0, 1, 3)
+        self.grid.addWidget(self.prog_bar, 14, 0, 1, 3)
 
         # Box to display output of check function (list of copied spectra)
         self.display = Display()
-        self.grid.addWidget(self.display, 14, 0, 1, 3)
+        self.grid.addWidget(self.display, 15, 0, 1, 3)
 
         # In-app notification that spectra have been found, dismissable
         self.notification = QPushButton()
         self.notification.hide()
-        self.grid.addWidget(self.notification, 15, 0, 1, 3)
+        self.grid.addWidget(self.notification, 16, 0, 1, 3)
 
         # Connect all the signals and slots
         self.version_info.linkActivated.connect(self._on_bug_report_link_clicked)
@@ -182,6 +191,7 @@ class MainWindow(QMainWindow):
         self.group_entry.changed.connect(self._on_group_changed)
         if admin_mode:
             self.group_name_entry.changed.connect(self._on_group_name_changed)
+            self.pattern_entry.changed.connect(self._on_pattern_changed)
         self.server_entry.changed.connect(self._on_server_path_changed)
         self.dest_entry.changed.connect(self._on_dest_path_changed)
         self.folder_name_options.changed.connect(self._on_folder_name_options_changed)
@@ -224,6 +234,8 @@ class MainWindow(QMainWindow):
         self.repeat_options.set_repeat_enabled(not spec_info.single_check_only)
         self.date_selector.set_multiday_enabled(not spec_info.single_check_only)
         self.date_selector.set_format(spec_info.date_entry)
+        if self.admin_mode:
+            self.pattern_entry.set_text(" ".join(spec_info.title_format))
 
     def notify_spectra(self):
         """Inform the user that spectra were found."""
@@ -327,6 +339,12 @@ class MainWindow(QMainWindow):
     def _on_group_name_changed(self):
         self.config.options.group_name = self.group_name_entry.text()
         self.save_button.setEnabled(True)
+    
+    @Slot()
+    def _on_pattern_changed(self):
+        # Changes the spectrometer configuration object itself, but that's OK,
+        # since we don't save the changes to file
+        self.config.specs[self.config.options.spec].title_format = self.pattern_entry.text().split()
 
     @Slot()
     def _on_server_path_changed(self):
