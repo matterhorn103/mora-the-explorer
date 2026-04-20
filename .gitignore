@@ -169,3 +169,4 @@ cython_debug/
 
 # Testing
 tests/nmr
+tests/new_user_config.toml
