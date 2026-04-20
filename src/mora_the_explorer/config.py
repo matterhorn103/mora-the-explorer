@@ -156,7 +156,12 @@ class Config:
         self.user_config_file = user_config_file
         if user_config_file.exists():
             self.user_config = self.load_config_toml(user_config_file)
-            logging.info(f"User configuration loaded from: {user_config_file}")
+            # If the config is for versions pre-2.0, discard it (too many incompatibilities)
+            if "initials" in self.user_config["options"]:
+                logging.info(f"User configuration in {user_config_file} not compatible with Mora >2.0")
+                self.user_config = {}
+            else:
+                logging.info(f"User configuration loaded from: {user_config_file}")
         # User options used to be stored in config.json pre v1.7, so also check for it
         elif user_config_file.with_name("config.json").exists():
             self.user_config = self.load_user_config_json(user_config_file.with_name("config.json"))
