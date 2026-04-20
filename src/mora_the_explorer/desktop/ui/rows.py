@@ -50,7 +50,7 @@ class DirSelector(RowComponent):
         # Groups four widgets - a title string, an entry field, then two buttons
         self.title = QLabel(title)
         self.entry_field = QLineEdit()
-        self.pick_button = QPushButton("pick")
+        self.pick_button = QPushButton("Pick")
         # self.go_button = QPushButton("go to")
         # self.go_button.hide()
 
@@ -271,7 +271,7 @@ class FolderNameOptions(RowComponent):
         super().__init__()
 
         # Three widgets
-        self.title = QLabel("include:")
+        self.title = QLabel("Include:")
         self.box_grid = QGridLayout()
         # self.comment = QLabel("…in folder name")
 
@@ -339,7 +339,7 @@ class SpectrometerSelector(RowComponent):
         self.buttons = QButtonGroup()
 
         # Container groups two items: a title and a stack of the buttons
-        self.title = QLabel("search:")
+        self.title = QLabel("Search:")
         self.button_stack = QVBoxLayout()
 
         for i, spec in enumerate(self.specs):
@@ -389,14 +389,14 @@ class RepeatSelector(RowComponent):
         super().__init__()
 
         # Groups two items: a title and a row of mixed widgets
-        self.title = QLabel("repeat:")
+        self.title = QLabel("Repeat:")
         self.repeat_row = QHBoxLayout()
 
         # Repeat row layout contains an interactive sentence consisting of
         # a checkbox, a spinbox, and a label
         self.repeat_box = QCheckBox("check every")
         self.interval_box = QSpinBox()
-        self.mins_label = QLabel("mins")
+        self.mins_label = QLabel("min")
 
         self.repeat_row.addWidget(self.repeat_box)
         self.repeat_row.addWidget(self.interval_box)
@@ -451,9 +451,9 @@ class DateSelector(RowComponent):
 
         # Groups three items: a title, a row of mixed widgets, and a button to
         # set the date to the current day
-        self.title = QLabel("when?")
+        self.title = QLabel("When?")
         self.date_row = QHBoxLayout()
-        self.today_button = QPushButton("today")
+        self.today_button = QPushButton("Today")
 
         # Date row layout contains an interactive sentence consisting of
         # two radio buttons and a date entry box

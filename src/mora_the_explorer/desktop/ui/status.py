@@ -18,7 +18,7 @@ class StatusBar(QWidget):
         self.setLayout(self.layout)
 
         # Button to begin check
-        self.start_button = QPushButton("start check now")
+        self.start_button = QPushButton("Start check now")
         self.start_button.setStyleSheet("background-color : #b88cce")
         self.layout.addWidget(self.start_button, 0, 0)
         # Make sure the whole status bar stays the same size as the button
@@ -28,7 +28,7 @@ class StatusBar(QWidget):
         self.start_button.setSizePolicy(start_button_size_policy)
 
         # Information for when check is in progress
-        self.label = QLabel("checking...")
+        self.label = QLabel("Checking…")
         self.label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         self.layout.addWidget(self.label, 0, 0)
 
@@ -48,7 +48,7 @@ class StatusBar(QWidget):
         # self.layout.addWidget(self.spinner)
 
         # Button to cancel pending repeat check
-        self.cancel_button = QPushButton("cancel repeat check")
+        self.cancel_button = QPushButton("Cancel repeat check")
         self.cancel_button.setStyleSheet("background-color : #cc0010; color : white")
         self.layout.addWidget(self.cancel_button, 0, 0)
 

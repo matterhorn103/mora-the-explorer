@@ -224,7 +224,7 @@ class Controller(QObject):
         self.main_window.status_bar.show_status()
 
         # Create instance of QtExplorer (back-end)
-        logging.info("Initializing new explorer...")
+        logging.info("Initializing new explorer…")
         self.explorer = QtExplorer(deepcopy(self.main_window.config))
         # Move it to the background thread
         self.explorer.moveToThread(self.explorer_thread)
@@ -232,7 +232,7 @@ class Controller(QObject):
         self.start_check.connect(self.explorer.start_check)
         self.explorer.check_finished.connect(self.check_ended)
         self.explorer_thread.start()
-        logging.info("...complete")
+        logging.info("…complete")
 
         # Create a fresh reporter
         self.reporter = self.new_reporter()
@@ -301,4 +301,4 @@ class Controller(QObject):
         self.main_window.cancelled.connect(self.cancel_scheduled_check)
         self.main_window.admin_mode_toggled.connect(self.toggle_admin_mode)
         self.main_window.show()
-        logging.info("...complete")
+        logging.info("…complete")

@@ -32,9 +32,9 @@ class App:
         # Load configuration if none passed – Controller needs it
         if config is None:
             logging.info(f"Program resources located at {rsrc_dir}")
-            logging.info("Loading program settings...")
+            logging.info("Loading program settings…")
             config = Config(rsrc_dir / "config.toml")
-            logging.info("...complete")
+            logging.info("…complete")
 
         # Load the version header
         with open(rsrc_dir / "version.txt", encoding="utf-8") as f:

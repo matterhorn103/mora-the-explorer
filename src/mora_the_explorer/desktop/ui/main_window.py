@@ -1,5 +1,6 @@
 import logging
 import platform
+from packaging.version import Version
 from urllib.parse import quote
 
 from PySide6.QtCore import Qt, QSize, QUrl, Signal, Slot
@@ -71,16 +72,17 @@ class MainWindow(QMainWindow):
 
         # Compose UI
         # First put in a plate with the version information
+        self.version = Version(version_header.splitlines()[2])
         self.version_info = create_version_label(version_header)
         self.grid.addWidget(self.version_info, 0, 0, 1, 3)
 
         # User initials entry
-        self.user_entry = rows.FreeEntryField("user:", "(initials)")
+        self.user_entry = rows.FreeEntryField("User:", "(initials)")
         self.user_entry.set_text(config.options.user)
         self.user_entry.add_to_grid(self.grid, 1)
 
         # User name entry
-        self.name_entry = rows.FreeEntryField("name:", None)
+        self.name_entry = rows.FreeEntryField("Name:", None)
         self.name_entry.set_text(config.options.user_name)
         self.name_entry.add_to_grid(self.grid, 2)
         # If config says this should only be active in admin mode, and we aren't
@@ -91,7 +93,7 @@ class MainWindow(QMainWindow):
         if not admin_mode:
             # Group entry from an allowed selection, for normal usage
             self.group_entry = rows.OverflowSelector(
-                "group:",
+                "Group:",
                 list(config.groups.filter_overflow(False)),
                 list(config.groups.filter_overflow(True)),
             )
@@ -99,20 +101,20 @@ class MainWindow(QMainWindow):
             self.group_entry.add_to_grid(self.grid, 3)
         else:
             # Group entry via free-form entry boxes, for admin usage
-            self.group_entry = rows.FreeEntryField("group:", None)
+            self.group_entry = rows.FreeEntryField("Group:", None)
             self.group_entry.set_text(config.options.group)
             self.group_entry.add_to_grid(self.grid, 3)
-            self.group_name_entry = rows.FreeEntryField("group name:", None)
+            self.group_name_entry = rows.FreeEntryField("Group name:", None)
             self.group_name_entry.set_text(config.groups.all.get(config.options.group, ""))
             self.group_name_entry.add_to_grid(self.grid, 4)
 
         # Server path
-        self.server_entry = rows.DirSelector("server:")
+        self.server_entry = rows.DirSelector("Server:")
         self.server_entry.set_path(config.paths.server())
         self.server_entry.add_to_grid(self.grid, 5)
 
         # Destination path
-        self.dest_entry = rows.DirSelector("save in:", "Ctrl+G")
+        self.dest_entry = rows.DirSelector("Save in:", "Ctrl+G")
         self.dest_entry.set_path(config.paths.save)
         self.dest_entry.add_to_grid(self.grid, 6)
 
@@ -141,7 +143,7 @@ class MainWindow(QMainWindow):
         self.repeat_options.add_to_grid(self.grid, 9)
 
         # Save button
-        self.save_button = QPushButton("save options as defaults for next time")
+        self.save_button = QPushButton("Save options as defaults for next time")
         # Remains disabled until the config is changed
         self.save_button.setEnabled(False)
         self.grid.addWidget(self.save_button, 10, 0, 1, 3)
@@ -282,19 +284,16 @@ class MainWindow(QMainWindow):
     def _on_bug_report_link_clicked(self, mailto_link: str):
         """Open a draft email containing some basic information."""
 
-        # Get version number
-        with open(self.rsrc_dir / "version.txt", encoding="utf-8") as f:
-            version_no = f.readlines()[2].strip().replace("<br>", "")
         # Get system info
         os_info = platform.uname()
         # Get path to log
         log_location = str(logging.getLogger().handlers[0].baseFilename)
         email_info = "\n".join(
             [
-                f"Version: {version_no}",
+                f"Version: {self.version}",
                 f"System: {os_info.system} {os_info.release}, {os_info.machine}",
                 "Description: (please describe your bug)",
-                f"Log: (please insert the contents of your log here, found at {log_location})",
+                f"Log: (please attach or insert the contents of your log here, found at {log_location})",
             ]
         )
         escaped_info = quote(email_info)
