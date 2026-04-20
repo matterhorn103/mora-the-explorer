@@ -165,7 +165,7 @@ cython_debug/
 .vscode/
 
 # uv
-uv.lock
+#uv.lock
 
 # Testing
 tests/nmr

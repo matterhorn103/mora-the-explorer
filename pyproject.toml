@@ -1,20 +1,18 @@
 [project]
 name = "mora-the-explorer"
-version = "1.8.1"
+version = "2.0.0b"
 description = "A small program for downloading NMR spectra at the Organic Chemistry department at the University of Münster"
 authors = [
-    { name = "Matthew J. Milner", email = "matterhorn103@proton.me" }
+    { name = "Matthew Milner", email = "matterhorn103@proton.me" }
 ]
 dependencies = [
     "darkdetect>=0.8.0",
-    "platformdirs>=4.2.0",
-    "plyer>=2.1.0",
-    "pillow>=10.3.0",
-    "pyside6-essentials>=6.7.0",
-    "tomli-w>=1.0.0",
+    "platformdirs>=4.9.6",
+    "pyside6-essentials>=6.11.0",
+    "tomli-w>=1.2.0",
 ]
 readme = "README.md"
-requires-python = ">= 3.12"
+requires-python = ">= 3.13"
 
 [project.scripts]
 mora-the-explorer = "mora_the_explorer.__main__:main"
@@ -25,13 +23,27 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "pyinstaller>=6.6.0",
+    "pyinstaller>=6.19.0",
+    "pytest>=9.0.3",
 ]
 
-[tool.pytest.ini_options]
+#[tool.hatch.build]
+#include = [
+#    "src/mora_the_explorer/config.toml"
+#]
+
+[tool.pytest]
 addopts = [
     "--import-mode=importlib",
 ]
-pythonpath = [
-  "."
-]
+#log_cli = true
+#log_cli_level = "DEBUG"
+log_file = "pytest.log"
+log_file_level = "DEBUG"
+#pythonpath = [
+#  "."
+#]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"

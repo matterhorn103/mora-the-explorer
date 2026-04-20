@@ -1,0 +1,10 @@
+SAMPLE#: 11
+USER: vnmr1
+MACRO: cpautoQ('loc11_002','day')
+SOLVENT: dmso
+TEXT: mjm501-1
+SampleDir: mjm501-1
+USERDIR: /home/vnmr1/vnmrsys
+DATA: 
+STATUS: Queued
+---------------------------------------------

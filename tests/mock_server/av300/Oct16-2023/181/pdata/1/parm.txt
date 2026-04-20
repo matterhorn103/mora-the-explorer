@@ -1,0 +1,40 @@
+
+Current Data Parameters
+NAME         Oct16-2023              
+EXPNO               181              
+PROCNO                1              
+
+F2 - Acquisition Parameters
+Date_          20231016              
+Time              14.19              
+INSTRUM           spect              
+PROBHD   5 mm PABBO BB-              
+PULPROG            zg30              
+TD                65536              
+SOLVENT           CDCl3              
+NS                    8              
+DS                    2              
+SWH            6188.119 Hz           
+FIDRES         0.094423 Hz           
+AQ            5.2953086 sec          
+RG                  181              
+DW               80.800 usec         
+DE                 6.50 usec         
+TE                295.3 K            
+D1           1.00000000 sec          
+TD0                   1              
+
+======== CHANNEL f1 ========
+SFO1        300.2618542 MHz          
+NUC1                 1H              
+P1                 9.60 usec         
+PLW1        18.00000000 W            
+
+F2 - Processing parameters
+SI                65536              
+SF          300.2600000 MHz          
+WDW                  EM              
+SSB      0              
+LB                 0.30 Hz           
+GB       0              
+PC                 1.00              

@@ -1,0 +1,14 @@
+Mora the Explorer
+Matt Milner
+v2.0.0b
+License: GPLv3
+<a href="mailto:milner@uni-muenster.de">Report a bug</a>
+Changes in version 2.0.0:
+- Update for move to new server
+- Big rewrite, codebase is now much more structured and maintainable
+- Inclusion of experiment in folder name is now optional
+- Solvent and frequency metadata available on all spectrometers
+- Option to include the original folder name
+- Buttons to select paths using the system file explorer
+- Field to specify the server address from the GUI (useful on macOS and Linux)
+- CLI and API work entirely independently of a GUI
