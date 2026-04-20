@@ -238,4 +238,4 @@ class Config:
             tomli_w.dump(to_save, f)
 
         logging.info(f"The following user options were saved to {path}:")
-        logging.info(self.user_config)
+        logging.info(to_save)
