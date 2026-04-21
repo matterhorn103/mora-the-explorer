@@ -106,3 +106,20 @@ class TestExplorer:
         explorer.config.options.inc_frequency = True
         reporter = explorer.single_check(date(2023, 10, 15))
         assert reporter.copied() == ["mjm-500-1-various-600"]
+
+    def test_agilent_inconsistent_match_bug(self):
+        # This tests the bug identified by Klaus 2026-04-10
+        explorer = mock_explorer()
+        explorer.config.options.spec = "v600"
+        explorer.config.options.user = "akw"
+        explorer.config.options.group = "gil"
+        explorer.config.options.inc_user = True
+        explorer.config.options.inc_solvent = False
+        explorer.config.options.inc_frequency = False
+        reporter = explorer.single_check(date(2026, 4, 10))
+        assert sorted(reporter.copied()) == [
+            "akw-004-4",
+            "akw-017-3",
+            "akw-17-4",
+            "akw-032-2-1",
+        ]
