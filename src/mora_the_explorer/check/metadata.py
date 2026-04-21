@@ -168,8 +168,6 @@ class MeasurementMetadata:
 
         Matching is done case-insensitively.
         """
-        logging.debug(self)
-        logging.debug(rules.conditions)
         for variable, expectation in rules.conditions.items():
             if expectation is None:
                 # Any value is a match

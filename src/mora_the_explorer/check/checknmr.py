@@ -366,7 +366,6 @@ def check_nmr(
                 metadata.date = date
 
             if not metadata.matches_rules(rules):
-                logging.debug("Not a match")
                 # Update progress bar
                 reporter.increment_progress()
                 continue
