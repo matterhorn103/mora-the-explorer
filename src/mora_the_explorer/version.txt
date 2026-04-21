@@ -1,6 +1,6 @@
 Mora the Explorer
 Matt Milner
-v2.0.0b
+v2.0.0b2
 License: GPLv3
 <a href="mailto:milner@uni-muenster.de">Report a bug</a>
 Changes in version 2.0.0:
