@@ -194,7 +194,7 @@ class Controller(QObject):
         changelog = "\n".join(version_info.splitlines()[5:])
         if self.version < remote_version:
             self.main_window.notify_update(
-                self.version, remote_version, changelog, self.update_path
+                self.version, remote_version, changelog, update_path
             )
 
     def new_reporter(self) -> QtReporter:
