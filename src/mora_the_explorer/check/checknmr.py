@@ -334,37 +334,36 @@ def check_nmr(
             logging.info(folder)
 
             # Extract title and experiment details from title file in spectrum folder
+            # For Agilent spectra the name of the folder itself ought to include the user
+            # initials so if that's a condition for a match (it usually is) we can save
+            # some time by checking for it straight away and short-circuiting if they are
+            # are missing from the folder name of the sample
+            if (
+                manufacturer is Manufacturer.AGILENT
+                and "user" in rules.conditions
+                and rules.conditions["user"] not in folder.name
+            ):
+                logging.info(
+                    "User missing from folder name - skipping detailed metadata analysis"
+                )
+                reporter.increment_progress()
+                continue
+
+            # Otherwise resolve the metadata fully
             try:
-                # For Agilent spectra the name of the folder itself ought to include the user
-                # initials so if that's a condition for a match (it usually is) we can save
-                # some time by checking for it straight away and short-circuiting if they are
-                # are missing from the folder name of the sample
-                if (
-                    manufacturer is Manufacturer.AGILENT
-                    and "user" in rules.conditions
-                    and rules.conditions["user"] not in folder.name
-                ):
-                    logging.info(
-                        "User missing from folder name - skipping detailed metadata analysis"
-                    )
-                    reporter.increment_progress()
-                    continue
-                # Otherwise resolve the metadata fully
                 metadata = get_metadata(folder, rules, manufacturer)
-                logging.info(f"Measurement title: {metadata.title}")
-                # Some things are not typically resolved by the get_metadata function
-                # but can be supplied because we know them already
-                metadata.manufacturer = manufacturer
-                if metadata.date is None:
-                    metadata.date = date
             except FileNotFoundError:
                 reporter.add_error(f"No metadata could be found for {folder}!")
                 logging.info("No metadata found")
                 reporter.increment_progress()
                 continue
-            except IndexError:  # Due to title not being long enough
-                reporter.increment_progress()
-                continue
+            logging.info(f"Measurement title: {metadata.title}")
+
+            # Some things are not typically resolved by the get_metadata function
+            # but can be supplied because we know them already
+            metadata.manufacturer = manufacturer
+            if metadata.date is None:
+                metadata.date = date
 
             if not metadata.matches_rules(rules):
                 # Update progress bar

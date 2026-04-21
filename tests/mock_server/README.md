@@ -29,7 +29,7 @@ For **Agilent** spectra, the contents of each folder is identical, other than th
 - For each spectrum folder, `./spectrum.fid/text` has been changed
 - `./dirinfo/macdir/sampleinfo` has been changed
 
-However, **each fid file includes an integer from 1 to 61 in order to make them each unique across the whole mock server** (even when the metadata for two spectra are otherwise identical).
+However, **each fid file includes an integer from 1 to 90 in order to make them each unique across the whole mock server** (even when the metadata for two spectra are otherwise identical).
 
 Five groups are mocked, with the following initialisms and names:
 ```toml

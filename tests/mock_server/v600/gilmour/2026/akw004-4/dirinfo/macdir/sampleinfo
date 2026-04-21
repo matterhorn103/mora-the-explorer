@@ -1,0 +1,10 @@
+SAMPLE#: 2
+USER: vnmr1
+MACRO: cpautoQ('loc2_001','day')
+SOLVENT: cdcl3
+TEXT: 
+SampleDir: akw004-4
+USERDIR: /home/vnmr1/vnmrsys
+DATA: 
+STATUS: Queued
+---------------------------------------------
