@@ -166,7 +166,7 @@ class MainWindow(QMainWindow):
         # during a check
         self.status_bar = StatusBar()
         self.status_bar.set_colour(config.appearance.start_button_colour)
-        self.grid.addWidget(self.status_bar, 12, 0, 1, 3)
+        self.grid.addWidget(self.status_bar, 13, 0, 1, 3)
 
         # Progress bar for check
         self.prog_bar = QProgressBar()
