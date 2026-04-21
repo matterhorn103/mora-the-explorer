@@ -362,9 +362,6 @@ def check_nmr(
                 logging.info("No metadata found")
                 reporter.increment_progress()
                 continue
-            except IndexError:  # Due to title not being long enough
-                reporter.increment_progress()
-                continue
 
             if not metadata.matches_rules(rules):
                 # Update progress bar

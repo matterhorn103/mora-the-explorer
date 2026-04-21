@@ -109,6 +109,8 @@ class TestExplorer:
 
     def test_agilent_inconsistent_match_bug(self):
         # This tests the bug identified by Klaus 2026-04-10
+        # The problem arises when individual spectra have an empty `text` file,
+        # from which the frequency is extracted
         explorer = mock_explorer()
         explorer.config.options.spec = "v600"
         explorer.config.options.user = "akw"
@@ -116,6 +118,7 @@ class TestExplorer:
         explorer.config.options.inc_user = True
         explorer.config.options.inc_solvent = False
         explorer.config.options.inc_frequency = False
+        explorer.config.options.inc_experiment = False
         reporter = explorer.single_check(date(2026, 4, 10))
         assert sorted(reporter.copied()) == [
             "akw-004-4",

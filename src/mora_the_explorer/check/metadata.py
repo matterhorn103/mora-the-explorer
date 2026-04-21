@@ -224,24 +224,26 @@ def get_metadata_agilent(folder: Path, rules: MetadataRules) -> MeasurementMetad
     metadata.experiment = "various"
 
     # Get magnet strength
-    while metadata.frequency is None:
-        for subfolder in folder.iterdir():
-            text_file = subfolder / "text"
-            if text_file.exists():
-                with open(text_file, encoding="utf-8") as f:
-                    spectrum_info = f.read().splitlines()
-                    line_with_freq_split = spectrum_info[3].split(",")
-                    # I assume that what we get here is the configured name of the spectrometer,
-                    # and it's just that the convention in Münster is to call them s600, v500 etc.,
-                    # so I don't know how portable this is
-                    spec_name = line_with_freq_split[0]
-                    magnet_freq = ""
-                    for char in spec_name:
-                        # Only want numbers, naturally
-                        if char.isdigit():
-                            magnet_freq += char
+    for subfolder in folder.iterdir():
+        text_file = subfolder / "text"
+        if text_file.exists():
+            with open(text_file, encoding="utf-8") as f:
+                spectrum_info = f.read().splitlines()
+                # I assume that what we get here is the configured name of the spectrometer,
+                # and it's just that the convention in Münster is to call them s600, v500 etc.,
+                # so I don't know how portable this is
+                try:
+                    spec_name = spectrum_info[3].split(",")[0]
+                except IndexError:
+                    continue
+                magnet_freq = ""
+                for char in spec_name:
+                    # Only want numbers, naturally
+                    if char.isdigit():
+                        magnet_freq += char
+                if magnet_freq:
                     metadata.frequency = int(magnet_freq)
-        break
+                    break
 
     # Get solvent
     # First try top-level `studypar` file
