@@ -123,6 +123,6 @@ class TestExplorer:
         assert sorted(reporter.copied()) == [
             "akw-004-4",
             "akw-017-3",
-            "akw-17-4",
             "akw-032-2-1",
+            "akw-17-4",
         ]

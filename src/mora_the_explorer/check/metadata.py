@@ -5,6 +5,7 @@ import datetime
 import logging
 from pathlib import Path
 import re
+from copy import copy
 from typing import Self
 
 from ..spec import Manufacturer
@@ -115,7 +116,8 @@ class MeasurementMetadata:
         # Split by every occurrence of one or more of -, _, or whitespace (or
         # whichever custom alternative was specified)
         components = re.split(rules.src_sep, title)
-        variables = rules.src_fields
+        # Have to make sure to make a copy here to avoid mutating the original in the rules
+        variables = copy(rules.src_fields)
 
         # Make sure the variables and components will correspond cleanly
         for i, variable in enumerate(variables):
@@ -166,6 +168,8 @@ class MeasurementMetadata:
 
         Matching is done case-insensitively.
         """
+        logging.debug(self)
+        logging.debug(rules.conditions)
         for variable, expectation in rules.conditions.items():
             if expectation is None:
                 # Any value is a match
