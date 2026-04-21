@@ -244,8 +244,25 @@ def get_metadata_agilent(folder: Path, rules: MetadataRules) -> MeasurementMetad
         break
 
     # Get solvent
+    # First try top-level `studypar` file
+    studypar_file = folder / "studypar"
+    if studypar_file.exists():
+        with open(studypar_file, encoding="utf-8") as f:
+            sample_info = f.read()
+        # Contains two lines in the format
+        # solvent 2 2 6 0 0 2 1 11 1 64
+        # 1 "cdcl3"
+        try:
+            lines = sample_info.splitlines()
+            for i, line in enumerate(lines):
+                if line.startswith("solvent"):
+                    solvent = lines[i + 1].split()[1].strip('"')
+                    metadata.solvent = solvent
+        except Exception:
+            pass
+    # Failing that, try `sampleinfo`, buried a bit deeper
     sample_info_file = folder / "dirinfo/macdir/sampleinfo"
-    if sample_info_file.exists():
+    if metadata.solvent is None and sample_info_file.exists():
         with open(sample_info_file, encoding="utf-8") as f:
             sample_info = f.read()
         # Contains a line in the format "SOLVENT: cdcl3"
