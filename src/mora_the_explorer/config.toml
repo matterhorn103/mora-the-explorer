@@ -136,7 +136,7 @@ single_check_only = false
 [spectrometers.neo400]
 manufacturer = "bruker"
 display_name = "Routine NMR (400 MHz)"
-spec_dir = "neo400"
+spec_dir = "neo400/av1"
 title_format = [ "group", "user:3" ]
 date = "%b%d-%Y"
 date_entry = "dd MMM yyyy"
@@ -150,6 +150,7 @@ archives = [
     "<spec_dir>/{%y}-neo400b_{%Y}/<date>",
     "<spec_dir>/{%y}-neo400c_{%Y}/<date>",
 ]
+include = [ "av300" ]
 single_check_only = false
 
 [spectrometers.hf]
