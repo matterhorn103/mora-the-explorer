@@ -194,6 +194,8 @@ def copy_folder(src: Path, target: Path, reporter: Reporter) -> Path | None:
 
     Returns the destination that was saved to, if any.
 
+    Also adds a `mora_meta` file (in TOML format) containing the metadata that was extracted.
+
     Note that `target` should be the target path of the copied folder, not a directory
     to copy it into.
 
@@ -377,7 +379,11 @@ def check_nmr(
 
             # Copy, add output messages to main output list
             reporter.set_status("Comparing metadata…")
-            _copy_dest = copy_folder(folder, dest_path / new_folder_name, reporter)
+            copy_dest = copy_folder(folder, dest_path / new_folder_name, reporter)
+
+            # If we copied, add a file with the metadata
+            if copy_dest:
+                metadata.write_toml(copy_dest / "mora.toml")
 
             # Update progress bar to make sure there's a noticeable movement after
             # copying a spectrum, otherwise it looks frozen

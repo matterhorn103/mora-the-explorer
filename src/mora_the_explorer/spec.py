@@ -15,6 +15,13 @@ class Manufacturer(Enum):
             return Manufacturer.AGILENT
         else:
             raise ValueError("Only Bruker and Agilent are recognized manufacturers!")
+    
+    def __str__(self) -> str:
+        match self:
+            case Manufacturer.BRUKER:
+                return "bruker"
+            case Manufacturer.AGILENT:
+                return "agilent"
 
 
 @dataclass
