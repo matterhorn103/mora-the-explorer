@@ -14,14 +14,17 @@
 user = "mjm"
 user_name = ""
 group = "gil"
-inc_user = false
-inc_experiment = true
-inc_solvent = false
-inc_frequency = false
-inc_original = false
 spec = "neo400"
 repeat_switch = false
 repeat_delay = 5
+
+[options.naming]
+group = false
+user = true
+solvent = false
+frequency = false
+experiment = true
+original = false
 
 
 [appearance]

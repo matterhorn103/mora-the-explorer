@@ -1,3 +1,4 @@
+from dataclasses import asdict
 import logging
 import platform
 from packaging.version import Version
@@ -120,14 +121,8 @@ class MainWindow(QMainWindow):
 
         # Folder name options
         self.folder_name_options = rows.FolderNameOptions()
-        self.folder_name_options.set_checked(
-            # Each option `user`, `solvent` etc. has a corresponding `inc_user`, `inc_solvent`
-            # etc. flag in the config
-            **{
-                k: getattr(config.options, f"inc_{k}")
-                for k in self.folder_name_options.options.keys()
-            }
-        )
+        # Each option `user`, `solvent` etc. has a corresponding flag in the config
+        self.folder_name_options.set_checked(**(asdict(config.options.naming)))
         self.folder_name_options.add_to_grid(self.grid, 7)
 
         # Spectrometer selection
@@ -360,7 +355,7 @@ class MainWindow(QMainWindow):
     def _on_folder_name_options_changed(self):
         # Returns {"user": True, "experiment": False, ...}
         for k, v in self.folder_name_options.checked().items():
-            setattr(self.config.options, f"inc_{k}", v)
+            setattr(self.config.options.naming, k, v)
         self.save_button.setEnabled(True)
 
     @Slot()
