@@ -19,14 +19,16 @@ class Manufacturer(Enum):
 
 @dataclass
 class Spectrometer:
-    """Specifies the directory structure and handling behaviour for an single
-    spectrometer.
+    """A profile describing the directory structure and handling behaviour for a
+    spectrometer or a group of spectrometers that should be searched together.
 
     manufacturer: the manufacturer of the spectrometer(s)
     display_name: the text shown next to the button in the user interface
         (note that some characters need escaping, e.g. write && for &)
     spec_dir: the path to the folder for the spectrometer, relative to the server
     title_format: the expected fields in the measurement title
+    match_metadata: the metadata fields that should be considered as conditions
+        for a match (order is irrelevant)
     date: a formatting string that defines <date> - for the format codes see
         https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
     date_entry: whether the user selects the full date "dd MMM yyyy" or just year "yyyy"
@@ -52,6 +54,7 @@ class Spectrometer:
     display_name: str
     spec_dir: str
     title_format: list[str]
+    match_metadata: list[str]
     date: str
     date_entry: str
     check_paths: list[str]

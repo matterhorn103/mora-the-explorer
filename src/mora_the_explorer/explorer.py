@@ -91,6 +91,23 @@ class Explorer:
         """Generate metadata handling rules based on the curent configuration."""
         options = self.config.options
         spec_info = self.config.specs[options.spec]
+
+        # Put together the conditions required for a match to be found
+        # The group name might have been set explicitly, but normally we get it
+        # from the groups table
+        if hasattr(options, "group_name"):
+            group_name = options.group_name
+        else:
+            group_name = self.config.groups.all[options.group]
+        conditions = {
+            "user": options.user,
+            "user_name": options.user_name,
+            "group": options.group,
+            "group_name": group_name,
+        }
+        # Drop any that aren't required per the spectrometer profile
+        conditions = {k: v for k, v in conditions.items() if k in spec_info.match_metadata}
+
         # Put together the way the folder names should be formatted
         if options.inc_user:
             # Treat user name and user as mutually exclusive, prioritise the user
@@ -105,20 +122,10 @@ class Explorer:
             name_format.append("frequency")
         if options.inc_original:
             name_format.append("folder_name")
-        # The group name might have been set explicitly, but normally we get it
-        # from the groups table
-        if hasattr(options, "group_name"):
-            group_name = options.group_name
-        else:
-            group_name = self.config.groups.all[options.group]
+
         rules = MetadataRules(
             src_fields=spec_info.title_format,
-            conditions={
-                "user": options.user,
-                "user_name": options.user_name,
-                "group": options.group,
-                "group_name": group_name,
-            },
+            conditions=conditions,
             dest_fields=name_format,
         )
         return rules

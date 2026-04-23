@@ -76,6 +76,9 @@ pharmazie = "pharmazie"
 #       (note that some characters need escaping, e.g. write && for &)
 #   spec_dir: the path to the folder for the spectrometer, relative to the server
 #   title_format: the expected fields in the measurement title
+#   match_metadata: the metadata fields that should be considered as conditions
+#       for a match (order is irrelevant). If you know a field will never be present,
+#       leave it out.
 #   date: a formatting string that defines <date> - for the format codes see
 #       https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
 #   date_entry: whether the user selects the full date "dd MMM yyyy" or just year "yyyy"
@@ -89,7 +92,7 @@ pharmazie = "pharmazie"
 #   allow_solvent: whether to enable the folder naming option to include the solvent
 #   single_check_only: whether users may use multiday and repeat checks for this spec
 #
-# Possible variable fields in `check_paths` and `archives are:
+# Possible variable fields in `check_paths` and `archives` are:
 # - <spec_dir>      (the value of `spec_dir`)
 # - <date>          (the value of `date`)
 # - <group>         (the chosen group's ID)
@@ -101,6 +104,7 @@ manufacturer = "bruker"
 display_name = "Pre-2020 archive (Bruker)"
 spec_dir = "archiv"
 title_format = [ "group", "user:3" ]
+match_metadata = [ "user", "user_name", "group" ]
 date = "%b%d-%Y"
 date_entry = "dd MMM yyyy"
 check_paths = [
@@ -119,6 +123,7 @@ manufacturer = "bruker"
 display_name = "Studer group NMR only (300 MHz)"
 spec_dir = "av300/av1"
 title_format = [ "group", "user:3" ]
+match_metadata = [ "user", "user_name", "group" ]
 date = "%b%d-%Y"
 date_entry = "dd MMM yyyy"
 check_paths = [
@@ -138,6 +143,7 @@ manufacturer = "bruker"
 display_name = "Routine NMR (400 MHz)"
 spec_dir = "neo400/av1"
 title_format = [ "group", "user:3" ]
+match_metadata = [ "user", "user_name", "group" ]
 date = "%b%d-%Y"
 date_entry = "dd MMM yyyy"
 check_paths = [
@@ -158,6 +164,7 @@ manufacturer = "agilent"
 display_name = "High-field spectrometers (500 && 600 MHz)"
 spec_dir = "500-600er"
 title_format = [ "user:3" ]
+match_metadata = [ "user", "group_name" ]
 date = "%Y"
 date_entry = "yyyy"
 check_paths = [
