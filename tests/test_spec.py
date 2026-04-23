@@ -1,4 +1,4 @@
-from mora_the_explorer.spec import Manufacturer
+from mora_the_explorer.core import Manufacturer
 
 
 class TestManufacturer:

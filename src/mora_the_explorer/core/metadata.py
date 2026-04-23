@@ -9,7 +9,7 @@ from typing import Self
 
 import tomli_w
 
-from ..spec import Manufacturer
+from .spec import Manufacturer
 
 
 class MetadataRules:
@@ -210,6 +210,49 @@ class MeasurementMetadata:
         # All conditions have been met
         return True
     
+    def generate_folder_name(
+        self,
+        rules: MetadataRules,
+        drop_missing: bool = True,
+    ) -> str:
+        """Get a formatted folder name according to the prescribed rules."""
+        parts = []
+        for field in rules.dest_fields:
+            if isinstance(field, list):
+                for mutually_exclusive_field in field:
+                    if getattr(self, mutually_exclusive_field, None) is not None:
+                        field = mutually_exclusive_field
+            if field.startswith("%"):
+                # strftime formatting strings beginning with `%` are replaced by the
+                # appropriately formatted component of the date
+                parts.append(self.date.strftime(field))
+            else:
+                value = getattr(self, field, None)
+                if isinstance(value, list):
+                    parts.extend(value)
+                    continue
+                # What do we do if the user wants something in the folder name but
+                # we don't have that information?
+                if value is not None:
+                    parts.append(str(value))
+                elif drop_missing:
+                    # Just don't include it at all
+                    continue
+                else:
+                    # Use unknown in its place
+                    parts.append("unknown")
+        # Join with desired separator, normalize to all lower case
+        name = rules.dest_sep.join(parts).lower()
+        # Normalize non-ASCII, non-alphanumerical characters
+        allowed_symbols = ["-", "_", " "]
+        special = set(
+            [x for x in name if not x.isascii() or (not x.isalnum() and x not in allowed_symbols)]
+        )
+        for x in special:
+            logging.info(f"Char {x} not permitted in folder names, replaced with {str(hex(ord(x)))}")
+            name = name.replace(x, str(hex(ord(x))))
+        return name
+    
     def write_toml(self, file: Path):
         """Write the metadata as TOML to `file`."""
 
@@ -342,47 +385,3 @@ def get_metadata(
             return get_metadata_agilent(folder, rules)
         case _:
             raise ValueError(f"{repr(manufacturer)} is not a valid manufacturer!")
-
-
-def generate_folder_name(
-    metadata: MeasurementMetadata,
-    rules: MetadataRules,
-    drop_missing: bool = True,
-) -> str:
-    """Format folder name according to the prescribed rules."""
-    parts = []
-    for field in rules.dest_fields:
-        if isinstance(field, list):
-            for mutually_exclusive_field in field:
-                if getattr(metadata, mutually_exclusive_field, None) is not None:
-                    field = mutually_exclusive_field
-        if field.startswith("%"):
-            # strftime formatting strings beginning with `%` are replaced by the
-            # appropriately formatted component of the date
-            parts.append(metadata.date.strftime(field))
-        else:
-            value = getattr(metadata, field, None)
-            if isinstance(value, list):
-                parts.extend(value)
-                continue
-            # What do we do if the user wants something in the folder name but
-            # we don't have that information?
-            if value is not None:
-                parts.append(str(value))
-            elif drop_missing:
-                # Just don't include it at all
-                continue
-            else:
-                # Use unknown in its place
-                parts.append("unknown")
-    # Join with desired separator, normalize to all lower case
-    name = rules.dest_sep.join(parts).lower()
-    # Normalize non-ASCII, non-alphanumerical characters
-    allowed_symbols = ["-", "_", " "]
-    special = set(
-        [x for x in name if not x.isascii() or (not x.isalnum() and x not in allowed_symbols)]
-    )
-    for x in special:
-        logging.info(f"Char {x} not permitted in folder names, replaced with {str(hex(ord(x)))}")
-        name = name.replace(x, str(hex(ord(x))))
-    return name

@@ -8,7 +8,7 @@ from PySide6.QtGui import QPalette, QColor, QIcon
 from PySide6.QtWidgets import QApplication
 
 from .. import LOG_FILE, get_rsrc_dir
-from ..config import Config
+from ..core.config import Config
 from .controller import Controller
 
 

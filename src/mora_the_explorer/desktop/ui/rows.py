@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (
     QFileDialog,
 )
 
-from ...spec import Spectrometer
+from ...core.spec import Spectrometer
 
 
 class RowComponent(QObject):

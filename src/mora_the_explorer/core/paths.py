@@ -3,7 +3,7 @@
 import datetime
 from pathlib import Path
 
-from ..spec import Spectrometer
+from .spec import Spectrometer
 
 
 def get_check_paths(
