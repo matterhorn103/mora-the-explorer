@@ -12,7 +12,7 @@
 
 [options]
 user = "mjm"
-user_name = "milner"
+user_name = ""
 group = "gil"
 inc_user = false
 inc_experiment = true
