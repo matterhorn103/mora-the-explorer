@@ -13,13 +13,13 @@ from .test_config import mock_config
 
 class TestMetadata:
     bruker_rules = MetadataRules(
-        ["group", "user:3"],
         {"group": "stu", "user": "mjm"},
+        r"<group>*<user>*",
         ["user", "sample_info", "experiment", "solvent"],
     )
     agilent_rules = MetadataRules(
-        ["user:3"],
         {"user": "mjm"},
+        r"<user>",
         ["user", "sample_info", "experiment", "solvent"],
     )
 
@@ -54,25 +54,22 @@ class TestMetadata:
         name = generate_folder_name(metadata, self.agilent_rules)
         assert name == "mjm-304-1-0xdf"
     
-    def test_agilent_problematic_titles(self):
+    def test_no_rules_mutation(self):
         # This is related to the bug tested by `TestExplorer.test_agilent_inconsistent_match_bug()`
-        # Only the first of these four was being properly parsed to give user = "akw"
+        # Only the first of these four was being properly parsed to give user = "akw",
+        # because the pattern was being mutated with each use of the rules
         titles = [
             "akw004-4",
             "akw017-3",
             "akw032-2-1",
             "akw17-4",
         ]
-        # Let's just do a sanity check that they are all the same characters
-        assert len(set([title[:3] for title in titles])) == 1
         rules = MetadataRules(
-            ["user:3"],
             {"user": "akw"},
+            r"<user>",
             ["user", "sample_info", "experiment", "solvent"],
         )
         for title in titles:
-            # Turned out that this was being mutated with each use of the rules
-            assert rules.src_fields == ["user:3"]
             metadata = MeasurementMetadata.from_title(title, rules)
             assert metadata.user == "akw"
 

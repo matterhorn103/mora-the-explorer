@@ -124,7 +124,7 @@ class Explorer:
             name_format.append("folder_name")
 
         rules = MetadataRules(
-            src_fields=spec_info.title_format,
+            src_pattern=spec_info.title_format,
             conditions=conditions,
             dest_fields=name_format,
         )

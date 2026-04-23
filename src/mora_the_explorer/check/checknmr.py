@@ -359,20 +359,24 @@ def check_nmr(
                 logging.info("No metadata found")
                 reporter.increment_progress()
                 continue
-            logging.info(f"Measurement title: {metadata.title}")
+
+            # Might have failed to match already while parsing the title, if not
+            # we check for a match now, if it fails in either case then we move
+            # on to the next spectrum
+            if not metadata or not metadata.matches_rules(rules):
+                # Update progress bar
+                reporter.increment_progress()
+                continue
+            else:
+                logging.info("Spectrum matches search query!")
+            
+            logging.debug(f"Measurement title: {metadata.title}")
 
             # Some things are not typically resolved by the get_metadata function
             # but can be supplied because we know them already
             metadata.manufacturer = manufacturer
             if metadata.date is None:
                 metadata.date = date
-
-            if not metadata.matches_rules(rules):
-                # Update progress bar
-                reporter.increment_progress()
-                continue
-            else:
-                logging.info("Spectrum matches search query!")
 
             # Formatting
             new_folder_name = generate_folder_name(metadata, rules, drop_missing=False)

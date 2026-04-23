@@ -5,7 +5,6 @@ import datetime
 import logging
 from pathlib import Path
 import re
-from copy import copy
 from typing import Self
 
 import tomli_w
@@ -19,41 +18,60 @@ class MetadataRules:
 
     def __init__(
         self,
-        src_fields: list[str],
         conditions: dict[str, str],
+        src_pattern: str,
         dest_fields: list[str],
         src_sep: str = r"[\s\-_]+",
         dest_sep: str = "-",
     ):
         """Create a new rules specification.
 
-        `src_fields` indicates the expected components of the measurement title.
-        For Bruker spectra this is recorded in `./pdata/1/title`, while for
+        `conditions` specifies the conditions that are required to be met for
+        a measurement to be considered a match for the search. Conditions are
+        specified in a `dict` with variable names as the keys and the expected
+        values as the values.
+        
+        The variable names used should be the same as the field names of
+        `MeasurementMetadata`.
+        
+        Falsey values such as `None` and `""` act as wildcards and cause the
+        condition to always be met.
+        If a condition is given and the corresponding variable is not even
+        present in the metadata, it is not considered a match.
+        Matching is done case-insensitively.
+
+        `src_pattern` is a regex pattern indicating the expected components of the
+        measurement title.
+        For Bruker spectra the title is recorded in `./pdata/1/title`, while for
         Agilent spectra it forms the name of the measurement folder.
         (Note that this is not the only source of a measurement's metadata.)
 
-        Title components are obtained from the title by separating on `src_sep`,
-        which is a regex pattern.
+        `*` and `+` symbols in the regex pattern are replaced by `src_sep` with
+        the respective symbol used to indicate how many times the separator is
+        expected to be repeated (i.e. `*` means "any number of separator characters"
+        and `+` means "at least one separator character"). 
         By default whitespace, hyphens, and underscores are treated as separators.
-        The list of strings is considered as a list of variable names.
-        The variable names used should be the same as the field names of
-        `MeasurementMetadata`.
-        All trailing components of the separated title are collected as the
-        `sample_info` variable.
 
-        For example, if `src_fields` is `["group", "user"]` then the measurement
-        title `"stu mjm 213-4 repeat"` will be parsed to give
-        `{"group": "stu", "user": "mjm", "sample_info": ["213", "4", "repeat"]}`
+        Positions where variables should be substituted by their expected values in
+        a pre-processing step and matched exactly are indicated in the pattern by
+        enclosing them in angle brackets e.g. `<user>`. If a variable's expected
+        value is falsey then a wildcard pattern is inserted.
+        Capture groups that should be extracted to variables are indicated in
+        the pattern by enclosing them in parentheses e.g. `(user)`.
+        Here, the variable names used must be ones that are in `conditions`.
 
-        If the maximum length of a field is known, or the field is not separated
-        from the succeeding field by a separator character, the length of the
-        field can be specified with the syntax `"variable:len"` e.g. `"user:3"`.
-        Should the field exceed the specified length, the excess characters will
-        be split off and placed at the next position.
+        All trailing components of the separated title are split on `src_sep` and
+        collected as the `sample_info` variable.
 
-        For example, if `src_fields` is `["user:3"]` then the
-        measurement title `"mjm304-1"` will be parsed into
-        `{"user": "mjm", "sample_info": ["304", "1"]}`
+        For example:
+        
+        - If `src_pattern` is `r"<group>*<user>*"` then the measurement title
+          `"stu mjm 213-4 repeat"` will be parsed to give
+          `{"group": "stu", "user": "mjm", "sample_info": ["213", "4", "repeat"]}`
+
+        - If `src_pattern` is `["<user>*"]` then the measurement title
+          `"mjm304-1"` will be parsed into
+          `{"user": "mjm", "sample_info": ["304", "1"]}`
 
         `dest_fields` indicates the desired components to include in the
         measurement folder name when it is saved to the destination location.
@@ -74,24 +92,40 @@ class MetadataRules:
         Note that the only allowed characters in the save name are ASCII
         a-z, A-Z, 0-9, -, and _, and anything else is replaced by the Unicode
         code point (in hexadecimal).
-
-        `conditions` specifies the conditions that are required to be met for
-        a measurement to be considered a match for the search.
-        Conditions are specified in a `dict` with variable names as the keys
-        and the expected values as the values.
-        If the expected value given is `None`, any value is considered a match.
-        Matching is done case-insensitively.
-        If a condition is given and the corresponding variable is not even
-        present in the metadata, it is not considered a match.
         """
 
-        self.src_fields = src_fields
-        self.src_sep = src_sep
         # Normalize the expectation values to lowercase now, and drop any that
         # just have `None` as the value
         self.conditions = {k: v.casefold() for k, v in conditions.items() if v is not None}
+        self._src_pattern = src_pattern
+        self.src_sep = src_sep
         self.dest_fields = dest_fields
         self.dest_sep = dest_sep
+
+    def pattern(self) -> str:
+        """Get the regex that should be used to match the measurement title
+        after processing."""
+        wildcard = r"[^\W_]+"  # i.e. any "word" character, but not underscore
+        pattern = self._src_pattern
+        logging.debug(pattern)
+        # First replace any * or + with the separator pattern in a non-capture group
+        pattern = pattern.replace("*", f"(?:{self.src_sep}*)")
+        pattern = pattern.replace("+", f"(?:{self.src_sep}+)")
+
+        # Then replace any variables with named capture groups
+        for variable, expectation in self.conditions.items():
+            # If the expectation value is `None` or an empty string, it's a wildcard
+            expectation = expectation if expectation else wildcard
+            # First those that should be matched literally
+            pattern = pattern.replace(f"<{variable}>", f"(?P<{variable}>{expectation})")
+            # Then those that should just be captured and compared
+            pattern = pattern.replace(f"({variable})", f"(?P<{variable}>{wildcard})")
+        
+        # Everything at the end is termed the "sample info", which is required to be
+        # at least something
+        pattern += r"(?P<sample_info>.+)"
+
+        return pattern
 
 
 @dataclass
@@ -114,46 +148,27 @@ class MeasurementMetadata:
     # Access fields programmatically using `getattr(mdata, field)` or `mdata.asdict()`
 
     @classmethod
-    def from_title(cls, title: str, rules: MetadataRules) -> Self:
+    def from_title(cls, title: str, rules: MetadataRules) -> Self | None:
+        """Create a metadata object with the values extracted from `title` according
+        to the pattern in `rules`. Returns `None` if the pattern is not matched."""
         # An empty string contains no metadata, obviously, so return early
         if not title:
-            return MeasurementMetadata()
-        # Split by every occurrence of one or more of -, _, or whitespace (or
-        # whichever custom alternative was specified)
-        components = re.split(rules.src_sep, title)
-        # Have to make sure to make a copy here to avoid mutating the original in the rules
-        variables = copy(rules.src_fields)
+            return None
+        
+        # Get the expected pattern for the title
+        pattern = rules.pattern()
+        match = re.match(pattern, title)
+        # If the title didn't match the pattern, pass that information on
+        if match is None:
+            return None
+        # Get the values of all the named capture groups (which, for literally
+        # matched variables, will be the same as the expected values)
+        extracted = match.groupdict()
 
-        # Make sure the variables and components will correspond cleanly
-        for i, variable in enumerate(variables):
-            if ":" in variable:
-                split = variable.split(":")
-                true_variable = split[0]
-                length = int(split[1])
-            else:
-                true_variable = variable
-                length = None
-            # Slice the component to the appropriate length
-            combined = components[i]
-            if length and len(combined) > length:
-                actual_component = combined[:length]
-                following_component = combined[length:]
-                components[i] = actual_component
-                components.insert(i + 1, following_component)
-            variables[i] = true_variable
+        # Split the sample info by every occurrence of one or more of -, _, or
+        # whitespace (or whichever custom alternative was specified)
+        extracted["sample_info"] = re.split(rules.src_sep, extracted["sample_info"])
 
-        extracted = {}
-        for i, component in enumerate(components):
-            if i == len(variables):
-                # No more variables specified, everything else is spare
-                break
-            extracted[variables[i]] = component
-
-        # Any remaining components are collected together as `sample_info`
-        if len(components) > len(rules.src_fields):
-            extracted["sample_info"] = components[len(rules.src_fields) :]
-        else:
-            extracted["sample_info"] = []
 
         result = MeasurementMetadata(**extracted)
 
@@ -208,7 +223,7 @@ class MeasurementMetadata:
             tomli_w.dump(d, f)
 
 
-def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetadata:
+def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetadata | None:
     # Extract title and experiment details from title file in spectrum folder
     title_file = folder / "pdata/1/title"
     with open(title_file, encoding="utf-8") as f:
@@ -225,6 +240,9 @@ def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetada
             logging.info(f"No measurement title was given for {folder}!")
 
     metadata = MeasurementMetadata.from_title(title, rules)
+    if metadata is None:
+        # Isn't a match
+        return None
     metadata.path = str(folder)
     metadata.folder_name = folder.name
     metadata.manufacturer = Manufacturer.BRUKER
@@ -247,9 +265,12 @@ def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetada
     return metadata
 
 
-def get_metadata_agilent(folder: Path, rules: MetadataRules) -> MeasurementMetadata:
+def get_metadata_agilent(folder: Path, rules: MetadataRules) -> MeasurementMetadata | None:
     title = folder.name
     metadata = MeasurementMetadata.from_title(title, rules)
+    if metadata is None:
+        # Isn't a match
+        return None
     metadata.path = str(folder)
     metadata.folder_name = folder.name
     metadata.group_name = folder.parent.parent.name
