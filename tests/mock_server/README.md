@@ -21,45 +21,51 @@ This directory contains a mock-up of the NMR server with four "spectrometer" dir
 Various "fake" spectra have been created to fill out the tree and give us something to test on.
 
 For **Bruker** spectra, the contents of each folder is identical with the exception of:
+- `./fid`
 - `./pdata/1/parm.txt`
 - `./pdata/1/title`
 
 For **Agilent** spectra, the contents of each folder is identical, other than the following changes:
 - The measurement folder name and the names of the spectrum folders within have their names changed accordingly
-- For each spectrum folder, `./spectrum.fid/text` has been changed
+- For each spectrum folder, `./spectrum.fid/fid` and `./spectrum.fid/text` have been changed
 - `./dirinfo/macdir/sampleinfo` has been changed
 
-However, **each fid file includes an integer from 1 to 90 in order to make them each unique across the whole mock server** (even when the metadata for two spectra are otherwise identical).
+Originally only five groups, three users, and three dates were mocked:
 
-Five groups are mocked, with the following initialisms and names:
-```toml
-[groups]
-gil = "gilmour"
-glo = "glorius"
-stu = "studer"
+- groups:
+  - gil = "gilmour"
+  - glo = "glorius"
+  - stu = "studer"
 
-[groups.other]
-biochemie = "biochemie"
-pharmazie = "pharmazie"
-```
+- overflow groups:
+  - biochemie = "biochemie"
+  - pharmazie = "pharmazie"
 
-Meanwhile only three users are mocked:
-{ user = "mjm", user_name = "milner", group = "stu" }
-{ user = "dna", user_name = "adams", group = "stu" }
-{ user = "stp", user_name = "pratchett", group = "gil" }
+- users:
+  - { user = "mjm", user_name = "milner", group = "stu" }
+  - { user = "dna", user_name = "adams", group = "stu" }
+  - { user = "stp", user_name = "pratchett", group = "gil" }
 
-Only three dates are mocked:
-- 2023-10-16
-- 2023-10-15
-- 2022-10-15
+- dates:
+  - 2023-10-16
+  - 2023-10-15
+  - 2022-10-15
 
 2023 is treated as the current year, while the 2022 spectra are in the "archive" folders.
 
 However, there are two folders for 2023-10-16 due to there being two spectra with EXPNO 100.
 
-## Bruker
+**Note that the original set of spectra has been expanded and the above have been supplemented.**
 
-Unrealistically, each Bruker spectrometer has had the exact same set of fake spectra "measured" on it, some of them with deliberately unusual or incorrect titles:
+## Unique FIDs
+
+Each fid file includes an integer from **1 to 91** to make them each unique across the whole mock server (even when the metadata for two spectra are otherwise identical).
+
+## Spectra
+
+### Bruker
+
+Originally, the Bruker spectrometers had this set of fake spectra "measured" on it, some of them with deliberately unusual or incorrect titles:
 
 2022-10-15:
 - 60 = stu dna 979-repeat (1H, b)  // Non-standard sample ID
@@ -84,11 +90,19 @@ Unrealistically, each Bruker spectrometer has had the exact same set of fake spe
 2023-10-16_2
 - 100 = stu dna 1452-1 (1H, a)  // Overflow folder for day
 
-For the neo400 example they are split amongst the three spectrometers, with the letters indicated in the parentheses.
+The av300 spectrometer has all of the above.
 
-## Agilent
+The neo400 spectrometers have all of the above as well, but split amongst the three spectrometers -- which is indicated by the letters in the parentheses.
 
-For the Agilent "v600" spectrometer, there are folders for 2022 and 2023 for all five groups, but the only ones containing spectra are:
+Since then the following have been added:
+
+- av300/Oct17-2023/10  // A measurement with a title file but no title
+
+### Agilent
+
+Note that for some group/year combinations there are folders but no spectra, just a `.placeholder` file (so that it can be checked in with Git).
+
+The following samples are mocked:
 
 studer/2022
 - mjm382  // No sample number
@@ -102,4 +116,11 @@ gilmour/2023
 - stp2-200
 - stpab12-1
 
-All contain 1H, 13C, and COSY experiments, except dna1455, which is proton only.
+gilmour/2026
+// These akw spectra were added specifically because they weren't being found properly
+- akw004-4  // HMBC has an empty `text` file
+- akw017-3
+- akw17-4  // HMBC has an empty `text` file
+- akw032-2-1
+
+Most contain 1H, 13C, and COSY experiments.
