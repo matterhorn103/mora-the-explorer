@@ -113,6 +113,9 @@ class MeasurementMetadata:
 
     @classmethod
     def from_title(cls, title: str, rules: MetadataRules) -> Self:
+        # An empty string contains no metadata, obviously, so return early
+        if not title:
+            return MeasurementMetadata()
         # Split by every occurrence of one or more of -, _, or whitespace (or
         # whichever custom alternative was specified)
         components = re.split(rules.src_sep, title)
@@ -187,21 +190,25 @@ def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetada
     with open(title_file, encoding="utf-8") as f:
         title_contents = f.read().splitlines()
     if len(title_contents) < 2:
-        logging.info("Title file is empty")
-    title = title_contents[0]
-    details = title_contents[1]
-    metadata = MeasurementMetadata.from_title(title, rules)
-    # Check that the title had enough components including sample info (no. etc.)
-    if metadata.sample_info is None:
-        logging.info("No sample name was given when submitting!")
-        raise IndexError
+        logging.info(f"Title file for {folder} is empty!")
+        title = ""
+        details = ""
+    else:
+        title = title_contents[0]
+        details = title_contents[1]
+        # Make a note if there's the title is empty
+        if not title:
+            logging.info(f"No measurement title was given for {folder}!")
 
+    metadata = MeasurementMetadata.from_title(title, rules)
     metadata.path = str(folder)
     metadata.folder_name = folder.name
     metadata.manufacturer = Manufacturer.BRUKER
-    details_split = details.split()
-    metadata.experiment = details_split[0]
-    metadata.solvent = details_split[1]
+
+    if details:
+        details_split = details.split()
+        metadata.experiment = details_split[0]
+        metadata.solvent = details_split[1]
 
     # Get magnet frequency
     uxnmr_info_file = folder / "uxnmr.info"
