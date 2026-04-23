@@ -132,3 +132,12 @@ class TestExplorer:
             "akw-032-2-1",
             "akw-17-4",
         ]
+    
+    def test_bruker_missing_title(self):
+        # Make sure there's not an issue if there is no measurement title
+        explorer = mock_explorer()
+        explorer.config.options.spec = "av300"
+        explorer.config.options.user = "xyz"
+        reporter = explorer.single_check(date(2023, 10, 17))
+        # No spectra should be found, and there should also be no error
+        assert len(reporter.copied()) == 0

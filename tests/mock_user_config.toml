@@ -1,6 +1,6 @@
 [options]
 user = "mjm"
-user_name = "milner"
+user_name = ""
 group = "stu"
 inc_user = false
 inc_experiment = true

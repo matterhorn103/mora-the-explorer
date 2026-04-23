@@ -113,6 +113,9 @@ class MeasurementMetadata:
 
     @classmethod
     def from_title(cls, title: str, rules: MetadataRules) -> Self:
+        # An empty string contains no metadata, obviously, so return early
+        if not title:
+            return MeasurementMetadata()
         # Split by every occurrence of one or more of -, _, or whitespace (or
         # whichever custom alternative was specified)
         components = re.split(rules.src_sep, title)
@@ -160,24 +163,34 @@ class MeasurementMetadata:
     def matches_rules(self, rules: MetadataRules) -> bool:
         """Check if the metadata match a set of rules.
 
-        If the expected value given is `None`, any value is considered a match.
-        Similarly, if a condition is given and the corresponding variable has no
-        value (it is still set to `None`), the condition is treated as met.
+        If there is a condition for a variable but the expected value given is falsey
+        (e.g. `None` or an empty string), any found value at all meets the condition
+        and it is considered a match.
+        An expected value of `None`, `""`, etc. thus functions as a wildcard.
+        
+        If the metadata for the variable of a condition was not found (and therefore
+        the corresponding variable is still set to `None`), the condition is not
+        met and it is not considered a match.
+
         However, if a condition is given and the variable is not a metadata
-        field, an `AttributeError` will be raised.
+        field at all, an `AttributeError` will be raised.
 
         Matching is done case-insensitively.
         """
         for variable, expectation in rules.conditions.items():
-            if expectation is None:
-                # Any value is a match
+            logging.debug(f"{variable} expected to be {expectation}")
+            if not expectation:
+                # Any value meets the condition
                 continue
-            actual = getattr(self, variable)
-            if actual is None:
-                # Ignore the condition
-                continue
-            if actual.casefold() != expectation:
+            found = getattr(self, variable)
+            logging.debug(f"{variable} found to be {found}")
+            if found is None:
+                # Condition can't be met if metadata wasn't even found, not a match
                 return False
+            if found.casefold() != expectation:
+                # Condition is not met, not a match
+                return False
+        # All conditions have been met
         return True
 
 
@@ -187,21 +200,25 @@ def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetada
     with open(title_file, encoding="utf-8") as f:
         title_contents = f.read().splitlines()
     if len(title_contents) < 2:
-        logging.info("Title file is empty")
-    title = title_contents[0]
-    details = title_contents[1]
-    metadata = MeasurementMetadata.from_title(title, rules)
-    # Check that the title had enough components including sample info (no. etc.)
-    if metadata.sample_info is None:
-        logging.info("No sample name was given when submitting!")
-        raise IndexError
+        logging.info(f"Title file for {folder} is empty!")
+        title = ""
+        details = ""
+    else:
+        title = title_contents[0]
+        details = title_contents[1]
+        # Make a note if there's the title is empty
+        if not title:
+            logging.info(f"No measurement title was given for {folder}!")
 
+    metadata = MeasurementMetadata.from_title(title, rules)
     metadata.path = str(folder)
     metadata.folder_name = folder.name
     metadata.manufacturer = Manufacturer.BRUKER
-    details_split = details.split()
-    metadata.experiment = details_split[0]
-    metadata.solvent = details_split[1]
+
+    if details:
+        details_split = details.split()
+        metadata.experiment = details_split[0]
+        metadata.solvent = details_split[1]
 
     # Get magnet frequency
     uxnmr_info_file = folder / "uxnmr.info"
@@ -221,6 +238,7 @@ def get_metadata_agilent(folder: Path, rules: MetadataRules) -> MeasurementMetad
     metadata = MeasurementMetadata.from_title(title, rules)
     metadata.path = str(folder)
     metadata.folder_name = folder.name
+    metadata.group_name = folder.parent.parent.name
     metadata.manufacturer = Manufacturer.AGILENT
     # One folder contains multiple measurements
     metadata.experiment = "various"
