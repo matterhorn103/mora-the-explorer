@@ -21,7 +21,7 @@ class MetadataRules:
         conditions: dict[str, str],
         src_pattern: str,
         dest_fields: list[str],
-        src_sep: str = r"[\s\-_]",
+        src_sep: str = r"[\s_-]",
         dest_sep: str = "-",
     ):
         """Create a new rules specification.
@@ -67,26 +67,32 @@ class MetadataRules:
         self.dest_sep = dest_sep
 
     def pattern(self) -> str:
-        """Get the regex that should be used to match the measurement title
+        r"""Get the regex that should be used to match the measurement title
         after processing.
         
-        `*` and `+` symbols in the regex pattern are replaced by `src_sep` with
-        the respective symbol used to indicate how many times the separator is
-        expected to be repeated (i.e. `*` means "any number of separator characters"
-        and `+` means "at least one separator character"). 
-        By default whitespace, hyphens, and underscores are treated as separators.
+        `\_` in the regex pattern, optionally followed by repeating character symbols
+        (i.e. `*`, `+`, `?`), are replaced during pre-processing by a non-capturing
+        group containing `src_sep`. Repeating character symbols are retained to
+        indicate how many times the separator is expected to be repeated (i.e.
+        `\_*` means "any number of separator characters" and `\_+` means "at least
+        one separator character"). 
+        By default `src_sep` has the value `[\s_-]` i.e. matching whitespace,
+        hyphens, and underscores.
+        For example, assuming that default, an occurrence of `\_+` in the original
+        pattern becomes `(?:[\s_-]+)`.
 
         Positions where variables should be substituted by their expected values in
         a pre-processing step and matched exactly are indicated in the pattern by
         enclosing them in angle brackets e.g. `<user>`. If a variable's expected
-        value is falsey then a wildcard pattern is inserted.
+        value is falsey then a wildcard pattern is inserted that matches any "word
+        character" but not any of the characters of `src_sep`.
         Capture groups that should be extracted to variables are indicated in
         the pattern by enclosing them in parentheses e.g. `(user)`.
         The variable names used must be ones that are in `conditions`.
 
         For example:
         
-        - If `src_pattern` was `r"<group>*<user>*(sample_info)"` and the default
+        - If `src_pattern` was `r"<group>\_*<user>\_*(sample_info)"` and the default
          `src_sep` was used then the title
           `"stu mjm 213-4 repeat"` would be parsed to give
           `{"group": "stu", "user": "mjm", "sample_info": "213-4 repeat"}`
@@ -95,12 +101,19 @@ class MetadataRules:
           `"mjm304-1"` would be parsed into
           `{"user": "mjm", "sample_info": "304-1"}`
         """
-        wildcard = rf"[^\W{self.src_sep.strip("[]")}]+"  # i.e. at least one of any "word" character, but not separator characters
+        wildcard = rf'[^\W{self.src_sep.strip("[]")}]+'  # i.e. at least one of any "word" character, but not separator characters
+        logging.debug(wildcard)
         pattern = self._src_pattern
         logging.debug(pattern)
-        # First replace any * or + with the separator pattern in a non-capture group
-        pattern = pattern.replace("*", f"(?:{self.src_sep}*)")
-        pattern = pattern.replace("+", f"(?:{self.src_sep}+)")
+        # First replace any separators with the separator pattern in a non-capture group
+        # A regex pattern that should match `\_` and capture any suffixed repeating characters
+        escaped_sep_matching_pattern = r"\\_([*+?]*)"
+        pattern = re.sub(
+            escaped_sep_matching_pattern,
+            lambda match: f"(?:{self.src_sep}{match.group(1)})",  # Use a callable lambda to avoid src_sep being interpreted (it should be reproduced literally)
+            pattern,
+        )
+        logging.debug(pattern)
 
         # Then replace any variables with named capture groups
         # `sample_info` is unlikely to have been given as a condition, so add it
@@ -111,7 +124,7 @@ class MetadataRules:
             # `sample_info` is allowed to include separators, so it's a different,
             # more general wildcard that matches any characters
             if not expectation:
-                expectation = wildcard if variable != "sample_info" else r".*"
+                expectation = r".*" if variable == "sample_info" else wildcard
             # First those that should be matched literally
             pattern = pattern.replace(f"<{variable}>", f"(?P<{variable}>{expectation})")
             # Then those that should just be captured and compared

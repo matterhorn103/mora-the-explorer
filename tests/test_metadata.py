@@ -7,21 +7,31 @@ from mora_the_explorer.core import (
 )
 
 
+BRUKER_RULES = MetadataRules(
+    {"group": "stu", "user": "mjm"},
+    r"<group>\_*<user>\_*(sample_info)",
+    ["user", "sample_info", "experiment", "solvent"],
+)
+AGILENT_RULES = MetadataRules(
+    {"user": "mjm"},
+    r"<user>(sample_info)",
+    ["user", "sample_info", "experiment", "solvent"],
+)
+
+
+class TestRules:
+
+    def test_pattern_processing(self):
+        assert BRUKER_RULES.pattern() == (
+            r"(?P<group>stu)(?:[\s_-]*)(?P<user>mjm)(?:[\s_-]*)(?P<sample_info>.*)"
+        )
+
+
 class TestMetadata:
-    bruker_rules = MetadataRules(
-        {"group": "stu", "user": "mjm"},
-        r"<group>*<user>*(sample_info)",
-        ["user", "sample_info", "experiment", "solvent"],
-    )
-    agilent_rules = MetadataRules(
-        {"user": "mjm"},
-        r"<user>(sample_info)",
-        ["user", "sample_info", "experiment", "solvent"],
-    )
 
     def test_bruker_title_extraction(self):
         title = "stu mjm 213-4 repeat"
-        metadata = MeasurementMetadata.from_title(title, self.bruker_rules)
+        metadata = MeasurementMetadata.from_title(title, BRUKER_RULES)
         assert metadata == MeasurementMetadata(
             group="stu",
             user="mjm",
@@ -33,12 +43,12 @@ class TestMetadata:
         metadata = MeasurementMetadata(group="stu", user="mjm", sample_info="213-4 repeat")
         metadata.manufacturer = Manufacturer.BRUKER
         metadata.date = datetime.date.today()
-        name = metadata.generate_folder_name(self.bruker_rules)
+        name = metadata.generate_folder_name(BRUKER_RULES)
         assert name == "mjm-213-4-repeat"
 
     def test_agilent_title_extraction(self):
         title = "mjm304-1-ß"
-        metadata = MeasurementMetadata.from_title(title, self.agilent_rules)
+        metadata = MeasurementMetadata.from_title(title, AGILENT_RULES)
         assert metadata == MeasurementMetadata(
             user="mjm",
             sample_info="304-1-ß",
@@ -47,7 +57,7 @@ class TestMetadata:
 
     def test_agilent_name_gen(self):
         metadata = MeasurementMetadata(user="mjm", sample_info="304-1-ß")
-        name = metadata.generate_folder_name(self.agilent_rules)
+        name = metadata.generate_folder_name(AGILENT_RULES)
         assert name == "mjm-304-1-0xdf"
     
     def test_no_rules_mutation(self):

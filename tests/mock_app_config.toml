@@ -38,7 +38,7 @@ pharmazie = "pharmazie"
 
 [spectrometers.dpx300]
 spec_dir = "dpx300"
-title_format = '<group>*<user>*(sample_info)'
+title_format = '<group>\_*<user>\_*(sample_info)'
 match_metadata = [ "user", "user_name", "group" ]
 date = "%b%d-%Y"
 check_paths = [
@@ -52,7 +52,7 @@ admin_only = true
 
 [spectrometers.av300]
 spec_dir = "av300"
-title_format = '<group>*<user>*(sample_info)'
+title_format = '<group>\_*<user>\_*(sample_info)'
 match_metadata = [ "user", "user_name", "group" ]
 date = "%b%d-%Y"
 check_paths = [
@@ -72,7 +72,7 @@ restrict_to = [
 
 [spectrometers.neo400]
 spec_dir = "neo400"
-title_format = '<group>*<user>*(sample_info)'
+title_format = '<group>\_*<user>\_*(sample_info)'
 match_metadata = [ "user", "user_name", "group" ]
 date = "%b%d-%Y"
 check_paths = [
