@@ -109,18 +109,22 @@ class Explorer:
         conditions = {k: v for k, v in conditions.items() if k in spec_info.match_metadata}
 
         # Put together the way the folder names should be formatted
-        if options.inc_user:
+        name_format = []
+        if options.naming.group:
+            # Treat group name and group as mutually exclusive, prioritise the group
+            name_format.append(["group", "group_name"])
+        if options.naming.user:
             # Treat user name and user as mutually exclusive, prioritise the user
-            name_format = [["user", "user_name"], "sample_info"]
-        else:
-            name_format = ["sample_info"]
-        if options.inc_experiment:
-            name_format.append("experiment")
-        if options.inc_solvent:
+            name_format.append(["user", "user_name"])
+        # Always include the sample info
+        name_format.append("sample_info")
+        if options.naming.solvent:
             name_format.append("solvent")
-        if options.inc_frequency:
+        if options.naming.frequency:
             name_format.append("frequency")
-        if options.inc_original:
+        if options.naming.experiment:
+            name_format.append("experiment")
+        if options.naming.original:
             name_format.append("folder_name")
 
         rules = MetadataRules(

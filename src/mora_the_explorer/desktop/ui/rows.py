@@ -283,10 +283,11 @@ class FolderNameOptions(RowComponent):
         # The set of options and the labels that should go next to the checkboxes
         # `Config` contains a flag for each option with an `inc_` prefix e.g. inc_user
         self.options = {
+            "group": "group",
             "user": "user",
-            "experiment": "experiment",
             "solvent": "solvent",
             "frequency": "frequency",
+            "experiment": "experiment",
             "original": "original name",
         }
         self.boxes = {}

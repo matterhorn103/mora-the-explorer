@@ -2,14 +2,17 @@
 user = "mmu"
 user_name = ""
 group = "gil"
-inc_user = false
-inc_experiment = true
-inc_solvent = false
-inc_frequency = false
-inc_original = false
 spec = "av300"
 repeat_switch = false
 repeat_delay = 5
+
+[options.naming]
+group = false
+user = true
+solvent = true
+frequency = false
+experiment = true
+original = false
 
 [appearance]
 start_button_colour = "#b88cce"

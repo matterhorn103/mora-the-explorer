@@ -31,20 +31,25 @@ USER_CONFIG_PATH = (
 
 # Dataclasses that hold the configuration in a structured fashion
 
+@dataclass
+class NamingOptions:
+    group: bool
+    user: bool
+    solvent: bool
+    frequency: bool
+    experiment: bool
+    original: bool
+
 
 @dataclass
 class UserOptions:
     user: str
     user_name: str
     group: str
-    inc_user: bool
-    inc_experiment: bool
-    inc_solvent: bool
-    inc_frequency: bool
-    inc_original: bool
     spec: str
     repeat_switch: bool
     repeat_delay: int
+    naming: NamingOptions
 
 
 @dataclass
@@ -92,6 +97,7 @@ class Config:
 
     ```toml
     [options]
+    [options.naming]
     [appearance]
     [paths]
     [admin]
@@ -133,7 +139,11 @@ class Config:
         logging.info(f"App configuration loaded from: {app_config_file}")
 
         # Extract the parts of the configuration from the app config
-        self.options = UserOptions(**(self.app_config["options"]))
+        # Extract the naming options
+        user_opts = self.app_config["options"].copy()
+        naming_opts = NamingOptions(**user_opts["naming"])
+        user_opts["naming"] = naming_opts
+        self.options = UserOptions(**user_opts)
         self.appearance = Appearance(**(self.app_config["appearance"]))
         self.paths = Paths(**(self.app_config["paths"]))
         self.admin = AdminOptions(**(self.app_config["admin"]))
@@ -171,7 +181,11 @@ class Config:
 
         # Merge anything in the user config in, takes priority over app config
         for k, v in self.user_config.get("options", {}).items():
-            setattr(self.options, k, v)
+            if k == "naming":
+                for flag, setting in v.items():
+                    setattr(self.options.naming, flag, setting)
+            else:
+                setattr(self.options, k, v)
         for k, v in self.user_config.get("appearance", {}).items():
             setattr(self.appearance, k, v)
         for k, v in self.user_config.get("paths", {}).items():
@@ -183,6 +197,7 @@ class Config:
 
         logging.info("The app is now configured as follows:")
         logging.info(f"- options: {self.options}")
+        logging.info(f"- naming: {self.options.naming}")
         logging.info(f"- appearance: {self.appearance}")
         logging.info(f"- paths: {self.paths}")
         logging.info(f"- available groups: {self.groups}")

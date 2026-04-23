@@ -2,14 +2,17 @@
 user = "mjm"
 user_name = ""
 group = "stu"
-inc_user = false
-inc_experiment = true
-inc_solvent = true
-inc_frequency = false
-inc_original = false
 spec = "av300"
 repeat_switch = true
 repeat_delay = 3
+
+[options.naming]
+group = false
+user = true
+solvent = true
+frequency = false
+experiment = true
+original = false
 
 [paths]
 windows = "//samba.public.os.wwu.de/usershare/projects/q_nmr-oc/nmr"
