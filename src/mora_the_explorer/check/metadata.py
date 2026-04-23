@@ -1,12 +1,14 @@
 """Metadata handling."""
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 import datetime
 import logging
 from pathlib import Path
 import re
 from copy import copy
 from typing import Self
+
+import tomli_w
 
 from ..spec import Manufacturer
 
@@ -192,6 +194,18 @@ class MeasurementMetadata:
                 return False
         # All conditions have been met
         return True
+    
+    def write_toml(self, file: Path):
+        """Write the metadata as TOML to `file`."""
+
+        d = asdict(self)
+        # Can't serialize the `Manufacturer` enum as-is
+        d["manufacturer"] = str(d["manufacturer"])
+        # Remove anything that has a value of `None` (TOML has no null value)
+        d = {k: v for k, v in d.items() if v is not None}
+
+        with open(file, "wb") as f:
+            tomli_w.dump(d, f)
 
 
 def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetadata:
