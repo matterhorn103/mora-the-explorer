@@ -238,6 +238,7 @@ def get_metadata_agilent(folder: Path, rules: MetadataRules) -> MeasurementMetad
     metadata = MeasurementMetadata.from_title(title, rules)
     metadata.path = str(folder)
     metadata.folder_name = folder.name
+    metadata.group_name = folder.parent.parent.name
     metadata.manufacturer = Manufacturer.AGILENT
     # One folder contains multiple measurements
     metadata.experiment = "various"
