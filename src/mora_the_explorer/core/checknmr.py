@@ -12,7 +12,6 @@ from pathlib import Path
 from .metadata import (
     MetadataRules,
     Manufacturer,
-    generate_folder_name,
     get_metadata,
 )
 
@@ -379,7 +378,7 @@ def check_nmr(
                 metadata.date = date
 
             # Formatting
-            new_folder_name = generate_folder_name(metadata, rules, drop_missing=False)
+            new_folder_name = metadata.generate_folder_name(rules, drop_missing=False)
 
             # Copy, add output messages to main output list
             reporter.set_status("Comparing metadata…")

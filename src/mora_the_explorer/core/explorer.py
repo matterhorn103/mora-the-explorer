@@ -5,7 +5,7 @@ import sys
 
 from .config import Config
 from .spec import Spectrometer
-from .check import get_check_paths, check_nmr, MetadataRules, Reporter
+from . import get_check_paths, check_nmr, MetadataRules, Reporter
 
 
 class PrintingReporter(Reporter):

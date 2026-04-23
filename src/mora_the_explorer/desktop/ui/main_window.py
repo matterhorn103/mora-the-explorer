@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
 )
 
-from ...config import Config
+from ...core.config import Config
 from . import rows
 from .display import Display
 from .status import StatusBar

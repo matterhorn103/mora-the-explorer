@@ -7,9 +7,9 @@ from pathlib import Path
 from PySide6.QtCore import QObject, QTimer, Signal, Slot, QThread
 from PySide6.QtWidgets import QApplication
 
-from ..check.checknmr import Reporter
-from ..config import Config
-from ..explorer import Explorer
+from ..core.checknmr import Reporter
+from ..core.config import Config
+from ..core.explorer import Explorer
 from .ui.main_window import MainWindow
 
 
