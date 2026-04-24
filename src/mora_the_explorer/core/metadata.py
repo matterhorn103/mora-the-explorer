@@ -276,6 +276,9 @@ class MeasurementMetadata:
 def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetadata | None:
     # Extract title and experiment details from title file in spectrum folder
     title_file = folder / "pdata/1/title"
+    if not title_file.exists():
+        logging.info(f"No title file for {folder} – presumably not a measurement")
+        return None
     with open(title_file, encoding="utf-8") as f:
         title_contents = f.read().splitlines()
     if len(title_contents) < 2:
@@ -285,7 +288,7 @@ def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetada
     else:
         title = title_contents[0]
         details = title_contents[1]
-        # Make a note if there's the title is empty
+        # Make a note if the title is empty
         if not title:
             logging.info(f"No measurement title was given for {folder}!")
 
