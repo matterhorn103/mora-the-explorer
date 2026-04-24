@@ -273,7 +273,7 @@ def check_nmr(
     reporter.set_status("Preparing…")
 
     logging.info("Checking with the following options:")
-    logging.info(f"- Match conditions: {rules.conditions}")
+    logging.info(f"- Match conditions: {rules.substitutions}")
     logging.info(f"- Save location: {dest}")
 
     # Some initial setup that is the same for all spectrometers
@@ -341,8 +341,7 @@ def check_nmr(
             # are missing from the folder name of the sample
             if (
                 manufacturer is Manufacturer.AGILENT
-                and "user" in rules.conditions
-                and rules.conditions["user"] not in folder.name
+                and rules.substitutions.user not in folder.name
             ):
                 logging.info(
                     "User missing from folder name - skipping detailed metadata analysis"
@@ -359,10 +358,8 @@ def check_nmr(
                 reporter.increment_progress()
                 continue
 
-            # Might have failed to match already while parsing the title, if not
-            # we check for a match now, if it fails in either case then we move
-            # on to the next spectrum
-            if not metadata or not metadata.matches_rules(rules):
+            # Might have failed to match, in which case we move on to the next spectrum
+            if not metadata:
                 # Update progress bar
                 reporter.increment_progress()
                 continue

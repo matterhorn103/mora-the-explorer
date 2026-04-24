@@ -136,7 +136,7 @@ class MainWindow(QMainWindow):
             from PySide6.QtGui import QFontDatabase
             self.pattern_entry = rows.FreeEntryField("Pattern:", "(to match)")
             # Pattern is regex
-            self.pattern_entry.set_text(config.specs[config.options.spec].title_format)
+            self.pattern_entry.set_text(config.specs[config.options.spec].measurement_pattern)
             self.pattern_entry.entry_field.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
             self.pattern_entry.add_to_grid(self.grid, 9)
 
@@ -230,7 +230,7 @@ class MainWindow(QMainWindow):
         self.date_selector.set_multiday_enabled(not spec_info.single_check_only)
         self.date_selector.set_format(spec_info.date_entry)
         if self.admin_mode:
-            self.pattern_entry.set_text(spec_info.title_format)
+            self.pattern_entry.set_text(spec_info.measurement_pattern)
 
     def notify_spectra(self):
         """Inform the user that spectra were found."""
@@ -339,7 +339,7 @@ class MainWindow(QMainWindow):
     def _on_pattern_changed(self):
         # Changes the spectrometer configuration object itself, but that's OK,
         # since we don't save the changes to file
-        self.config.specs[self.config.options.spec].title_format = self.pattern_entry.text()
+        self.config.specs[self.config.options.spec].measurement_pattern = self.pattern_entry.text()
 
     @Slot()
     def _on_server_path_changed(self):

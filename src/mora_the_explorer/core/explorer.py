@@ -5,7 +5,7 @@ import sys
 
 from .config import Config
 from .spec import Spectrometer
-from . import get_check_paths, check_nmr, MetadataRules, Reporter
+from . import get_check_paths, check_nmr, MetadataRules, Reporter, VariableSubstitutions
 
 
 class PrintingReporter(Reporter):
@@ -99,14 +99,13 @@ class Explorer:
             group_name = options.group_name
         else:
             group_name = self.config.groups.all[options.group]
-        conditions = {
-            "user": options.user,
-            "user_name": options.user_name,
-            "group": options.group,
-            "group_name": group_name,
-        }
-        # Drop any that aren't required per the spectrometer profile
-        conditions = {k: v for k, v in conditions.items() if k in spec_info.match_metadata}
+        substitutions = VariableSubstitutions(
+            user=options.user,
+            user_name=options.user_name,
+            group=options.group,
+            group_name=group_name,
+            sample_id="",  # TODO use the actual value once it exists
+        )
 
         # Put together the way the folder names should be formatted
         name_format = []
@@ -117,7 +116,7 @@ class Explorer:
             # Treat user name and user as mutually exclusive, prioritise the user
             name_format.append(["user", "user_name"])
         # Always include the sample info
-        name_format.append("sample_info")
+        name_format.append("sample_id")
         if options.naming.solvent:
             name_format.append("solvent")
         if options.naming.frequency:
@@ -128,8 +127,8 @@ class Explorer:
             name_format.append("folder_name")
 
         rules = MetadataRules(
-            src_pattern=spec_info.title_format,
-            conditions=conditions,
+            substitutions=substitutions,
+            measurement_pattern=spec_info.measurement_pattern,
             dest_fields=name_format,
         )
         return rules
