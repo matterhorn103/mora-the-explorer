@@ -33,7 +33,7 @@ class Spectrometer:
     display_name: the text shown next to the button in the user interface
         (note that some characters need escaping, e.g. write && for &)
     spec_dir: the path to the folder for the spectrometer, relative to the server
-    title_format: the expected fields in the measurement title
+    measurement_pattern: the expected fields in the measurement title
     match_metadata: the metadata fields that should be considered as conditions
         for a match (order is irrelevant)
     date: a formatting string that defines <date> - for the format codes see
@@ -60,7 +60,7 @@ class Spectrometer:
     manufacturer: Manufacturer
     display_name: str
     spec_dir: str
-    title_format: list[str]
+    measurement_pattern: list[str]
     match_metadata: list[str]
     date: str
     date_entry: str

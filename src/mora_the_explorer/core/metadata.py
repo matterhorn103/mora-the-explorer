@@ -1,6 +1,6 @@
 """Metadata handling."""
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, fields
 import datetime
 import logging
 from pathlib import Path
@@ -12,125 +12,133 @@ import tomli_w
 from .spec import Manufacturer
 
 
+@dataclass
+class VariableSubstitutions:
+    """Holds the values that should be inserted into the regex patterns when required."""
+
+    user: str
+    user_name: str
+    group: str
+    group_name: str
+    sample_id: str
+
+
 class MetadataRules:
     """Specifies rules for extracting and proliferating measurement metadata, as
     well as the required values for a match."""
 
     def __init__(
         self,
-        conditions: dict[str, str],
-        src_pattern: str,
+        substitutions: VariableSubstitutions,
+        measurement_pattern: str,
         dest_fields: list[str],
-        src_sep: str = r"[\s_-]",
+        pattern_sep: str = r"[\s_-]",
         dest_sep: str = "-",
     ):
-        """Create a new rules specification.
+        r"""Create a new rules specification.
 
-        `conditions` specifies the conditions that are required to be met for
-        a measurement to be considered a match for the search. Conditions are
-        specified in a `dict` with variable names as the keys and the expected
-        values as the values.
-        The variable names used should be the same as the field names of
-        `MeasurementMetadata`.
+        The rules are used for two purposes:
+        1. Analysing the sample and measurement names, determining whether there
+           is a match, and extracting any metadata
+        2. Generating a folder name by combining metadata fields
 
-        If `sample_info` is not listed as a specific condition, 
+        `measurement_pattern` is a regex pattern indicating the expected
+        components of the measurement title. It is a normal regex in all ways,
+        and uses normal regex syntax, with the exception of two extensions:
+
+        1. Any occurrence of a backslash-escaped underscore `\_` will be replaced
+           by `pattern_sep`, which represents allowed "separator" characters
+
+        2. Variable names surrounded by angle brackets `<var>` are replaced by named
+           capture groups `(?P<var>...)`
+
+        The resulting patterns are compiled when the `MeasurementRules` object is
+        instantiated, and can be accessed using the `sample_pattern` and
+        `measurement_pattern` properties.
         
-        Falsey values such as `None` and `""` act as wildcards and cause the
-        condition to always be met.
-        If a condition is given and the corresponding variable is not even
-        present in the metadata, it is not considered a match.
-        Matching is done case-insensitively.
+        `pattern_sep` is typically a character class. The default value matches
+        whitespace, underscores, and hyphens.
 
-        `src_pattern` is a (template for a) regex pattern indicating the expected
-        components of the measurement title.
-        Variable names surrounded by `<>` or `()` are replaced by capture groups.
-        See `MetadataRules.pattern()` for mora details on how `src_pattern` is
-        processed before use in matching.
-        For Bruker spectra the title is recorded in `./pdata/1/title`, while for
-        Agilent spectra it forms the name of the measurement folder.
-        (Note that this is not the only source of a measurement's metadata.)
+        The capture groups indicate that some value for a metadata variable is
+        expected at that position and so should be extracted and stored in a
+        `MeasurementMetadata` object. Through the use of `!`, the value of the
+        corresponding attribute of `substitutions` can be substituted in.
+        Usually the substitued value will be a literal string, and the effect is
+        of making that value a hard requirement for a match using the pattern.
+        Without `!`, the value may be any number of non-separator characters.
+
+        In combination with `?` in the normal fashion, variables can thus be used
+        in the patterns as follows:
+
+        `<var>` – some value for the variable is expected here and should be extracted;
+        becomes `(?P<var>[^\_]+)`
+
+        `<var!>` – the corresponding value for the variable is required to match; if `var = "abc"`, becomes `(?P<var>abc)`
+        
+        `<var>?` indicates that the variable may or may not be present; becomes `(?P<var>[^\_]+)?`
+        
+        `<var!>?` indicates that the variable may or may not be present, but if it is, it must match; becomes e.g. `(?P<var>abc)?`
+
+        If substitution should occur (i.e. `!` is used) then the variable should
+        be the name of one of the attributes of `VariableSubstitutions`; otherwise,
+        the `!` is ignored.
+
+        Substituted values are normalized to lowercase using `str.casefold()`.
+        
+        For Bruker spectra the pattern is matched to the title as recorded in
+        `./pdata/1/title`, while for Agilent spectra they are used to analyse the
+        names of the sample folder and the contained measurement folders.
+        (Note that these are not the only source of a measurement's metadata.)
 
         `dest_fields` indicates the desired metadata fields to include in the
-        measurement folder name when it is saved to the destination location.
+        measurement folder name when it is saved to the destination location, and
+        `dest_sep` the separator character (or string) that should be used to join
+        the fields.
         See `MeasurementMetadata.generate_folder_name()` for more details.
-
-        `src_sep` should be a regex character class with all the characters that
-        should be considered as separators.
         """
 
-        # Normalize the expectation values to lowercase now, and drop any that
-        # just have `None` as the value
-        self.conditions = {k: v.casefold() for k, v in conditions.items() if v is not None}
-        self._src_pattern = src_pattern
-        self.src_sep = src_sep
+        self.src_sep = pattern_sep
         self.dest_fields = dest_fields
         self.dest_sep = dest_sep
-
-    def pattern(self) -> str:
-        r"""Get the regex that should be used to match the measurement title
-        after processing.
         
-        `\_` in the regex pattern, optionally followed by repeating character symbols
-        (i.e. `*`, `+`, `?`), are replaced during pre-processing by a non-capturing
-        group containing `src_sep`. Repeating character symbols are retained to
-        indicate how many times the separator is expected to be repeated (i.e.
-        `\_*` means "any number of separator characters" and `\_+` means "at least
-        one separator character"). 
-        By default `src_sep` has the value `[\s_-]` i.e. matching whitespace,
-        hyphens, and underscores.
-        For example, assuming that default, an occurrence of `\_+` in the original
-        pattern becomes `(?:[\s_-]+)`.
+        # Normalize the substitution values to lowercase now
+        self.substitutions = VariableSubstitutions(
+            **{k: v.casefold() for k, v in asdict(substitutions).items()}
+        )
+        self._measurement_pattern = re.compile(self.process_pattern(measurement_pattern))
 
-        Positions where variables should be substituted by their expected values in
-        a pre-processing step and matched exactly are indicated in the pattern by
-        enclosing them in angle brackets e.g. `<user>`. If a variable's expected
-        value is falsey then a wildcard pattern is inserted that matches any "word
-        character" but not any of the characters of `src_sep`.
-        Capture groups that should be extracted to variables are indicated in
-        the pattern by enclosing them in parentheses e.g. `(user)`.
-        The variable names used must be ones that are in `conditions`.
+    @property
+    def measurement_pattern(self) -> re.Pattern:
+        """Get the processed regex that should be used to match the measurement title."""
+        return self._measurement_pattern
 
-        For example:
-        
-        - If `src_pattern` was `r"<group>\_*<user>\_*(sample_info)"` and the default
-         `src_sep` was used then the title
-          `"stu mjm 213-4 repeat"` would be parsed to give
-          `{"group": "stu", "user": "mjm", "sample_info": "213-4 repeat"}`
+    def process_pattern(self, pattern: str) -> str:
+        """Process any use of the custom extensions in the regex pattern based on the
+        provided `pattern_sep` and `substitutions`."""
 
-        - If `src_pattern` was instead `["<user>(sample_info)"]` then the title
-          `"mjm304-1"` would be parsed into
-          `{"user": "mjm", "sample_info": "304-1"}`
-        """
-        wildcard = rf'[^\W{self.src_sep.strip("[]")}]+'  # i.e. at least one of any "word" character, but not separator characters
-        logging.debug(wildcard)
-        pattern = self._src_pattern
-        logging.debug(pattern)
-        # First replace any separators with the separator pattern in a non-capture group
         # A regex pattern that should match `\_` and capture any suffixed repeating characters
-        escaped_sep_matching_pattern = r"\\_([*+?]*)"
+        escaped_sep_matching_pattern = r'\\_([*+?]*)'
+        # Replace any separators with the separator pattern in a non-capture group
         pattern = re.sub(
             escaped_sep_matching_pattern,
-            lambda match: f"(?:{self.src_sep}{match.group(1)})",  # Use a callable lambda to avoid src_sep being interpreted (it should be reproduced literally)
+            lambda match: f'(?:{self.src_sep}{match.group(1)})',  # Use a callable lambda to avoid pattern_sep being interpreted (it should be reproduced literally)
             pattern,
         )
-        logging.debug(pattern)
 
-        # Then replace any variables with named capture groups
-        # `sample_info` is unlikely to have been given as a condition, so add it
-        if "sample_info" not in self.conditions:
-            self.conditions["sample_info"] = None
-        for variable, expectation in self.conditions.items():
-            # If the expectation value is `None` or an empty string, it's a wildcard
-            # `sample_info` is allowed to include separators, so it's a different,
-            # more general wildcard that matches any characters
-            if not expectation:
-                expectation = r".*" if variable == "sample_info" else wildcard
-            # First those that should be matched literally
-            pattern = pattern.replace(f"<{variable}>", f"(?P<{variable}>{expectation})")
-            # Then those that should just be captured and compared
-            pattern = pattern.replace(f"({variable})", f"(?P<{variable}>{expectation})")
+        normal_wildcard = rf'[^{self.src_sep.strip("[]")}]+'  # i.e. anything other than separator characters
+        # `sample_id` is allowed to include separators, so it's a different,
+        # more general wildcard that matches any characters
+        sample_id_wildcard = r".*"
+        for variable, value in asdict(self.substitutions).items():
+            wildcard = sample_id_wildcard if variable == "sample_id" else normal_wildcard
+            # First those that should just be captured, whatever they are
 
-        logging.debug(pattern)
+            # First see if it should just be captured
+            pattern = pattern.replace(f"<{variable}>", f"(?P<{variable}>{wildcard})")
+            # Then see if it should be matched literally
+            # (Important that the wildcard ones are replaced first)
+            pattern = pattern.replace(f"<{variable}!>", f"(?P<{variable}>{value})")
+
         return pattern
 
 
@@ -150,19 +158,19 @@ class MeasurementMetadata:
     experiment: str | None = None
     frequency: int | None = None
     solvent: str | None = None
-    sample_info: str | None = None
+    sample_id: str | None = None
     # Access fields programmatically using `getattr(mdata, field)` or `asdict(mdata)`
 
     @classmethod
-    def from_title(cls, title: str, rules: MetadataRules) -> Self | None:
+    def from_measurement_title(cls, title: str, rules: MetadataRules) -> Self | None:
         """Create a metadata object with the values extracted from `title` according
         to the pattern in `rules`. Returns `None` if the pattern is not matched."""
         # An empty string contains no metadata, obviously, so return early
         if not title:
             return None
         # Get the expected pattern for the title
-        pattern = rules.pattern()
-        match = re.match(pattern, title, re.IGNORECASE)
+        pattern: re.Pattern = rules.measurement_pattern
+        match = pattern.fullmatch(title)
         # If the title didn't match the pattern, pass that information on
         if match is None:
             return None
@@ -173,39 +181,6 @@ class MeasurementMetadata:
         # Add the original title too
         result.title = title
         return result
-
-    def matches_rules(self, rules: MetadataRules) -> bool:
-        """Check if the metadata match a set of rules.
-
-        If there is a condition for a variable but the expected value given is falsey
-        (e.g. `None` or an empty string), any found value at all meets the condition
-        and it is considered a match.
-        An expected value of `None`, `""`, etc. thus functions as a wildcard.
-        
-        If the metadata for the variable of a condition was not found (and therefore
-        the corresponding variable is still set to `None`), the condition is not
-        met and it is not considered a match.
-
-        However, if a condition is given and the variable is not a metadata
-        field at all, an `AttributeError` will be raised.
-
-        Matching is done case-insensitively.
-        """
-        for variable, expectation in rules.conditions.items():
-            logging.debug(f"{variable} expected to be {expectation}")
-            if not expectation:
-                # Any value meets the condition
-                continue
-            found = getattr(self, variable)
-            logging.debug(f"{variable} found to be {found}")
-            if found is None:
-                # Condition can't be met if metadata wasn't even found, not a match
-                return False
-            if found.casefold() != expectation:
-                # Condition is not met, not a match
-                return False
-        # All conditions have been met
-        return True
     
     def generate_folder_name(
         self,
@@ -233,7 +208,7 @@ class MeasurementMetadata:
         is `True`, in which case the field is simply skipped. The same applies if
         a requested field is not an actual metadata field.
         
-        If `sample_info` is to be included (it is listed in `rules.dest_fields`)
+        If `sample_id` is to be included (it is listed in `rules.dest_fields`)
         it is normalized so that all instances of `rules.src_sep` become
         `rules.dest_sep`.
         
@@ -241,8 +216,8 @@ class MeasurementMetadata:
         by replacing them with the Unicode code point prefixed with an `"x"`.
 
         For example, if the metadata are:
-        `{"group": "stu", "user": "mjm", "sample_info": "213-4 repeat", "frequency": "300", "solvent": "DMSO-d6"}`
-        and `dest_fields` had the value `["user", "sample_info", "solvent"]`
+        `{"group": "stu", "user": "mjm", "sample_id": "213-4 repeat", "frequency": "300", "solvent": "DMSO-d6"}`
+        and `dest_fields` had the value `["user", "sample_id", "solvent"]`
         then the measurement folder would be saved with the path
         `<dest_path>/mjm-213-4-repeat-DMSO-d6/`
         """
@@ -259,7 +234,7 @@ class MeasurementMetadata:
             else:
                 value = getattr(self, field, None)
                 if value is not None:
-                    if field == "sample_info":
+                    if field == "sample_id":
                         # Normalize the separators
                         normalized = re.sub(rules.src_sep, rules.dest_sep, value)
                         parts.append(normalized)
@@ -314,7 +289,8 @@ def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetada
         if not title:
             logging.info(f"No measurement title was given for {folder}!")
 
-    metadata = MeasurementMetadata.from_title(title, rules)
+    logging.debug(title)
+    metadata = MeasurementMetadata.from_measurement_title(title, rules)
     if metadata is None:
         # Isn't a match
         return None
@@ -342,7 +318,7 @@ def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetada
 
 def get_metadata_agilent(folder: Path, rules: MetadataRules) -> MeasurementMetadata | None:
     title = folder.name
-    metadata = MeasurementMetadata.from_title(title, rules)
+    metadata = MeasurementMetadata.from_measurement_title(title, rules)
     if metadata is None:
         # Isn't a match
         return None
@@ -380,12 +356,12 @@ def get_metadata_agilent(folder: Path, rules: MetadataRules) -> MeasurementMetad
     studypar_file = folder / "studypar"
     if studypar_file.exists():
         with open(studypar_file, encoding="utf-8") as f:
-            sample_info = f.read()
+            sample_id = f.read()
         # Contains two lines in the format
         # solvent 2 2 6 0 0 2 1 11 1 64
         # 1 "cdcl3"
         try:
-            lines = sample_info.splitlines()
+            lines = sample_id.splitlines()
             for i, line in enumerate(lines):
                 if line.startswith("solvent"):
                     solvent = lines[i + 1].split()[1].strip('"')
@@ -393,13 +369,13 @@ def get_metadata_agilent(folder: Path, rules: MetadataRules) -> MeasurementMetad
         except Exception:
             pass
     # Failing that, try `sampleinfo`, buried a bit deeper
-    sample_info_file = folder / "dirinfo/macdir/sampleinfo"
-    if metadata.solvent is None and sample_info_file.exists():
-        with open(sample_info_file, encoding="utf-8") as f:
-            sample_info = f.read()
+    sample_id_file = folder / "dirinfo/macdir/sampleinfo"
+    if metadata.solvent is None and sample_id_file.exists():
+        with open(sample_id_file, encoding="utf-8") as f:
+            sample_id = f.read()
         # Contains a line in the format "SOLVENT: cdcl3"
         try:
-            solvent = sample_info.splitlines()[3].split()[1]
+            solvent = sample_id.splitlines()[3].split()[1]
             metadata.solvent = solvent
         except Exception:
             pass

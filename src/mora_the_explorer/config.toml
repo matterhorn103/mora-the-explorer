@@ -43,6 +43,7 @@ save = "~/nmr"  # The location spectra should be copied to
 
 [admin]
 user_name_is_admin_only = true
+pattern_separator = '[\s_-]'
 
 
 [groups]
@@ -78,7 +79,7 @@ pharmazie = "pharmazie"
 #   display_name: the text shown next to the button in the user interface
 #       (note that some characters need escaping, e.g. write && for &)
 #   spec_dir: the path to the folder for the spectrometer, relative to the server
-#   title_format: the expected fields in the measurement title
+#   measurement_pattern: the expected fields in the measurement title
 #   match_metadata: the metadata fields that should be considered as conditions
 #       for a match (order is irrelevant). If you know a field will never be present,
 #       leave it out.
@@ -106,7 +107,7 @@ pharmazie = "pharmazie"
 manufacturer = "bruker"
 display_name = "Pre-2020 archive (Bruker)"
 spec_dir = "archiv"
-title_format = '<group>\_*<user>\_*(sample_info)'
+measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
 match_metadata = [ "user", "user_name", "group" ]
 date = "%b%d-%Y"
 date_entry = "dd MMM yyyy"
@@ -125,7 +126,7 @@ single_check_only = false
 manufacturer = "bruker"
 display_name = "Studer group NMR only (300 MHz)"
 spec_dir = "av300/av1"
-title_format = '<group>\_*<user>\_*(sample_info)'
+measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
 match_metadata = [ "user", "user_name", "group" ]
 date = "%b%d-%Y"
 date_entry = "dd MMM yyyy"
@@ -145,7 +146,7 @@ single_check_only = false
 manufacturer = "bruker"
 display_name = "Routine NMR (400 MHz)"
 spec_dir = "neo400/av1"
-title_format = '<group>\_*<user>\_*(sample_info)'
+measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
 match_metadata = [ "user", "user_name", "group" ]
 date = "%b%d-%Y"
 date_entry = "dd MMM yyyy"
@@ -166,7 +167,7 @@ single_check_only = false
 manufacturer = "agilent"
 display_name = "High-field spectrometers (500 && 600 MHz)"
 spec_dir = "500-600er"
-title_format = '<user>(sample_info)'
+measurement_pattern = '<user!><sample_id>'
 match_metadata = [ "user", "group_name" ]
 date = "%Y"
 date_entry = "yyyy"

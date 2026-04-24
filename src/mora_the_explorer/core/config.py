@@ -76,6 +76,7 @@ class Paths:
 
 @dataclass
 class AdminOptions:
+    pattern_separator: str
     user_name_is_admin_only: bool | None = None
 
 

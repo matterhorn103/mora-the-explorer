@@ -26,6 +26,7 @@ save = "~/Documents/nmr"
 
 [admin]
 user_name_is_admin_only = true
+pattern_separator = '[\s_-]'
 
 [groups]
 gil = "gilmour"
@@ -38,7 +39,7 @@ pharmazie = "pharmazie"
 
 [spectrometers.dpx300]
 spec_dir = "dpx300"
-title_format = '<group>\_*<user>\_*(sample_info)'
+measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
 match_metadata = [ "user", "user_name", "group" ]
 date = "%b%d-%Y"
 check_paths = [
@@ -52,7 +53,7 @@ admin_only = true
 
 [spectrometers.av300]
 spec_dir = "av300"
-title_format = '<group>\_*<user>\_*(sample_info)'
+measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
 match_metadata = [ "user", "user_name", "group" ]
 date = "%b%d-%Y"
 check_paths = [
@@ -72,7 +73,7 @@ restrict_to = [
 
 [spectrometers.neo400]
 spec_dir = "neo400"
-title_format = '<group>\_*<user>\_*(sample_info)'
+measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
 match_metadata = [ "user", "user_name", "group" ]
 date = "%b%d-%Y"
 check_paths = [
@@ -96,7 +97,7 @@ single_check_only = false
 
 [spectrometers.v600]
 spec_dir = "v600"
-title_format = '<user>(sample_info)'
+measurement_pattern = '<user!><sample_id>'
 match_metadata = [ "user", "group_name" ]
 date = "%Y"
 check_paths = [
