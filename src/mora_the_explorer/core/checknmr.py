@@ -283,7 +283,7 @@ def check_nmr(
         logging.info("Given destination folder not found!")
         reporter.add_error("Given destination folder not found!")
     # Confirm server can be reached
-    check_paths = []
+    check_paths: list[Path] = []
     not_found = []
     for p in src:
         p = Path(p)
@@ -331,7 +331,7 @@ def check_nmr(
     # Each is a folder that contains measurement folders
     for check_path in check_paths:
         # Iterate over the measurement folders
-        for folder in check_path.iterdir():
+        for folder in [x for x in check_path.iterdir() if x.is_dir() and not x.name.startswith(".")]:
             logging.info(folder)
 
             # Extract title and experiment details from title file in spectrum folder

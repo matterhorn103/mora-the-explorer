@@ -149,3 +149,13 @@ class TestExplorer:
         reporter = explorer.single_check(date(2023, 10, 17))
         # No spectra should be found, and there should also be no error
         assert len(reporter.copied()) == 0
+
+    def test_files_and_non_measurements(self):
+        # Make sure that if the spectrometer directory contains files as well as
+        # measurement subdirectories, or subdirectories that aren't for
+        # measurements, everything copes and no error occurs
+        explorer = mock_explorer()
+        explorer.config.options.spec = "av300"
+        reporter = explorer.single_check(date(2023, 10, 14))
+        # No spectra should be found, and there should also be no error
+        assert len(reporter.copied()) == 0
