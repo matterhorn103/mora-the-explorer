@@ -78,13 +78,7 @@ pharmazie = "pharmazie"
 #   manufacturer: the manufacturer of the spectrometer(s)
 #   display_name: the text shown next to the button in the user interface
 #       (note that some characters need escaping, e.g. write && for &)
-#   spec_dir: the path to the folder for the spectrometer, relative to the server
 #   measurement_pattern: the expected fields in the measurement title
-#   match_metadata: the metadata fields that should be considered as conditions
-#       for a match (order is irrelevant). If you know a field will never be present,
-#       leave it out.
-#   date: a formatting string that defines <date> - for the format codes see
-#       https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
 #   date_entry: whether the user selects the full date "dd MMM yyyy" or just year "yyyy"
 #   check_paths: the paths that should be searched for new spectra
 #   archives: if spectra from previous years can't be found under check_paths, the
@@ -97,27 +91,23 @@ pharmazie = "pharmazie"
 #   single_check_only: whether users may use multiday and repeat checks for this spec
 #
 # Possible variable fields in `check_paths` and `archives` are:
-# - <spec_dir>      (the value of `spec_dir`)
-# - <date>          (the value of `date`)
 # - <group>         (the chosen group's ID)
 # - <group_name>    (the chosen group's name)
 # - any strftime formatting string, with % characters, enclosed in {}
+#   - for the format codes see https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
 
 [spectrometers.archiv]
 manufacturer = "bruker"
 display_name = "Pre-2020 archive (Bruker)"
-spec_dir = "archiv"
 measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
-match_metadata = [ "user", "user_name", "group" ]
-date = "%b%d-%Y"
 date_entry = "dd MMM yyyy"
 check_paths = [
-    "<spec_dir>/dpx300/{%y}-dpx300_{%Y}/<date>",
-    "<spec_dir>/av300/{%y}-av300_{%Y}/<date>",
-    "<spec_dir>/av400/{%y}-av400_{%Y}/<date>",
-    "<spec_dir>/neo400a/{%y}-neo400a_{%Y}/neo400a_<date>",
-    "<spec_dir>/neo400/{%y}-neo400b_{%Y}/neo400a_<date>",
-    "<spec_dir>/neo400c/{%y}-neo400c_{%Y}/neo400c_<date>",
+    "archiv/dpx300/{%y}-dpx300_{%Y}/{%b%d-%Y}",
+    "archiv/av300/{%y}-av300_{%Y}/{%b%d-%Y}",
+    "archiv/av400/{%y}-av400_{%Y}/{%b%d-%Y}",
+    "archiv/neo400a/{%y}-neo400a_{%Y}/neo400a_{%b%d-%Y}",
+    "archiv/neo400/{%y}-neo400b_{%Y}/neo400a_{%b%d-%Y}",
+    "archiv/neo400c/{%y}-neo400c_{%Y}/neo400c_{%b%d-%Y}",
 ]
 admin_only = true
 single_check_only = false
@@ -125,16 +115,13 @@ single_check_only = false
 [spectrometers.av300]
 manufacturer = "bruker"
 display_name = "Studer group NMR only (300 MHz)"
-spec_dir = "av300/av1"
 measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
-match_metadata = [ "user", "user_name", "group" ]
-date = "%b%d-%Y"
 date_entry = "dd MMM yyyy"
 check_paths = [
-    "<spec_dir>/<date>",
+    "av300/av1/{%b%d-%Y}",
 ]
 archives = [
-    "<spec_dir>/{%y}-av300_{%Y}/<date>",
+    "av300/av1/{%y}-av300_{%Y}/{%b%d-%Y}",
 ]
 restrict_to = [
     "stu",
@@ -144,21 +131,18 @@ single_check_only = false
 
 [spectrometers.neo400]
 manufacturer = "bruker"
-display_name = "Routine NMR (400 MHz)"
-spec_dir = "neo400/av1"
+display_name = "Routine NMR (300 && 400 MHz)"
 measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
-match_metadata = [ "user", "user_name", "group" ]
-date = "%b%d-%Y"
 date_entry = "dd MMM yyyy"
 check_paths = [
-    "<spec_dir>/neo400a_<date>",
-    "<spec_dir>/neo400b_<date>",
-    "<spec_dir>/neo400c_<date>",
+    "neo400/av1/neo400a_{%b%d-%Y}",
+    "neo400/av1/neo400b_{%b%d-%Y}",
+    "neo400/av1/neo400c_{%b%d-%Y}",
 ]
 archives = [
-    "<spec_dir>/{%y}-neo400a_{%Y}/<date>",
-    "<spec_dir>/{%y}-neo400b_{%Y}/<date>",
-    "<spec_dir>/{%y}-neo400c_{%Y}/<date>",
+    "neo400/av1/{%y}-neo400a_{%Y}/{%b%d-%Y}",
+    "neo400/av1/{%y}-neo400b_{%Y}/{%b%d-%Y}",
+    "neo400/av1/{%y}-neo400c_{%Y}/{%b%d-%Y}",
 ]
 include = [ "av300" ]
 single_check_only = false
@@ -166,12 +150,9 @@ single_check_only = false
 [spectrometers.hf]
 manufacturer = "agilent"
 display_name = "High-field spectrometers (500 && 600 MHz)"
-spec_dir = "500-600er"
 measurement_pattern = '<user!><sample_id>'
-match_metadata = [ "user", "group_name" ]
-date = "%Y"
 date_entry = "yyyy"
 check_paths = [
-    "<spec_dir>/<group_name>/<date>",
+    "500-600er/<group_name>/{%Y}",
 ]
 single_check_only = true

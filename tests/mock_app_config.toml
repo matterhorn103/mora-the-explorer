@@ -38,12 +38,9 @@ biochemie = "biochemie"
 pharmazie = "pharmazie"
 
 [spectrometers.dpx300]
-spec_dir = "dpx300"
 measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
-match_metadata = [ "user", "user_name", "group" ]
-date = "%b%d-%Y"
 check_paths = [
-    "<spec_dir>/{%y}-dpx300_{%Y}/<date>",
+    "dpx300/{%y}-dpx300_{%Y}/{%b%d-%Y}",
 ]
 manufacturer = "bruker"
 display_name = "dpx300 (bruker)"
@@ -52,16 +49,13 @@ single_check_only = false
 admin_only = true
 
 [spectrometers.av300]
-spec_dir = "av300"
 measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
-match_metadata = [ "user", "user_name", "group" ]
-date = "%b%d-%Y"
 check_paths = [
-    "<spec_dir>/<date>",
+    "av300/{%b%d-%Y}",
 ]
 archives = [
-    "<spec_dir>/{%y}-av300_{%Y}/<date>",
-    "<spec_dir>/{%y}-dpx300_{%Y}/<date>",
+    "av300/{%y}-av300_{%Y}/{%b%d-%Y}",
+    "av300/{%y}-dpx300_{%Y}/{%b%d-%Y}",
 ]
 manufacturer = "bruker"
 display_name = "av300 (bruker)"
@@ -72,20 +66,17 @@ restrict_to = [
 ]
 
 [spectrometers.neo400]
-spec_dir = "neo400"
 measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
-match_metadata = [ "user", "user_name", "group" ]
-date = "%b%d-%Y"
 check_paths = [
-    "<spec_dir>/neo400a_<date>",
-    "<spec_dir>/neo400b_<date>",
-    "<spec_dir>/neo400c_<date>",
+    "neo400/neo400a_{%b%d-%Y}",
+    "neo400/neo400b_{%b%d-%Y}",
+    "neo400/neo400c_{%b%d-%Y}",
 ]
 archives = [
-    "<spec_dir>/{%y}-av400_{%Y}/<date>",
-    "<spec_dir>/{%y}-neo400a_{%Y}/<date>",
-    "<spec_dir>/{%y}-neo400b_{%Y}/<date>",
-    "<spec_dir>/{%y}-neo400c_{%Y}/<date>",
+    "neo400/{%y}-av400_{%Y}/{%b%d-%Y}",
+    "neo400/{%y}-neo400a_{%Y}/{%b%d-%Y}",
+    "neo400/{%y}-neo400b_{%Y}/{%b%d-%Y}",
+    "neo400/{%y}-neo400c_{%Y}/{%b%d-%Y}",
 ]
 manufacturer = "bruker"
 include = [
@@ -96,12 +87,9 @@ date_entry = "dd MMM yyyy"
 single_check_only = false
 
 [spectrometers.v600]
-spec_dir = "v600"
 measurement_pattern = '<user!><sample_id>'
-match_metadata = [ "user", "group_name" ]
-date = "%Y"
 check_paths = [
-    "<spec_dir>/<group_name>/<date>",
+    "v600/<group_name>/{%Y}",
 ]
 manufacturer = "agilent"
 display_name = "v600 (agilent)"

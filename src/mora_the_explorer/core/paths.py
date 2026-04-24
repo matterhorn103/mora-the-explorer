@@ -22,14 +22,9 @@ def get_check_paths(
     # Add archives for previous years other than the current if requested
     if check_date.year != datetime.date.today().year:
         raw_path_list.extend(spec_info.archives)
-    if spec_info.date is not None:
-        date = check_date.strftime(spec_info.date)
-    else:
-        date = ""
     # Replace the variable fields enclosed in <> angle brackets
     check_path_list: list[Path] = []
     for path in raw_path_list:
-        path = path.replace("<spec_dir>", spec_info.spec_dir).replace("<date>", date)
         # {} fields for datetime format strings can be subbed all at once
         path = check_date.strftime(path).replace("{", "").replace("}", "")
         to_add = []
