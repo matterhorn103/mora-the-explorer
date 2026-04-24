@@ -96,6 +96,8 @@ The neo400 spectrometers have all of the above as well, but split amongst the th
 
 Since then the following have been added:
 
+- av300/Oct14-2023/not_a_measurement  // A folder without any measurement data or metadata
+- av300/Oct14-2023/.placeholder  // A file as opposed to a folder
 - av300/Oct17-2023/10  // A measurement with a title file but no title
 
 ### Agilent
