@@ -24,7 +24,7 @@ class TestExplorer:
         reporter = explorer.single_check(date(2023, 10, 15))
         # A single spectrum, mjm-500-1, should be found
         assert len(reporter.copied()) == 1
-        assert reporter.copied() == ["mjm-500-1-cdcl3-proton"]
+        assert sorted(reporter.copied()) == ["mjm-500-1-cdcl3-proton"]
         assert reporter.messages()[0] == "Spectrum found: mjm-500-1-cdcl3-proton"
 
     def test_400er_checks_300er(self):
@@ -45,7 +45,7 @@ class TestExplorer:
         explorer.config.options.naming.group = True
         reporter = explorer.single_check(date(2023, 10, 15))
         # A single spectrum, mjm-500-1, should be found
-        assert reporter.copied() == ["stu-mjm-500-1-cdcl3-proton"]
+        assert sorted(reporter.copied()) == ["stu-mjm-500-1-cdcl3-proton"]
 
     def test_no_initials(self):
         explorer = mock_explorer()
@@ -53,7 +53,7 @@ class TestExplorer:
         explorer.config.options.naming.user = False
         reporter = explorer.single_check(date(2023, 10, 15))
         # A single spectrum, mjm-500-1, should be found
-        assert reporter.copied() == ["500-1-cdcl3-proton"]
+        assert sorted(reporter.copied()) == ["500-1-cdcl3-proton"]
 
     def test_no_solvent(self):
         explorer = mock_explorer()
@@ -61,7 +61,7 @@ class TestExplorer:
         explorer.config.options.naming.solvent = False
         reporter = explorer.single_check(date(2023, 10, 15))
         # A single spectrum, mjm-500-1, should be found
-        assert reporter.copied() == ["mjm-500-1-proton"]
+        assert sorted(reporter.copied()) == ["mjm-500-1-proton"]
 
     def test_no_experiment(self):
         explorer = mock_explorer()
@@ -70,7 +70,7 @@ class TestExplorer:
         explorer.config.options.naming.experiment = False
         reporter = explorer.single_check(date(2023, 10, 15))
         # A single spectrum, mjm-500-1, should be found
-        assert reporter.copied() == ["mjm-500-1"]
+        assert sorted(reporter.copied()) == ["mjm-500-1"]
 
     def test_with_freq(self):
         explorer = mock_explorer()
@@ -79,7 +79,7 @@ class TestExplorer:
         explorer.config.options.naming.frequency = True
         reporter = explorer.single_check(date(2023, 10, 15))
         # A single spectrum, mjm-500-1, should be found
-        assert reporter.copied() == ["mjm-500-1-300-proton"]
+        assert sorted(reporter.copied()) == ["mjm-500-1-300-proton"]
         # Note that only that specific spectrum has the uxnmr.info file in the mock server setup
         reporter = explorer.single_check(date(2023, 10, 16))
         # Whereas these ones don't, so all have the frequency as unknown
@@ -94,7 +94,7 @@ class TestExplorer:
         explorer = mock_explorer()
         explorer.config.options.spec = "v600"
         reporter = explorer.single_check(date(2023, 10, 15))
-        assert reporter.copied() == [
+        assert sorted(reporter.copied()) == [
             "mjm-500-1-cdcl3-various",
             "mjm-501-1-dmso-various",
         ]
@@ -105,7 +105,7 @@ class TestExplorer:
         explorer.config.options.naming.solvent = False
         explorer.config.options.naming.frequency = True
         reporter = explorer.single_check(date(2023, 10, 15))
-        assert reporter.copied() == [
+        assert sorted(reporter.copied()) == [
             "mjm-500-1-600-various",
             "mjm-501-1-600-various",
         ]
@@ -117,7 +117,7 @@ class TestExplorer:
         explorer.config.options.naming.frequency = True
         explorer.config.options.naming.group = True
         reporter = explorer.single_check(date(2023, 10, 15))
-        assert reporter.copied() == [
+        assert sorted(reporter.copied()) == [
             "studer-mjm-500-1-600-various",
             "studer-mjm-501-1-600-various",
         ]
