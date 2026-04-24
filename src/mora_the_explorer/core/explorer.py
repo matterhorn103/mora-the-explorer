@@ -130,6 +130,7 @@ class Explorer:
             substitutions=substitutions,
             measurement_pattern=spec_info.measurement_pattern,
             dest_fields=name_format,
+            pattern_sep=self.config.admin.pattern_separator,
         )
         return rules
 

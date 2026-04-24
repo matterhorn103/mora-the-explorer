@@ -43,6 +43,7 @@ save = "~/nmr"  # The location spectra should be copied to
 
 [admin]
 user_name_is_admin_only = true
+pattern_separator = '[\s_-]'
 
 
 [groups]

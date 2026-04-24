@@ -26,6 +26,7 @@ save = "~/Documents/nmr"
 
 [admin]
 user_name_is_admin_only = true
+pattern_separator = '[\s_-]'
 
 [groups]
 gil = "gilmour"
