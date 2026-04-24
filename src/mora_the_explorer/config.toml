@@ -131,7 +131,7 @@ single_check_only = false
 
 [spectrometers.neo400]
 manufacturer = "bruker"
-display_name = "Routine NMR (400 MHz)"
+display_name = "Routine NMR (300 && 400 MHz)"
 measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
 date_entry = "dd MMM yyyy"
 check_paths = [
