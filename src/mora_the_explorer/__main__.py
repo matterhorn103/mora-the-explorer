@@ -137,23 +137,24 @@ def main():
         )
 
     app_config = get_rsrc_dir() / "config.toml"
-    if args.config:
-        # Load provided config
-        config = Config(app_config, Path(args.config))
-    else:
-        config = Config(app_config, USER_CONFIG_PATH)
 
     # Launch desktop app if requested
     if args.command == "launch":
         logging.info("Launching GUI from command line")
         from .desktop import App
-
-        app = App(config)
+        if args.config:
+            app = App(app_config, args.config)
+        else:
+            app = App(app_config)
         app.run()
         # Event loop will continue until the program is closed
         return
     elif args.command == "check":
-        pass
+        if args.config:
+            # Load provided config
+            config = Config(app_config, Path(args.config))
+        else:
+            config = Config(app_config, USER_CONFIG_PATH)
     else:
         parser.print_help()
         return

@@ -1,21 +1,38 @@
 import logging
+from pathlib import Path
 import platform
 
 import darkdetect
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QFile, QIODevice
 from PySide6.QtGui import QPalette, QColor, QIcon
 from PySide6.QtWidgets import QApplication
 
 from .. import LOG_FILE, get_rsrc_dir
-from ..core.config import Config
+from .. import resources  # noqa: F401
+from ..core.config import Config, USER_CONFIG_PATH
 from .controller import Controller
+
+
+def load_text_resource(path: str) -> str:
+    f = QFile(path)
+    if not f.open(QIODevice.OpenModeFlag.ReadOnly):
+        raise RuntimeError(f"Could not open resource: {path}")
+    try:
+        data: str = f.readAll().data().decode("utf-8")
+    finally:
+        f.close()
+    return data
 
 
 class App:
     """A wrapper for a `Controller` and the actual `QApplication`."""
 
-    def __init__(self, config: Config | None = None):
+    def __init__(
+        self,
+        app_config_file: Path | bytes | str | None = None,
+        user_config_file: Path = USER_CONFIG_PATH,
+    ):
         """Create a Mora the Explorer desktop application with a GUI, but don't run it yet."""
 
         self.app = QApplication()
@@ -29,16 +46,15 @@ class App:
         )
 
         rsrc_dir = get_rsrc_dir()
-        # Load configuration if none passed – Controller needs it
-        if config is None:
-            logging.info(f"Program resources located at {rsrc_dir}")
-            logging.info("Loading program settings…")
-            config = Config(rsrc_dir / "config.toml")
-            logging.info("…complete")
+
+        logging.info("Loading program settings…")
+        if app_config_file is None:
+            app_config_file = load_text_resource(":/config.toml")
+        config = Config(app_config_file, user_config_file)
+        logging.info("…complete")
 
         # Load the version header
-        with open(rsrc_dir / "version.txt", encoding="utf-8") as f:
-            version_header = f.read()
+        version_header = load_text_resource(":/version.txt")
 
         # Create singleton instance of `Controller` to handle the various components
         self.controller = Controller(config, version_header)
