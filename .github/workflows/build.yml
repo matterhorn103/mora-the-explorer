@@ -17,8 +17,8 @@ jobs:
             artifact_name: mora-the-explorer-linux.bin
           #- os: windows-latest
           #  artifact_name: mora-the-explorer-win.exe
-          #- os: macos-latest
-          #  artifact_name: mora-the-explorer-macos.app
+          - os: macos-latest
+            artifact_name: mora-the-explorer-macos.app
 
     runs-on: ${{ matrix.os }}
 
