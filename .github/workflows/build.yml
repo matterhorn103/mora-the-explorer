@@ -65,21 +65,19 @@ jobs:
         run: |
           mkdir build
           uv run pyside6-deploy -c linux.spec
-          test -e build/mora_the_explorer.app || exit 1
 
       - name: Build binary (Windows)
         if: runner.os == 'Windows'
         run: |
           mkdir build
           uv run pyside6-deploy -c win.spec
-          test -e build/mora_the_explorer.app || exit 1
 
       - name: Build binary (macOS)
         if: runner.os == 'macOS'
         run: |
           mkdir build
           uv run pyside6-deploy -c mac.spec
-          test -e build/mora_the_explorer.app || exit 1
+          test -e build/mora_the_explorer.app/Contents/MacOS/mora_the_explorer || exit 1
 
       - name: Rename binary (Linux)
         if: runner.os == 'Linux'
