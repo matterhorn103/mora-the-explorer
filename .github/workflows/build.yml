@@ -65,22 +65,21 @@ jobs:
         run: |
           mkdir build
           uv run pyside6-deploy -c linux.spec
-      
-      - name: Debug build output
-        if: always() && runner.os == 'Linux'
-        run: find . -name "*.bin" -o -name "mora_the_explorer*" 2>/dev/null
+          test -e build/mora_the_explorer.app || exit 1
 
       - name: Build binary (Windows)
         if: runner.os == 'Windows'
         run: |
           mkdir build
           uv run pyside6-deploy -c win.spec
+          test -e build/mora_the_explorer.app || exit 1
 
       - name: Build binary (macOS)
         if: runner.os == 'macOS'
         run: |
           mkdir build
           uv run pyside6-deploy -c mac.spec
+          test -e build/mora_the_explorer.app || exit 1
 
       - name: Rename binary (Linux)
         if: runner.os == 'Linux'
