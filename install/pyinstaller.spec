@@ -5,18 +5,10 @@ block_cipher = None
 
 
 a = Analysis(
-    ['src/main.py'],
+    ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[
-        ('LICENSE.md', '.'),
-        ('README.md', '.'),
-        ('explorer.ico', '.'),
-        ('pyproject.toml', '.'),
-        ('src/mora_the_explorer/version.txt', '.'),
-        ('src/mora_the_explorer/config.toml', '.'),
-    ],
-    #hiddenimports=['plyer.platforms.win.notification', 'plyer.platforms.macosx.notification', 'plyer.platforms.linux.notification'],
+    datas=[],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -35,7 +27,7 @@ exe = EXE(
     [],
     exclude_binaries=True,
     name='mora_the_explorer',
-    icon='explorer.ico',
+    icon='explorer.png',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -60,6 +52,6 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name='mora_the_explorer.app',
-    icon='explorer.ico',
+    icon='explorer.icns',
     bundle_identifier=None,
 )
