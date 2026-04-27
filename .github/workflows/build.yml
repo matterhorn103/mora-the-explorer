@@ -4,6 +4,9 @@ on:
   push:
     tags:
       - 'v*'
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
@@ -12,10 +15,10 @@ jobs:
         include:
           - os: ubuntu-latest
             artifact_name: mora-the-explorer-linux.bin
-          - os: windows-latest
-            artifact_name: mora-the-explorer-win.exe
-          - os: macos-latest
-            artifact_name: mora-the-explorer-macos.app
+          #- os: windows-latest
+          #  artifact_name: mora-the-explorer-win.exe
+          #- os: macos-latest
+          #  artifact_name: mora-the-explorer-macos.app
 
     runs-on: ${{ matrix.os }}
 
@@ -29,6 +32,27 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           version: "0.11.7"
+
+      - name: Install Linux system deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt update
+          # Qt dependencies
+          sudo apt install -y \
+            libfontconfig1-dev \
+            libfreetype6-dev \
+            libx11-dev \
+            libx11-xcb-dev \
+            libxext-dev \
+            libxfixes-dev \
+            libxi-dev \
+            libxrender-dev \
+            libxkbcommon-dev \
+            libxkbcommon-x11-dev \
+            libatspi2.0-dev \
+            '^libxcb.*-dev'
+          # Nuitka dependencies
+          sudo apt install -y ccache clang patchelf
 
       - name: Install the project
         run: uv sync --locked --dev
@@ -70,6 +94,7 @@ jobs:
 
   release:
     needs: build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: write
