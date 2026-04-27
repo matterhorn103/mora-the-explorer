@@ -1,4 +1,4 @@
-name: Build
+name: Test and Build
 
 on:
   push:
@@ -14,11 +14,11 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            artifact_name: mora-the-explorer
+            artifact_name: mora-the-explorer-linux
           - os: windows-latest
-            artifact_name: mora-the-explorer.exe
+            artifact_name: mora-the-explorer-windows
           - os: macos-latest
-            artifact_name: mora-the-explorer.app
+            artifact_name: mora-the-explorer-macos
 
     runs-on: ${{ matrix.os }}
 
@@ -33,6 +33,25 @@ jobs:
         with:
           version: "0.11.7"
 
+      - name: Install Linux system deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt update
+          # Qt dependencies
+          sudo apt install -y \
+            libfontconfig1-dev \
+            libfreetype6-dev \
+            libx11-dev \
+            libx11-xcb-dev \
+            libxext-dev \
+            libxfixes-dev \
+            libxi-dev \
+            libxrender-dev \
+            libxkbcommon-dev \
+            libxkbcommon-x11-dev \
+            libatspi2.0-dev \
+            '^libxcb.*-dev'
+
       - name: Install the project
         run: uv sync --locked --dev
 
@@ -46,17 +65,8 @@ jobs:
         run: |
           uv run pyinstaller install/pyinstaller.spec
 
-      - name: Rename binary (Linux)
-        if: runner.os == 'Linux'
-        run: mv build/mora_the_explorer ${{ matrix.artifact_name }}
-
-      - name: Rename binary (Windows)
-        if: runner.os == 'Windows'
-        run: mv build/mora_the_explorer.exe ${{ matrix.artifact_name }}
-
-      - name: Rename binary (macOS)
-        if: runner.os == 'macOS'
-        run: mv build/mora_the_explorer.app ${{ matrix.artifact_name }}
+      - name: Rename bundle
+        run: mv dist/mora_the_explorer ${{ matrix.artifact_name }}
 
       - uses: actions/upload-artifact@v7
         with:
