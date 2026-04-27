@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: mora-the-explorer-linux.bin
+          - os: windows-latest
+            artifact_name: mora-the-explorer-win.exe
+          - os: macos-latest
+            artifact_name: mora-the-explorer-macos.app
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: ".python-version"
+    
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "0.11.7"
+
+      - name: Install the project
+        run: uv sync --locked --dev
+
+      - name: Run tests
+        run: uv run pytest
+
+      - name: Build binary (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          pyside6-deploy -c linux.spec
+
+      - name: Build binary (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          pyside6-deploy -c win.spec
+
+      - name: Build binary (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          pyside6-deploy -c mac.spec
+
+      - name: Rename binary (Linux)
+        if: runner.os == 'Linux'
+        run: mv build/mora_the_explorer.bin ${{ matrix.artifact_name }}
+
+      - name: Rename binary (Windows)
+        if: runner.os == 'Windows'
+        run: mv build/mora_the_explorer.exe ${{ matrix.artifact_name }}
+
+      - name: Rename binary (macOS)
+        if: runner.os == 'macOS'
+        run: mv build/mora_the_explorer.app ${{ matrix.artifact_name }}
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_name }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          merge-multiple: true
+          path: dist/
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: dist/*
