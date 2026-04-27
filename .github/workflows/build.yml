@@ -33,11 +33,6 @@ jobs:
         with:
           version: "0.11.7"
 
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: "6.11.*"
-
       - name: Install Linux system deps
         if: runner.os == 'Linux'
         run: |
@@ -58,6 +53,13 @@ jobs:
             '^libxcb.*-dev'
           # Nuitka dependencies
           sudo apt install -y ccache clang patchelf
+      
+      - name: Check dyld_info
+        if: runner.os == 'macOS'
+        run: |
+          sw_vers
+          which dyld_info || echo "dyld_info not found"
+          xcrun --find dyld_info || echo "dyld_info not in Xcode tools either"
 
       - name: Install the project
         run: uv sync --locked --dev
