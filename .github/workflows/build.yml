@@ -15,10 +15,10 @@ jobs:
         include:
           - os: ubuntu-latest
             artifact_name: mora-the-explorer-linux.bin
-          #- os: windows-latest
-          #  artifact_name: mora-the-explorer-win.exe
-          - os: macos-latest
-            artifact_name: mora-the-explorer-macos.app
+          - os: windows-latest
+            artifact_name: mora-the-explorer-win.exe
+          #- os: macos-latest
+          #  artifact_name: mora-the-explorer-macos.app
 
     runs-on: ${{ matrix.os }}
 
@@ -53,13 +53,6 @@ jobs:
             '^libxcb.*-dev'
           # Nuitka dependencies
           sudo apt install -y ccache clang patchelf
-      
-      - name: Check dyld_info
-        if: runner.os == 'macOS'
-        run: |
-          sw_vers
-          which dyld_info || echo "dyld_info not found"
-          xcrun --find dyld_info || echo "dyld_info not in Xcode tools either"
 
       - name: Install the project
         run: uv sync --locked --dev
