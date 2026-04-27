@@ -63,6 +63,7 @@ jobs:
       - name: Build binary (Linux)
         if: runner.os == 'Linux'
         run: |
+          mkdir build
           uv run pyside6-deploy -c linux.spec
       
       - name: Debug build output
@@ -72,11 +73,13 @@ jobs:
       - name: Build binary (Windows)
         if: runner.os == 'Windows'
         run: |
+          mkdir build
           uv run pyside6-deploy -c win.spec
 
       - name: Build binary (macOS)
         if: runner.os == 'macOS'
         run: |
+          mkdir build
           uv run pyside6-deploy -c mac.spec
 
       - name: Rename binary (Linux)
