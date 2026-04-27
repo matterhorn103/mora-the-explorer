@@ -39,17 +39,17 @@ jobs:
       - name: Build binary (Linux)
         if: runner.os == 'Linux'
         run: |
-          pyside6-deploy -c linux.spec
+          uv run pyside6-deploy -c linux.spec
 
       - name: Build binary (Windows)
         if: runner.os == 'Windows'
         run: |
-          pyside6-deploy -c win.spec
+          uv run pyside6-deploy -c win.spec
 
       - name: Build binary (macOS)
         if: runner.os == 'macOS'
         run: |
-          pyside6-deploy -c mac.spec
+          uv run pyside6-deploy -c mac.spec
 
       - name: Rename binary (Linux)
         if: runner.os == 'Linux'
