@@ -75,7 +75,7 @@ class MainWindow(QMainWindow):
         # First put in a plate with the version information
         self.version = Version(version_header.splitlines()[2])
         self.version_info = create_version_label(version_header)
-        self.grid.addWidget(self.version_info, 0, 0, 1, 3)
+        self.grid.addWidget(self.version_info, 0, 0, 1, 2)
 
         # Initialize the row counter
         # We already have one thing in the grid (the version info) so start at 1
@@ -158,7 +158,7 @@ class MainWindow(QMainWindow):
         self.save_button = QPushButton("Save options as defaults for next time")
         # Remains disabled until the config is changed
         self.save_button.setEnabled(False)
-        self.grid.addWidget(self.save_button, self.next_row(), 0, 1, 3)
+        self.grid.addWidget(self.save_button, self.next_row(), 0, 1, 2)
 
         # Date selection
         self.date_selector = rows.DateSelector()
@@ -169,7 +169,7 @@ class MainWindow(QMainWindow):
         # during a check
         self.status_bar = StatusBar()
         self.status_bar.set_colour(config.appearance.start_button_colour)
-        self.grid.addWidget(self.status_bar, self.next_row(), 0, 1, 3)
+        self.grid.addWidget(self.status_bar, self.next_row(), 0, 1, 2)
 
         # Progress bar for check
         self.prog_bar = QProgressBar()
@@ -177,16 +177,16 @@ class MainWindow(QMainWindow):
         if platform.system() == "Windows" and platform.release() == "11":
             # Looks bad (with initial Qt Win11 theme at least) so disable text
             self.prog_bar.setTextVisible(False)
-        self.grid.addWidget(self.prog_bar, self.next_row(), 0, 1, 3)
+        self.grid.addWidget(self.prog_bar, self.next_row(), 0, 1, 2)
 
         # Box to display output of check function (list of copied spectra)
         self.display = Display()
-        self.grid.addWidget(self.display, self.next_row(), 0, 1, 3)
+        self.grid.addWidget(self.display, self.next_row(), 0, 1, 2)
 
         # In-app notification that spectra have been found, dismissable
         self.notification = QPushButton()
         self.notification.hide()
-        self.grid.addWidget(self.notification, self.next_row(), 0, 1, 3)
+        self.grid.addWidget(self.notification, self.next_row(), 0, 1, 2)
 
         # Connect all the signals and slots
         self.version_info.linkActivated.connect(self._on_bug_report_link_clicked)
