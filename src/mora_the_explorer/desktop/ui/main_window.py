@@ -77,15 +77,19 @@ class MainWindow(QMainWindow):
         self.version_info = create_version_label(version_header)
         self.grid.addWidget(self.version_info, 0, 0, 1, 3)
 
+        # Initialize the row counter
+        # We already have one thing in the grid (the version info) so start at 1
+        self._row_count = 1
+
         # User initials entry
         self.user_entry = rows.FreeEntryField("User:", "(initials)")
         self.user_entry.set_text(config.options.user)
-        self.user_entry.add_to_grid(self.grid, 1)
+        self.add_row(self.user_entry)
 
         # User name entry
         self.name_entry = rows.FreeEntryField("User name:", None)
         self.name_entry.set_text(config.options.user_name)
-        self.name_entry.add_to_grid(self.grid, 2)
+        self.add_row(self.name_entry)
         # If config says this should only be active in admin mode, and we aren't
         # in admin mode, then hide it
         if config.admin.user_name_is_admin_only and not admin_mode:
@@ -99,37 +103,41 @@ class MainWindow(QMainWindow):
                 list(config.groups.filter_overflow(True)),
             )
             self.group_entry.set_selected(config.options.group)
-            self.group_entry.add_to_grid(self.grid, 3)
+            self.add_row(self.group_entry)
         else:
             # Group entry via free-form entry boxes, for admin use
             self.group_entry = rows.FreeEntryField("Group:", None)
             self.group_entry.set_text(config.options.group)
-            self.group_entry.add_to_grid(self.grid, 3)
+            self.add_row(self.group_entry)
             self.group_name_entry = rows.FreeEntryField("Group name:", None)
             self.group_name_entry.set_text(config.groups.all.get(config.options.group, ""))
-            self.group_name_entry.add_to_grid(self.grid, 4)
+            self.add_row(self.group_name_entry)
 
         # Server path
         self.server_entry = rows.DirSelector("Server:", False)
         self.server_entry.set_path(config.paths.server())
-        self.server_entry.add_to_grid(self.grid, 5)
+        self.add_row(self.server_entry)
 
         # Destination path
         self.dest_entry = rows.DirSelector("Save in:", True, "Ctrl+G")
         self.dest_entry.set_path(config.paths.save)
-        self.dest_entry.add_to_grid(self.grid, 6)
+        self.add_row(self.dest_entry)
 
         # Folder name options
         self.folder_name_options = rows.FolderNameOptions()
         # Each option `user`, `solvent` etc. has a corresponding flag in the config
         self.folder_name_options.set_checked(**(asdict(config.options.naming)))
-        self.folder_name_options.add_to_grid(self.grid, 7)
+        self.add_row(self.folder_name_options)
+
+        # Preview of the result of the user's choices
+        self.folder_name_preview = rows.FolderNamePreview(config)
+        self.add_row(self.folder_name_preview)
 
         # Spectrometer selection
         self.spec_selector = rows.SpectrometerSelector(config.specs)
         self.refresh_visible_specs()
         self.spec_selector.set_selected(config.options.spec)
-        self.spec_selector.add_to_grid(self.grid, 8)
+        self.add_row(self.spec_selector)
 
         # Match pattern customization via a free-form entry box, for admin use
         if admin_mode:
@@ -138,30 +146,30 @@ class MainWindow(QMainWindow):
             # Pattern is regex
             self.pattern_entry.set_text(config.specs[config.options.spec].measurement_pattern)
             self.pattern_entry.entry_field.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
-            self.pattern_entry.add_to_grid(self.grid, 9)
+            self.add_row(self.pattern_entry)
 
         # Repeat options
         self.repeat_options = rows.RepeatSelector()
         self.repeat_options.set_repeat_checked(config.options.repeat_switch)
         self.repeat_options.set_interval(config.options.repeat_delay)
-        self.repeat_options.add_to_grid(self.grid, 10)
+        self.add_row(self.repeat_options)
 
         # Save button
         self.save_button = QPushButton("Save options as defaults for next time")
         # Remains disabled until the config is changed
         self.save_button.setEnabled(False)
-        self.grid.addWidget(self.save_button, 11, 0, 1, 3)
+        self.grid.addWidget(self.save_button, self.next_row(), 0, 1, 3)
 
         # Date selection
         self.date_selector = rows.DateSelector()
         self.date_selector.set_mode("current")
-        self.date_selector.add_to_grid(self.grid, 12)
+        self.add_row(self.date_selector)
 
         # Status bar to start and cancel a check, as well as show the status
         # during a check
         self.status_bar = StatusBar()
         self.status_bar.set_colour(config.appearance.start_button_colour)
-        self.grid.addWidget(self.status_bar, 13, 0, 1, 3)
+        self.grid.addWidget(self.status_bar, self.next_row(), 0, 1, 3)
 
         # Progress bar for check
         self.prog_bar = QProgressBar()
@@ -169,16 +177,16 @@ class MainWindow(QMainWindow):
         if platform.system() == "Windows" and platform.release() == "11":
             # Looks bad (with initial Qt Win11 theme at least) so disable text
             self.prog_bar.setTextVisible(False)
-        self.grid.addWidget(self.prog_bar, 14, 0, 1, 3)
+        self.grid.addWidget(self.prog_bar, self.next_row(), 0, 1, 3)
 
         # Box to display output of check function (list of copied spectra)
         self.display = Display()
-        self.grid.addWidget(self.display, 15, 0, 1, 3)
+        self.grid.addWidget(self.display, self.next_row(), 0, 1, 3)
 
         # In-app notification that spectra have been found, dismissable
         self.notification = QPushButton()
         self.notification.hide()
-        self.grid.addWidget(self.notification, 16, 0, 1, 3)
+        self.grid.addWidget(self.notification, self.next_row(), 0, 1, 3)
 
         # Connect all the signals and slots
         self.version_info.linkActivated.connect(self._on_bug_report_link_clicked)
@@ -207,6 +215,17 @@ class MainWindow(QMainWindow):
         # A shortcut to switch to and from admin mode
         admin_shortcut = QShortcut(QKeySequence("Ctrl+Shift+A"), self)
         admin_shortcut.activated.connect(self.admin_mode_toggled)
+
+    def add_row(self, row: rows.RowComponent):
+        """Adds a row component to the next row in the grid."""
+        row.add_to_grid(self.grid, self._row_count)
+        self._row_count += 1
+
+    def next_row(self) -> int:
+        """Get the index of the next row and iterate it."""
+        row = self._row_count
+        self._row_count += 1
+        return row
 
     def refresh_visible_specs(self):
         """Make sure the available spectrometers reflect what's allowed for the current group."""
@@ -310,6 +329,7 @@ class MainWindow(QMainWindow):
     @Slot()
     def _on_user_changed(self):
         self.config.options.user = self.user_entry.text()
+        self.folder_name_preview.regenerate_preview()
         self.save_button.setEnabled(True)
 
     @Slot()
@@ -328,11 +348,13 @@ class MainWindow(QMainWindow):
         else:
             self.config.options.group = self.group_entry.selected()
             self.refresh_visible_specs()
+        self.folder_name_preview.regenerate_preview()
         self.save_button.setEnabled(True)
 
     @Slot()
     def _on_group_name_changed(self):
         self.config.options.group_name = self.group_name_entry.text()
+        self.folder_name_preview.regenerate_preview()
         self.save_button.setEnabled(True)
     
     @Slot()
@@ -344,6 +366,8 @@ class MainWindow(QMainWindow):
     @Slot()
     def _on_server_path_changed(self):
         self.config.paths.set_server(self.server_entry.path())
+        # Don't bother with this so long as we don't offer the ability to include the path
+        #self.folder_name_preview.regenerate_preview()
         self.save_button.setEnabled(True)
 
     @Slot()
@@ -356,12 +380,14 @@ class MainWindow(QMainWindow):
         # Returns {"user": True, "experiment": False, ...}
         for k, v in self.folder_name_options.checked().items():
             setattr(self.config.options.naming, k, v)
+        self.folder_name_preview.regenerate_preview()
         self.save_button.setEnabled(True)
 
     @Slot()
     def _on_spec_changed(self):
         self.config.options.spec = self.spec_selector.selected()
         self.adapt_to_spec()
+        self.folder_name_preview.regenerate_preview()
         self.save_button.setEnabled(True)
 
     @Slot()

@@ -133,17 +133,10 @@ class Explorer:
             pattern_sep=self.config.admin.pattern_separator,
         )
         return rules
-
-    def single_check(self, date: datetime.date, reporter: Reporter | None = None) -> Reporter:
-        """Conduct a check of a single date.
-
-        Returns the `Reporter` it was passed, or the default `PrintingReporter`
-        that was created if none was passed.
-        """
-
-        # If the caller didn't provide a reporter, just create a basic one
-        reporter = reporter if reporter else PrintingReporter()
-
+    
+    def get_check_paths(self, date: datetime.date) -> list[Path]:
+        """Generate the paths to check based on the current configuration."""
+        
         spec: Spectrometer = self.config.specs[self.config.options.spec]
         # If there's any spectrometer that ought to be included, sub the actual
         # definitions in for the strings if it hasn't already been done
@@ -153,7 +146,6 @@ class Explorer:
 
         # Get platform dependent server path
         server_path = Path(getattr(self.config.paths, platform.system().lower())).expanduser()
-        dest_path = Path(self.config.paths.save).expanduser()
 
         # If a specific group hasn't been selected, check all groups i.e. treat as wild
         # An empty string and `None` both mean that nothing has been selected
@@ -171,10 +163,27 @@ class Explorer:
             groups=groups,
         )
 
+        return check_paths
+
+
+    def single_check(self, date: datetime.date, reporter: Reporter | None = None) -> Reporter:
+        """Conduct a check of a single date.
+
+        Returns the `Reporter` it was passed, or the default `PrintingReporter`
+        that was created if none was passed.
+        """
+
+        # If the caller didn't provide a reporter, just create a basic one
+        reporter = reporter if reporter else PrintingReporter()
+
+        # Work out what paths to check
+        check_paths = self.get_check_paths(date)
+
         # Start main checking function
         options = self.config.options
         rules = self.generate_rules()
         spec = self.config.specs[options.spec]
+        dest_path = Path(self.config.paths.save).expanduser()
 
         check_nmr(
             src=check_paths,

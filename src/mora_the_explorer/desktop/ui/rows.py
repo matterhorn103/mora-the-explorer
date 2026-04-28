@@ -22,7 +22,11 @@ from PySide6.QtWidgets import (
     QFileDialog,
 )
 
-from ...core.spec import Spectrometer
+from mora_the_explorer.core.config import Config, NamingOptions
+from mora_the_explorer.core.explorer import Explorer
+from mora_the_explorer.core.metadata import MeasurementMetadata, MetadataRules
+
+from ...core.spec import Manufacturer, Spectrometer
 
 
 class RowComponent(QObject):
@@ -347,6 +351,69 @@ class FolderNameOptions(RowComponent):
         """Set the status of all the checkboxes."""
         for k, v in kwargs.items():
             self.boxes[k].setChecked(v)
+
+
+class FolderNamePreview(RowComponent):
+    """A component to show the user the result of their selected naming options."""
+
+    def __init__(self, config: Config):
+        # Maintains its own explorer instance in order to regenerate the rules
+        # The explorer doesn't need to be recreated anew every time something
+        # changes, and it doesn't need its own config, it just shares the main
+        # window's
+        self.config = config
+        self.explorer = Explorer(config)
+
+        # Some demo metadata that include the user's own initials and group and
+        # example values of the other fields
+        # Keep a single copy hanging around, just replace the user/group if they change
+        # Some strings start off empty because they are generated in a call to
+        # regenerate_preview() in a second anyway
+        self.metadata = MeasurementMetadata(
+            path="",
+            folder_name="170",
+            manufacturer=Manufacturer.BRUKER,
+            date=datetime.date.today(),
+            user="",
+            group="",
+            experiment="proton",
+            frequency=300.26,
+            solvent="CDCl3",
+            sample_id="389-1",
+        )
+
+        # Container groups two items: a title and a text label
+        self.title = QLabel("Preview:")
+        self.preview = QLabel()
+
+        # Centre-align the preview within the column
+        self.preview.setAlignment(Qt.AlignCenter)
+
+        self.regenerate_preview()
+
+    def add_to_grid(self, grid: QGridLayout, row: int):
+        grid.addWidget(self.title, row, 0)
+        grid.addWidget(self.preview, row, 1)
+
+    @Slot()
+    def regenerate_preview(self):
+        """Update the preview based on the current config."""
+
+        # Update the demo metadata first
+        self.metadata.user = self.config.options.user
+        self.metadata.group = self.config.options.group
+        self.metadata.manufacturer = self.config.specs[self.config.options.spec].manufacturer
+        if self.metadata.manufacturer == Manufacturer.BRUKER:
+            self.metadata.folder_name = "170"
+            self.metadata.instrument = "av300"
+        else:
+            self.metadata.folder_name = self.config.options.user + self.metadata.sample_id
+            self.metadata.instrument = "v500"
+        # Don't bother with this so long as we don't offer the ability to include the path
+        #self.metadata.path = self.explorer.get_check_paths(datetime.date.today())[0] / self.metadata.folder_name
+        
+        preview = self.metadata.generate_folder_name(self.explorer.generate_rules(), drop_missing=False)
+        self.preview.setText(preview)
 
 
 class SpectrometerSelector(RowComponent):
