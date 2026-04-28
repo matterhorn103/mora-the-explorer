@@ -70,6 +70,7 @@ jobs:
       - name: Build binary (Linux)
         if: runner.os == 'Linux'
         run: |
+          rm -r build
           mkdir build
           uv run pyside6-deploy -c install/linux.spec
 
