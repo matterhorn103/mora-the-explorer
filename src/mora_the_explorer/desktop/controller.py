@@ -247,7 +247,8 @@ class Controller(QObject):
         self.reporter = self.new_reporter()
         # Then actually trigger the explorer to start a check via our signal
         self.start_check.emit(
-            self.main_window.date_selector.multiday(),
+            (self.main_window.date_selector.mode() == "multi"),
+            # This always gets the current date right now in "current" mode
             self.main_window.date_selector.date(),
             self.reporter,
         )

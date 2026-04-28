@@ -474,73 +474,105 @@ class DateSelector(RowComponent):
     def __init__(self):
         super().__init__()
 
-        # Groups three items: a title, a row of mixed widgets, and a button to
-        # set the date to the current day
+        # Groups two items: a title, and a row of mixed widgets
         self.title = QLabel("When?")
         self.date_row = QHBoxLayout()
-        self.today_button = QPushButton("Today")
 
         # Date row layout contains an interactive sentence consisting of
-        # two radio buttons and a date entry box
+        # three radio buttons, a date entry box, and a reset button
 
         # Mutually exclusive radio buttons to choose between single and multiple days
         self.date_button_group = QButtonGroup()
+        self.today_button = QRadioButton("today")
         self.only_button = QRadioButton("only")
         self.since_button = QRadioButton("since")
 
+        self.date_button_group.addButton(self.today_button)
         self.date_button_group.addButton(self.only_button)
         self.date_button_group.addButton(self.since_button)
 
         # Date editor with initial value set to today's date
         self.date_selector = QDateEdit(datetime.date.today())
         self.date_selector.setDisplayFormat("dd MMM yyyy")
+        self.date_selector.setMinimumWidth(150)
 
-        self.date_row.addWidget(self.only_button, 0)
-        self.date_row.addWidget(self.since_button, 1)
-        self.date_row.addWidget(self.date_selector, 2)
+        # A button to reset the date to the current day
+        self.reset_button = QPushButton("")
 
-        # When the today button is pressed, set the current date to today's date
-        self.today_button.clicked.connect(self.set_to_today)
+        # Give the reset button an icon
+        reset_icon = self.reset_button.style().standardIcon(QStyle.StandardPixmap.SP_BrowserReload)
+        self.reset_button.setIcon(reset_icon)
+        self.reset_button.setFixedSize(24, 24)
+
+        self.date_row.addWidget(self.today_button)
+        self.date_row.addWidget(self.only_button)
+        self.date_row.addWidget(self.since_button)
+        self.date_row.addWidget(self.date_selector)
+        self.date_row.addWidget(self.reset_button)
+
+        # When the reset button is pressed, set the current date to today's date
+        self.reset_button.clicked.connect(self.reset_date)
 
         # Right align the title (but centre vertically)
         self.title.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
         self.date_button_group.buttonClicked.connect(self.changed)
+        self.date_button_group.buttonClicked.connect(self._adjust_for_mode)
         self.date_selector.userDateChanged.connect(self.changed)
 
     def add_to_grid(self, grid: QGridLayout, row: int):
         grid.addWidget(self.title, row, 0)
-        grid.addLayout(self.date_row, row, 1)
-        grid.addWidget(self.today_button, row, 2)
+        grid.addLayout(self.date_row, row, 1, 1, 2)
 
     def date(self) -> datetime.date:
-        return self.date_selector.date().toPython()
+        if self.mode() == "current":
+            return datetime.date.today()
+        else:
+            return self.date_selector.date().toPython()
 
     def set_date(self, date: datetime.date):
         self.date_selector.setDate(date)
 
     @Slot()
-    def set_to_today(self):
+    def reset_date(self):
         self.set_date(datetime.date.today())
 
     def set_format(self, format: str):
         """Set the display format of the date."""
         self.date_selector.setDisplayFormat(format)
 
-    def multiday(self) -> bool:
-        """Whether the since function is activated."""
-        return self.date_button_group.checkedButton() is self.since_button
+    def mode(self) -> str:
+        """Which mode ("current", "single", or "multi") is currently active."""
+        if self.date_button_group.checkedButton() is self.today_button:
+            return "current"
+        elif self.date_button_group.checkedButton() is self.only_button:
+            return "single"
+        else:  # mode == "multi"
+            return "multi"
+        
+    @Slot()
+    def _adjust_for_mode(self):
+        mode = self.mode()
+        if mode == "current":
+            self.reset_date()
+            self.date_selector.setEnabled(False)
+        elif mode == "single":
+            self.date_selector.setEnabled(True)
+        else:  # mode == "multi"
+            self.date_selector.setEnabled(True)
 
-    def set_multiday(self, multiday: bool):
-        """Set the mode to be multi or single day."""
-        if multiday:
-            self.since_button.setChecked(True)
-        else:
+    def set_mode(self, mode: str):
+        """Set the mode to "current", "single", or "multi"."""
+        if mode == "current":
+            self.today_button.setChecked(True)
+        elif mode == "single":
             self.only_button.setChecked(True)
+        else:  # mode == "multi"
+            self.since_button.setChecked(True)
+        self._adjust_for_mode()
 
     def set_multiday_enabled(self, enabled: bool):
         """Set the multiday mode to be available or not."""
-        self.only_button.setEnabled(enabled)
         self.since_button.setEnabled(enabled)
-        if not enabled:
-            self.only_button.setChecked(True)
+        if self.mode() == "multi" and not enabled:
+            self.set_mode("single")
