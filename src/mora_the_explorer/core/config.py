@@ -76,8 +76,11 @@ class Paths:
 
 
 @dataclass
-class AdminOptions:
+class Admin:
     pattern_separator: str
+    version: str
+    email: str
+    changelog: str
     user_name_is_admin_only: bool | None = None
 
 
@@ -110,8 +113,8 @@ class Config:
     ```
 
     At runtime, two files are consulted:
-    1. The "app config": a `config.toml` in the app's resources directory, with default settings
-    2. The "user config": a `config.toml` in the user's personal data folder, with personal settings
+    1. The "app config": `mora.toml`, in the app's resources directory, with default settings
+    2. The "user config": `config.toml`, in the user's personal data folder, with personal settings
 
     The contents of the two files are merged upon loading, with anything in the
     user config taking priority over the app config.
@@ -140,7 +143,7 @@ class Config:
         app_config_file: Path | bytes | str = None,
         user_config_file: Path = USER_CONFIG_PATH,
     ):
-        # Load app config from config.toml
+        # Load app config from mora.toml
         self.app_config = self.load_config_toml(app_config_file)
         if isinstance(app_config_file, Path):
             logging.info(f"App configuration loaded from: {app_config_file}")
@@ -155,7 +158,7 @@ class Config:
         self.options = UserOptions(**user_opts)
         self.appearance = Appearance(**(self.app_config["appearance"]))
         self.paths = Paths(**(self.app_config["paths"]))
-        self.admin = AdminOptions(**(self.app_config["admin"]))
+        self.admin = Admin(**(self.app_config["admin"]))
         # Flatten the list of groups
         all_groups: dict = self.app_config["groups"].copy()
         if "other" in all_groups:

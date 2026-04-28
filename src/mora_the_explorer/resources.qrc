@@ -1,6 +1,5 @@
 <RCC>
     <qresource prefix="/">
-        <file>config.toml</file>
-        <file>version.txt</file>
+        <file>mora.toml</file>
     </qresource>
 </RCC>

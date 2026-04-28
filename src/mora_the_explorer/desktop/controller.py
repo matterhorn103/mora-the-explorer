@@ -1,6 +1,7 @@
 import datetime
 import logging
 from copy import deepcopy
+import tomllib
 from packaging.version import Version
 from pathlib import Path
 
@@ -140,23 +141,22 @@ class Controller(QObject):
     timer: QTimer
     explorer: QtExplorer
 
-    def __init__(self, config: Config, version_header: str, admin_mode: bool = False):
-        """Create a new `Controller` along with a new associated `MainWindow`
-        instance.
-
-        `version_header` has two functions:
-        1. The first five lines are displayed to the user at the top of the app,
-           providing information about the version, author, license etc.
-        2. The contents are compared to the same file that is deposited on the
-           server to see if updates are available.
-        """
+    def __init__(self, config: Config, admin_mode: bool = False):
+        """Create a new `Controller` along with a new associated `MainWindow` instance."""
         super().__init__()
-        self.version_header = version_header
-        self.version = Version(version_header.splitlines()[2])
+        self.version_header = "\n".join([
+            "Mora the Explorer",
+            "Matt Milner",
+            config.admin.version,
+            "License: GPLv3",
+            f'<a href="mailto:{config.admin.email}">Report a bug</a>',
+            config.admin.changelog,
+        ])
+        self.version = Version(config.admin.version)
 
         # Create instance of `MainWindow` (front-end)
         logging.info("Initializing user interface…")
-        self.main_window = MainWindow(config, version_header, admin_mode)
+        self.main_window = MainWindow(config, self.version_header, admin_mode)
         # Connect the key signals
         self.main_window.started.connect(self.check_requested)
         self.main_window.cancelled.connect(self.cancel_scheduled_check)
@@ -176,23 +176,32 @@ class Controller(QObject):
         QApplication.instance().aboutToQuit.connect(self.cleanup)
 
     def update_check(self, update_path: Path):
-        """Check for updates at the specified location."""
+        """Check for updates at the specified location.
+        
+        Assumes that the directory at `update_path` contains a copy of the source code
+        of Mora the Explorer, under the subdirectory name `src`. The `mora.toml`
+        file within the source code is then checked and compare to the local one
+        to see if a newer version has been released.
+        """
 
         logging.info(f"Checking for updates at: {update_path}")
-        update_path_version_file = update_path / "version.txt"
+        remote_config_file = update_path / "src/src/mora_the_explorer/mora.toml"
         try:
-            if update_path_version_file.exists() is True:
-                with open(update_path_version_file, encoding="utf-8") as f:
-                    version_info = f.read()
+            if remote_config_file.exists() is True:
+                with open(remote_config_file, "rb", encoding="utf-8") as f:
+                    remote_config = tomllib.read(f)
             else:
-                logging.info(f"No remote version information found at {update_path_version_file}")
+                logging.info(f"No remote version information found at {remote_config_file}")
                 return
         except PermissionError:
             logging.info("The user does not have the required permissions to access the server!")
             return
-        remote_version = Version(version_info.splitlines()[2])
-        changelog = "\n".join(version_info.splitlines()[5:])
+        remote_version = Version(remote_config["admin"]["version"])
         if self.version < remote_version:
+            changelog = (
+            "What's new in version " + remote_version + ":\n"
+            + remote_config["admin"]["changelog"]
+            )
             self.main_window.notify_update(
                 self.version, remote_version, changelog, update_path
             )

@@ -136,7 +136,7 @@ def main():
             level=logging.INFO,
         )
 
-    app_config = get_rsrc_dir() / "config.toml"
+    app_config = get_rsrc_dir() / "mora.toml"
 
     # Launch desktop app if requested
     if args.command == "launch":
