@@ -24,6 +24,7 @@ repeat_delay = 5
 group = false
 user = true
 solvent = false
+instrument = false
 frequency = false
 experiment = true
 original = false

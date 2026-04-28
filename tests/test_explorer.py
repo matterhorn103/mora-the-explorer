@@ -90,10 +90,30 @@ class TestExplorer:
             "mjm-501-2-unknown-proton",
         ]
 
+    def test_with_instrument(self):
+        explorer = mock_explorer()
+        explorer.config.options.spec = "av300"
+        explorer.config.options.naming.solvent = False
+        explorer.config.options.naming.instrument = True
+        reporter = explorer.single_check(date(2023, 10, 15))
+        # A single spectrum, mjm-500-1, should be found
+        assert sorted(reporter.copied()) == ["mjm-500-1-av300-proton"]
+        # Note that only that specific spectrum has the uxnmr.info file in the mock server setup
+        reporter = explorer.single_check(date(2023, 10, 16))
+        # Whereas these ones don't, so all have the frequency as unknown
+        print(reporter.copied())
+        assert sorted(reporter.copied()) == [
+            "mjm-501-1-unknown-proton",
+            "mjm-501-2-unknown-carbon",
+            "mjm-501-2-unknown-proton",
+        ]
+
     def test_agilent(self):
         explorer = mock_explorer()
         explorer.config.options.spec = "v600"
         reporter = explorer.single_check(date(2023, 10, 15))
+        # Note that only these two spectra have a populated `procpar` file as required
+        # for the metadata extraction, and only the proton spectra have it
         assert sorted(reporter.copied()) == [
             "mjm-500-1-cdcl3-various",
             "mjm-501-1-dmso-various",
@@ -108,6 +128,17 @@ class TestExplorer:
         assert sorted(reporter.copied()) == [
             "mjm-500-1-600-various",
             "mjm-501-1-600-various",
+        ]
+    
+    def test_agilent_with_instrument(self):
+        explorer = mock_explorer()
+        explorer.config.options.spec = "v600"
+        explorer.config.options.naming.solvent = False
+        explorer.config.options.naming.instrument = True
+        reporter = explorer.single_check(date(2023, 10, 15))
+        assert sorted(reporter.copied()) == [
+            "mjm-500-1-v600-various",
+            "mjm-501-1-v600-various",
         ]
     
     def test_agilent_with_group(self):

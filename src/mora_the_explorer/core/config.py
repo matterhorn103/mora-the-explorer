@@ -37,6 +37,7 @@ class NamingOptions:
     group: bool
     user: bool
     solvent: bool
+    instrument: bool
     frequency: bool
     experiment: bool
     original: bool
@@ -66,13 +67,13 @@ class Paths:
     update: str  # Relative to the server paths
     save: str
 
-    def server(self):
+    def server(self) -> str:
         """Return the server path for the current platform."""
         return getattr(self, platform.system().lower())
 
-    def set_server(self, path: str):
+    def set_server(self, path: str | Path):
         """Set the server path for the current platform."""
-        setattr(self, platform.system().lower(), path)
+        setattr(self, platform.system().lower(), str(path))
 
 
 @dataclass

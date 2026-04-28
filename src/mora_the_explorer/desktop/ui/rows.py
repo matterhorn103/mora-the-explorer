@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QDateEdit,
     QCheckBox,
+    QSizePolicy,
     QSpinBox,
     QHBoxLayout,
     QStyle,
@@ -22,7 +23,11 @@ from PySide6.QtWidgets import (
     QFileDialog,
 )
 
-from ...core.spec import Spectrometer
+from mora_the_explorer.core.config import Config, NamingOptions
+from mora_the_explorer.core.explorer import Explorer
+from mora_the_explorer.core.metadata import MeasurementMetadata, MetadataRules
+
+from ...core.spec import Manufacturer, Spectrometer
 
 
 class RowComponent(QObject):
@@ -51,21 +56,22 @@ class DirSelector(RowComponent):
         # Store the path as a Path object
         self._path: Path = None
 
-        # Groups three items - a title string, a path field, then two buttons
+        # Groups two items - a title string and a path field, and two buttons
         self.title = QLabel(title)
+        # The path field consists of a button to click to select a folder, the
+        # entry field itself, and (optionally) a button to go to the folder
         self.path_layout = QHBoxLayout()
-        self.go_button = QPushButton("go to")
-
-        # The path field consists of a button to click to select a folder and the
-        # entry field itself
         self.pick_button = QPushButton("")
         self.entry_field = QLineEdit()
+        self.go_button = QPushButton("go to")
         self.path_layout.addWidget(self.pick_button)
         self.path_layout.addWidget(self.entry_field)
-        # We want no gap
+        self.path_layout.addWidget(self.go_button)
+
+        # We want no gap between the entry field and the buttons
         self.path_layout.setSpacing(0)
-        # However the entry field is disabled to prevent accidental changes,
-        # changes have to be made using the pick button
+        # However, the entry field is disabled to prevent accidental changes, so
+        # that changes have to be made using the pick button
         self.entry_field.setEnabled(False)
 
         # Give the pick button the appropriate icon, make it square
@@ -81,6 +87,8 @@ class DirSelector(RowComponent):
         self.pick_button.clicked.connect(self.pick_path)
         self.go_button.clicked.connect(self.go_to)
 
+        # If no go button was requested, we still generate it (to make logic simpler),
+        # we just don't show it
         if not go_button:
             self.go_button.hide()
 
@@ -95,7 +103,6 @@ class DirSelector(RowComponent):
     def add_to_grid(self, grid: QGridLayout, row: int):
         grid.addWidget(self.title, row, 0)
         grid.addLayout(self.path_layout, row, 1)
-        grid.addWidget(self.go_button, row, 2)
 
     def path(self) -> Path:
         """Get the current path in the entry field."""
@@ -137,11 +144,16 @@ class FreeEntryField(RowComponent):
 
         # Groups three widgets - a title string, an entry field, then a trailing comment
         self.title = QLabel(title)
+        # Entry field and comment distributed within a sub-layout
+        self.field_layout = QHBoxLayout()
         self.entry_field = QLineEdit()
+        self.field_layout.addWidget(self.entry_field)
         if comment is not None:
             self.comment = QLabel(comment)
             # Centre the comment in both directions
             self.comment.setAlignment(Qt.AlignCenter)
+            self.comment.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
+            self.field_layout.addWidget(self.comment)
         else:
             self.comment = None
 
@@ -155,9 +167,7 @@ class FreeEntryField(RowComponent):
 
     def add_to_grid(self, grid: QGridLayout, row: int):
         grid.addWidget(self.title, row, 0)
-        grid.addWidget(self.entry_field, row, 1)
-        if self.comment:
-            grid.addWidget(self.comment, row, 2)
+        grid.addLayout(self.field_layout, row, 1)
 
     def text(self) -> str:
         """Get the current text in the entry field."""
@@ -221,6 +231,14 @@ class OverflowSelector(RowComponent):
         self.overflow_stack.addWidget(self.other_button)
         self.overflow_stack.addWidget(self.dropdown)
 
+        # But actually, we group the two stacks together in the central column
+        self.buttons_layout = QHBoxLayout()
+        self.buttons_layout.addLayout(self.button_stack)
+        self.buttons_layout.addLayout(self.overflow_stack)
+
+        # Make the dropdown as small as possible
+        self.dropdown.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
+
         # Right align the title (but centre vertically)
         self.title.setAlignment(Qt.AlignRight | Qt.AlignTop)
 
@@ -247,8 +265,7 @@ class OverflowSelector(RowComponent):
 
     def add_to_grid(self, grid: QGridLayout, row: int):
         grid.addWidget(self.title, row, 0)
-        grid.addLayout(self.button_stack, row, 1)
-        grid.addLayout(self.overflow_stack, row, 2)
+        grid.addLayout(self.buttons_layout, row, 1)
 
     def selected(self) -> str:
         """Get the selected option."""
@@ -310,33 +327,42 @@ class FolderNameOptions(RowComponent):
             "group": "group",
             "user": "user",
             "solvent": "solvent",
-            "frequency": "frequency",
+            "instrument": "instrument",
             "experiment": "experiment",
             "original": "original name",
         }
         self.boxes = {}
 
         # Create the checkboxes, add them to the rows, connect up the signals
+        # Fill the first row until half or more of the boxes have been added
+        # First item in new row is thus the item with i == (n + 1) // 2
+        first_i_in_row2 = (len(self.options) + 1) // 2
         for i, (option, label) in enumerate(self.options.items()):
             box = QCheckBox(label)
             self.boxes[option] = box
-            # Fill the first row until half or more of the boxes have been added
-            # First item in new row is thus the item with i == (n + 1) // 2
-            first_i_in_row2 = (len(self.options) + 1) // 2
             if i < first_i_in_row2:
                 self.box_grid.addWidget(box, 0, i)
             else:
                 self.box_grid.addWidget(box, 1, i - first_i_in_row2)
             box.toggled.connect(self.changed)
+        
+        # Add an additional checkbox for the "sample ID" that is a dummy, can't
+        # be deselected, and doesn't feature in any of the other logic - it's
+        # there just to make it clearer how the names are generated (as everything
+        # that's in the generated names then has a corresponding checkbox)
+        id_checkbox = QCheckBox("sample ID")
+        id_checkbox.setChecked(True)
+        id_checkbox.setEnabled(False)
+        self.box_grid.addWidget(id_checkbox, 0, first_i_in_row2)
 
     def add_to_grid(self, grid: QGridLayout, row: int):
         grid.addWidget(self.title, row, 0)
         # Up to six options fit within the central column
-        if len(self.options) <= 6:
-            grid.addLayout(self.box_grid, row, 1)
+        #if len(self.options) <= 6:
+        grid.addLayout(self.box_grid, row, 1)
         # More than that and we need to expand into the third column
-        else:
-            grid.addLayout(self.box_grid, row, 1, 1, 2)
+        #else:
+        #grid.addLayout(self.box_grid, row, 1, 1, 2)
         # grid.addWidget(self.comment, row, 2)
 
     def checked(self) -> dict[str, bool]:
@@ -346,7 +372,76 @@ class FolderNameOptions(RowComponent):
     def set_checked(self, **kwargs: bool):
         """Set the status of all the checkboxes."""
         for k, v in kwargs.items():
-            self.boxes[k].setChecked(v)
+            if k in self.boxes:
+                self.boxes[k].setChecked(v)
+            # Otherwise don't do anything, there's no box for this option, it
+            # can only be set via the config file
+
+
+class FolderNamePreview(RowComponent):
+    """A component to show the user the result of their selected naming options."""
+
+    def __init__(self, config: Config):
+        # Maintains its own explorer instance in order to regenerate the rules
+        # The explorer doesn't need to be recreated anew every time something
+        # changes, and it doesn't need its own config, it just shares the main
+        # window's
+        self.config = config
+        self.explorer = Explorer(config)
+
+        # Some demo metadata that include the user's own initials and group and
+        # example values of the other fields
+        # Keep a single copy hanging around, just replace the user/group if they change
+        # Some strings start off empty because they are generated in a call to
+        # regenerate_preview() in a second anyway
+        self.metadata = MeasurementMetadata(
+            path="",
+            folder_name="170",
+            manufacturer=Manufacturer.BRUKER,
+            date=datetime.date.today(),
+            user="",
+            group="",
+            experiment="proton",
+            frequency=300.26,
+            solvent="CDCl3",
+            sample_id="389-1",
+        )
+
+        # Container groups two items: a title and a text label
+        self.title = QLabel("Preview:")
+        self.preview = QLabel()
+
+        # Right align the title (but top align vertically)
+        self.title.setAlignment(Qt.AlignRight | Qt.AlignTop)
+
+        # Centre-align the preview within the column
+        self.preview.setAlignment(Qt.AlignCenter | Qt.AlignTop)
+
+        self.regenerate_preview()
+
+    def add_to_grid(self, grid: QGridLayout, row: int):
+        grid.addWidget(self.title, row, 0)
+        grid.addWidget(self.preview, row, 1)
+
+    @Slot()
+    def regenerate_preview(self):
+        """Update the preview based on the current config."""
+
+        # Update the demo metadata first
+        self.metadata.user = self.config.options.user
+        self.metadata.group = self.config.options.group
+        self.metadata.manufacturer = self.config.specs[self.config.options.spec].manufacturer
+        if self.metadata.manufacturer == Manufacturer.BRUKER:
+            self.metadata.folder_name = "170"
+            self.metadata.instrument = "av300"
+        else:
+            self.metadata.folder_name = self.config.options.user + self.metadata.sample_id
+            self.metadata.instrument = "v500"
+        # Don't bother with this so long as we don't offer the ability to include the path
+        #self.metadata.path = self.explorer.get_check_paths(datetime.date.today())[0] / self.metadata.folder_name
+        
+        preview = self.metadata.generate_folder_name(self.explorer.generate_rules(), drop_missing=False)
+        self.preview.setText(preview)
 
 
 class SpectrometerSelector(RowComponent):
@@ -382,7 +477,7 @@ class SpectrometerSelector(RowComponent):
 
     def add_to_grid(self, grid: QGridLayout, row: int):
         grid.addWidget(self.title, row, 0)
-        grid.addLayout(self.button_stack, row, 1, 1, 2)
+        grid.addLayout(self.button_stack, row, 1)
 
     def selected(self) -> str:
         """Get the selected option."""
@@ -494,7 +589,8 @@ class DateSelector(RowComponent):
         # Date editor with initial value set to today's date
         self.date_selector = QDateEdit(datetime.date.today())
         self.date_selector.setDisplayFormat("dd MMM yyyy")
-        self.date_selector.setMinimumWidth(150)
+        #self.date_selector.setMinimumWidth(200)
+        self.date_selector.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         # A button to reset the date to the current day
         self.reset_button = QPushButton("")
@@ -504,11 +600,17 @@ class DateSelector(RowComponent):
         self.reset_button.setIcon(reset_icon)
         self.reset_button.setFixedSize(24, 24)
 
+        # We don't want a gap between the date selector and the reset button, so
+        # add a nested layout
+        self.date_selector_layout = QHBoxLayout()
+        self.date_selector_layout.setSpacing(0)
+        self.date_selector_layout.addWidget(self.date_selector)
+        self.date_selector_layout.addWidget(self.reset_button)
+
         self.date_row.addWidget(self.today_button)
         self.date_row.addWidget(self.only_button)
         self.date_row.addWidget(self.since_button)
-        self.date_row.addWidget(self.date_selector)
-        self.date_row.addWidget(self.reset_button)
+        self.date_row.addLayout(self.date_selector_layout)
 
         # When the reset button is pressed, set the current date to today's date
         self.reset_button.clicked.connect(self.reset_date)
@@ -522,7 +624,7 @@ class DateSelector(RowComponent):
 
     def add_to_grid(self, grid: QGridLayout, row: int):
         grid.addWidget(self.title, row, 0)
-        grid.addLayout(self.date_row, row, 1, 1, 2)
+        grid.addLayout(self.date_row, row, 1)
 
     def date(self) -> datetime.date:
         if self.mode() == "current":
