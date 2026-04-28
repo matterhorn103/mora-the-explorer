@@ -59,7 +59,7 @@ However, there are two folders for 2023-10-16 due to there being two spectra wit
 
 ## Unique FIDs
 
-Each fid file includes an integer from **1 to 91** to make them each unique across the whole mock server (even when the metadata for two spectra are otherwise identical).
+Each fid file includes an integer from **1 to 92** to make them each unique across the whole mock server (even when the metadata for two spectra are otherwise identical).
 
 ## Spectra
 
@@ -99,24 +99,25 @@ Since then the following have been added:
 - av300/Oct14-2023/not_a_measurement  // A folder without any measurement data or metadata
 - av300/Oct14-2023/.placeholder  // A file as opposed to a folder
 - av300/Oct17-2023/10  // A measurement with a title file but no title
+- av300/Oct15-2023/32 = stu dna 1370-1 (19F, CD2Cl2)  // To give a set of three measurements for the same sample
 
 ### Agilent
 
 Note that for some group/year combinations there are folders but no spectra, just a `.placeholder` file (so that it can be checked in with Git).
 
-The following samples are mocked:
+The following samples are mocked. Note that not all contain a proper `procpar` file yet; those missing one are marked with a !
 
 studer/2022
-- mjm382  // No sample number
+- mjm382 ! // No sample number
 
 studer/2023
 - mjm500-1
-- mjm501-1 (DMSO)  // Solvent other than chloroform
-- dna1455  // Proton only
+- mjm501-1  // Solvent other than chloroform (DMSO)
+- dna1455 ! // Proton only
 
 gilmour/2023
-- stp2-200
-- stpab12-1
+- stp2-200 !
+- stpab12-1 !
 
 gilmour/2026
 // These akw spectra were added specifically because they weren't being found properly

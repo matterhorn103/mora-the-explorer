@@ -199,13 +199,15 @@ def copy_folder(src: Path, target: Path, reporter: Reporter) -> Path | None:
         num = 1
         while not same_spectrum_found:
             num += 1
-            target = target.with_name(target.name + "-" + str(num))
-            if target.exists():
-                same_spectrum_found, incomplete_copy = compare_spectra(src, target)
+            alt = target.with_name(target.name + "-" + str(num))
+            if alt.exists():
+                # Check if this spectrum is the same one or yet another unique one
+                same_spectrum_found, incomplete_copy = compare_spectra(src, alt)
             else:
-                # We have exhausted all possible candidates for the same spectrum
-                # and have arrived at a new unique name, so we need to copy the
-                # spectrum and use this unique name
+                # We have exhausted all possible candidates for the same spectrum,
+                # it's definitely not already been copied, and we have now finally
+                # arrived at a new unique name, so stop the loop and use it
+                target = alt
                 break
 
     # Try and fix only partially copied spectra
