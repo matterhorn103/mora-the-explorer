@@ -87,25 +87,6 @@ class Reporter(ABC):
         pass
 
 
-def get_number_spectra(paths: list[Path]):
-    """Get the total number of spectra folders in the given directories.
-
-    We can then use the length of it to measure progress.
-    """
-    # Can't remember why it was done this way, I guess the hf check used to be done
-    # differently to how it is today
-    # if paths is None:
-    #    n = sum(1 for x in path.iterdir() if x.is_dir())
-    # else:
-    #    n = 0
-    #    for path in paths:
-    #        n += sum(1 for x in path.iterdir() if x.is_dir())
-    n = 0
-    for path in paths:
-        n += sum(1 for x in path.iterdir() if x.is_dir())
-    return n
-
-
 def compare_spectra(server_folder, dest_folder) -> tuple[bool, bool]:
     """Check that two spectra with the same name are actually the same measurement and not e.g. different proton measurements.
 
@@ -310,16 +291,37 @@ def check_nmr(
         for p in check_paths:
             logging.info(str(p))
 
+    reporter.reset_progress()
+
+    # Now we handle Bruker and Agilent a bit differently
+    # Each folder in check_paths contains subfolders either for individual measurements (Bruker)
+    # or for different samples with multiple measurements in each folder (Agilent)
+    # For Agilent checks we thus expand each entry in check_paths, but since the
+    # user's initials should appear in the title of the sample folder, and each
+    # measurement folder ends with `.fid`, we can do some preliminary filtering
+    # to save checking every single one of these
+    measurement_dirs = []
+    for check_path in check_paths:
+        if manufacturer is Manufacturer.AGILENT:
+            sample_folders = [x for x in check_path.iterdir() if x.is_dir() and not x.name.startswith(".")]
+            hits = [s for s in sample_folders if rules.substitutions.user in s.name]
+            for sample_folder in hits:
+                measurement_dirs.extend([x for x in sample_folder.iterdir() if x.is_dir() and x.suffix == ".fid"])
+        else:
+            measurement_dirs.extend([x for x in check_path.iterdir() if x.is_dir() and not x.name.startswith(".")])
+
     # Initialize progress bar
-    # Get total number of folders that we're going to be checking across all src paths
-    n_spectra = get_number_spectra(paths=check_paths)
-    logging.info(f"Total spectra in these paths: {n_spectra}")
-    try:
-        reporter.set_max_progress(n_spectra)
-        reporter.reset_progress()
-    except Exception:
-        # This stops Python from hanging when the program is closed, no idea why
-        sys.exit()
+    n_measurements = len(measurement_dirs)
+    # If we are checking an Agilent spectrometer, let's assume that the above
+    # expansion operation took some time, and now that it's done make the progress
+    # bar move by an appropriate amount
+    if manufacturer is Manufacturer.AGILENT:
+        logging.info(f"Total spectra in these paths matching the given user: {n_measurements}")
+        reporter.set_max_progress(n_measurements + 10)
+        reporter.increment_progress(10)
+    else:
+        logging.info(f"Total spectra in these paths: {n_measurements}")
+        reporter.set_max_progress(n_measurements)
     reporter.set_status("Checking…")
 
     # Start the actual search process
@@ -327,33 +329,15 @@ def check_nmr(
     # the folder for a spectrum is manufacturer-dependent
 
     logging.info("The following spectra were checked for potential matches:")
-    # Loop through each folder in check_paths
-    # Each is a folder that contains measurement folders
-    for check_path in check_paths:
-        # Iterate over the measurement folders
-        for folder in [x for x in check_path.iterdir() if x.is_dir() and not x.name.startswith(".")]:
-            logging.info(folder)
+    # Loop over all the measurements
+    for measurement_dir in measurement_dirs:
+            logging.info(measurement_dir)
 
-            # Extract title and experiment details from title file in spectrum folder
-            # For Agilent spectra the name of the folder itself ought to include the user
-            # initials so if that's a condition for a match (it usually is) we can save
-            # some time by checking for it straight away and short-circuiting if they are
-            # are missing from the folder name of the sample
-            if (
-                manufacturer is Manufacturer.AGILENT
-                and rules.substitutions.user not in folder.name
-            ):
-                logging.info(
-                    "User missing from folder name - skipping detailed metadata analysis"
-                )
-                reporter.increment_progress()
-                continue
-
-            # Otherwise resolve the metadata fully
+            # Resolve the metadata fully
             try:
-                metadata = get_metadata(folder, rules, manufacturer)
+                metadata = get_metadata(measurement_dir, rules, manufacturer)
             except FileNotFoundError:
-                reporter.add_error(f"No metadata could be found for {folder}!")
+                reporter.add_error(f"No metadata could be found for {measurement_dir}!")
                 logging.info("No metadata found")
                 reporter.increment_progress()
                 continue
@@ -369,6 +353,7 @@ def check_nmr(
             logging.debug(f"Measurement title: {metadata.title}")
 
             # Some things are not typically resolved by the get_metadata function
+            # (at least not at this point in time)
             # but can be supplied because we know them already
             metadata.manufacturer = manufacturer
             if metadata.date is None:
@@ -379,7 +364,7 @@ def check_nmr(
 
             # Copy, add output messages to main output list
             reporter.set_status("Comparing metadata…")
-            copy_dest = copy_folder(folder, dest_path / new_folder_name, reporter)
+            copy_dest = copy_folder(measurement_dir, dest_path / new_folder_name, reporter)
 
             # If we copied, add a file with the metadata
             if copy_dest:

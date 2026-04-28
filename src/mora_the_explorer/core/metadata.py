@@ -241,7 +241,7 @@ class MeasurementMetadata:
                         parts.append(normalized)
                     elif field == "frequency":
                         # Round it
-                        parts.append(str(round(value)))
+                        parts.append(str(round(value)) + "mhz")
                     else:
                         parts.append(str(value))
                 # What do we do if the user wants something in the folder name but
@@ -277,16 +277,16 @@ class MeasurementMetadata:
             tomli_w.dump(d, f)
 
 
-def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetadata | None:
+def get_metadata_bruker(dir: Path, rules: MetadataRules) -> MeasurementMetadata | None:
     # Extract title and experiment details from title file in spectrum folder
-    title_file = folder / "pdata/1/title"
+    title_file = dir / "pdata/1/title"
     if not title_file.exists():
-        logging.info(f"No title file for {folder} – presumably not a measurement")
+        logging.info(f"No title file for {dir} – presumably not a measurement")
         return None
     with open(title_file, encoding="utf-8") as f:
         title_contents = f.read().splitlines()
     if len(title_contents) < 2:
-        logging.info(f"Title file for {folder} is empty!")
+        logging.info(f"Title file for {dir} is empty!")
         title = ""
         details = ""
     else:
@@ -294,15 +294,15 @@ def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetada
         details = title_contents[1]
         # Make a note if the title is empty
         if not title:
-            logging.info(f"No measurement title was given for {folder}!")
+            logging.info(f"No measurement title was given for {dir}!")
 
     logging.debug(title)
     metadata = MeasurementMetadata.from_measurement_title(title, rules)
     if metadata is None:
         # Isn't a match
         return None
-    metadata.path = str(folder)
-    metadata.folder_name = folder.name
+    metadata.path = str(dir)
+    metadata.folder_name = dir.name
     metadata.manufacturer = Manufacturer.BRUKER
 
     if details:
@@ -311,7 +311,7 @@ def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetada
         metadata.solvent = details_split[1]
 
     # Get magnet frequency and instrument name
-    uxnmr_info_file = folder / "uxnmr.info"
+    uxnmr_info_file = dir / "uxnmr.info"
     if uxnmr_info_file.exists():
         with open(uxnmr_info_file, encoding="utf-8") as f:
             for line in f:
@@ -328,62 +328,59 @@ def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetada
     return metadata
 
 
-def get_metadata_agilent(folder: Path, rules: MetadataRules) -> MeasurementMetadata | None:
-    title = folder.name
+def get_metadata_agilent(dir: Path, rules: MetadataRules) -> MeasurementMetadata | None:
+    title = dir.name
     metadata = MeasurementMetadata.from_measurement_title(title, rules)
     if metadata is None:
         # Isn't a match
         return None
-    metadata.path = str(folder)
-    metadata.folder_name = folder.name
-    metadata.group_name = folder.parent.parent.name
+    metadata.path = str(dir)
+    metadata.folder_name = dir.name
+    metadata.group_name = dir.parent.parent.parent.name
     metadata.manufacturer = Manufacturer.AGILENT
-    # One folder contains multiple measurements
+    # One folder contains multiple measurements TODO Extract properly
     metadata.experiment = "various"
 
-
-    # Each measurement has a procpar file that we can get everything from
-    for subfolder in folder.iterdir():
-        procpar_file = subfolder / "procpar"
-        if procpar_file.exists():
-            with open(procpar_file, encoding="utf-8") as f:
-                procpar = f.read().splitlines()
-            # Contains sets of three lines, where the first line starts with the parameter name,
-            # and the second line has the value as the second item
-            # Specify those which we want to extract and how, with the name of the
-            # parameter in the procpar file as the keys
-            pars = {
-                "sfrq": {"field": "frequency", "dtype": float},
-                "solvent": {"field": "solvent", "dtype": str},
-                "kbspec": {"field": "instrument", "dtype": str},
-            }
-            # Turns out we can't rely on the lines being in sets of three, so have
-            # to iterate through all of them
-            for i, line in enumerate(procpar):
-                try:
-                    par = line.split()[0]  # Note that for 2 of 3 lines this won't actually be a parameter name
-                except IndexError:
-                    continue
-                if par in pars:
-                    # Value on next line in second position
-                    val = procpar[i + 1].split()[1]
-                    processed_val = pars[par]["dtype"](val.strip('"'))
-                    setattr(metadata, pars[par]["field"], processed_val)
-                if metadata.frequency and metadata.instrument and metadata.solvent:
-                    # Found everything we need, we can stop iterating
-                    break
-    print(metadata)
+    procpar_file = dir / "procpar"
+    if procpar_file.exists():
+        with open(procpar_file, encoding="utf-8") as f:
+            procpar = f.read().splitlines()
+        # Contains sets of three lines, where the first line starts with the parameter name,
+        # and the second line has the value as the second item
+        # Specify those which we want to extract and how, with the name of the
+        # parameter in the procpar file as the keys
+        pars = {
+            "kbpslabel": {"field": "experiment", "dtype": str},
+            "sfrq": {"field": "frequency", "dtype": float},
+            "solvent": {"field": "solvent", "dtype": str},
+            "kbspec": {"field": "instrument", "dtype": str},
+        }
+        # Turns out we can't rely on the lines being in sets of three, so have
+        # to iterate through all of them
+        for i, line in enumerate(procpar):
+            try:
+                par = line.split()[0]  # Note that for 2 of 3 lines this won't actually be a parameter name
+            except IndexError:
+                continue
+            if par in pars:
+                # Value on next line in second position
+                val = procpar[i + 1].split()[1]
+                processed_val = pars[par]["dtype"](val.strip('"'))
+                setattr(metadata, pars[par]["field"], processed_val)
+            if metadata.frequency and metadata.instrument and metadata.solvent:
+                # Found everything we need, we can stop iterating
+                break
 
     return metadata
 
 
 def get_metadata(
-    folder: Path, rules: MetadataRules, manufacturer: Manufacturer
+    dir: Path, rules: MetadataRules, manufacturer: Manufacturer
 ) -> MeasurementMetadata:
     match manufacturer:
         case Manufacturer.BRUKER:
-            return get_metadata_bruker(folder, rules)
+            return get_metadata_bruker(dir, rules)
         case Manufacturer.AGILENT:
-            return get_metadata_agilent(folder, rules)
+            return get_metadata_agilent(dir, rules)
         case _:
             raise ValueError(f"{repr(manufacturer)} is not a valid manufacturer!")
