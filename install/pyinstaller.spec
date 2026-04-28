@@ -27,7 +27,7 @@ exe = EXE(
     [],
     exclude_binaries=True,
     name='mora_the_explorer',
-    icon='explorer.png',
+    icon='explorer.ico',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

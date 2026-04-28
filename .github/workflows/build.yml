@@ -51,6 +51,8 @@ jobs:
             libxkbcommon-x11-dev \
             libatspi2.0-dev \
             '^libxcb.*-dev'
+          # Nuitka dependencies
+          sudo apt install -y ccache clang patchelf
 
       - name: Install the project
         run: uv sync --locked --dev
@@ -65,8 +67,19 @@ jobs:
         run: |
           uv run pyinstaller install/pyinstaller.spec
 
+      - name: Build binary (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir build
+          uv run pyside6-deploy -c install/linux.spec
+
       - name: Rename bundle
+        if: runner.os != 'Linux'
         run: mv dist/mora_the_explorer ${{ matrix.artifact_name }}
+
+      - name: Rename binary (Linux)
+        if: runner.os == 'Linux'
+        run: mv build/mora_the_explorer.bin ${{ matrix.artifact_name }}
 
       - uses: actions/upload-artifact@v7
         with:
