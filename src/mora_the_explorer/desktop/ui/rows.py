@@ -321,26 +321,35 @@ class FolderNameOptions(RowComponent):
         self.boxes = {}
 
         # Create the checkboxes, add them to the rows, connect up the signals
+        # Fill the first row until half or more of the boxes have been added
+        # First item in new row is thus the item with i == (n + 1) // 2
+        first_i_in_row2 = (len(self.options) + 1) // 2
         for i, (option, label) in enumerate(self.options.items()):
             box = QCheckBox(label)
             self.boxes[option] = box
-            # Fill the first row until half or more of the boxes have been added
-            # First item in new row is thus the item with i == (n + 1) // 2
-            first_i_in_row2 = (len(self.options) + 1) // 2
             if i < first_i_in_row2:
                 self.box_grid.addWidget(box, 0, i)
             else:
                 self.box_grid.addWidget(box, 1, i - first_i_in_row2)
             box.toggled.connect(self.changed)
+        
+        # Add an additional checkbox for the "sample ID" that is a dummy, can't
+        # be deselected, and doesn't feature in any of the other logic - it's
+        # there just to make it clearer how the names are generated (as everything
+        # that's in the generated names then has a corresponding checkbox)
+        id_checkbox = QCheckBox("sample ID")
+        id_checkbox.setChecked(True)
+        id_checkbox.setEnabled(False)
+        self.box_grid.addWidget(id_checkbox, 0, first_i_in_row2)
 
     def add_to_grid(self, grid: QGridLayout, row: int):
         grid.addWidget(self.title, row, 0)
         # Up to six options fit within the central column
-        if len(self.options) <= 6:
-            grid.addLayout(self.box_grid, row, 1)
+        #if len(self.options) <= 6:
+        grid.addLayout(self.box_grid, row, 1)
         # More than that and we need to expand into the third column
-        else:
-            grid.addLayout(self.box_grid, row, 1, 1, 2)
+        #else:
+        #grid.addLayout(self.box_grid, row, 1, 1, 2)
         # grid.addWidget(self.comment, row, 2)
 
     def checked(self) -> dict[str, bool]:
