@@ -154,7 +154,7 @@ class MainWindow(QMainWindow):
 
         # Date selection
         self.date_selector = rows.DateSelector()
-        self.date_selector.set_multiday(False)
+        self.date_selector.set_mode("current")
         self.date_selector.add_to_grid(self.grid, 12)
 
         # Status bar to start and cancel a check, as well as show the status
@@ -193,9 +193,9 @@ class MainWindow(QMainWindow):
         self.spec_selector.changed.connect(self._on_spec_changed)
         self.repeat_options.changed.connect(self._on_repeat_changed)
         self.save_button.clicked.connect(self._on_save_button_clicked)
-        # Connect specifically to the multiday buttons not the overall changed signal
+        # Connect specifically to the buttons not the overall changed signal
         # because we don't need to do anything when the date is changed
-        self.date_selector.date_button_group.buttonClicked.connect(self._on_multiday_toggled)
+        self.date_selector.date_button_group.buttonClicked.connect(self._on_date_mode_changed)
         # self.date_selector.date_selector.userDateChanged.connect(self._on_date_changed)
         self.notification.clicked.connect(self._on_notification_clicked)
         # Connect the start/cancel buttons directly to the main window's own signals
@@ -376,8 +376,8 @@ class MainWindow(QMainWindow):
         self.save_button.setEnabled(False)
 
     @Slot()
-    def _on_multiday_toggled(self):
-        if self.date_selector.multiday():
+    def _on_date_mode_changed(self):
+        if self.date_selector.mode() == "multi":
             self.repeat_options.set_repeat_enabled(False)
         else:
             self.adapt_to_spec()
