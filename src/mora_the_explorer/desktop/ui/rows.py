@@ -327,7 +327,7 @@ class FolderNameOptions(RowComponent):
             "group": "group",
             "user": "user",
             "solvent": "solvent",
-            "frequency": "frequency",
+            "instrument": "instrument",
             "experiment": "experiment",
             "original": "original name",
         }
@@ -372,7 +372,10 @@ class FolderNameOptions(RowComponent):
     def set_checked(self, **kwargs: bool):
         """Set the status of all the checkboxes."""
         for k, v in kwargs.items():
-            self.boxes[k].setChecked(v)
+            if k in self.boxes:
+                self.boxes[k].setChecked(v)
+            # Otherwise don't do anything, there's no box for this option, it
+            # can only be set via the config file
 
 
 class FolderNamePreview(RowComponent):

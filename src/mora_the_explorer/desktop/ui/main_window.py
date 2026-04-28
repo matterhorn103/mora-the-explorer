@@ -126,6 +126,7 @@ class MainWindow(QMainWindow):
         # Folder name options
         self.folder_name_options = rows.FolderNameOptions()
         # Each option `user`, `solvent` etc. has a corresponding flag in the config
+        # (except for frequency)
         self.folder_name_options.set_checked(**(asdict(config.options.naming)))
         self.add_row(self.folder_name_options)
 

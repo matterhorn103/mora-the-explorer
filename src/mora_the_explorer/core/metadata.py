@@ -156,6 +156,7 @@ class MeasurementMetadata:
     group: str | None = None
     group_name: str | None = None
     experiment: str | None = None
+    instrument: str | None = None
     frequency: float | None = None
     solvent: str | None = None
     sample_id: str | None = None
@@ -238,6 +239,9 @@ class MeasurementMetadata:
                         # Normalize the separators
                         normalized = re.sub(rules.src_sep, rules.dest_sep, value)
                         parts.append(normalized)
+                    elif field == "frequency":
+                        # Round it
+                        parts.append(str(round(value)))
                     else:
                         parts.append(str(value))
                 # What do we do if the user wants something in the folder name but
@@ -306,7 +310,7 @@ def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetada
         metadata.experiment = details_split[0]
         metadata.solvent = details_split[1]
 
-    # Get magnet frequency
+    # Get magnet frequency and instrument name
     uxnmr_info_file = folder / "uxnmr.info"
     if uxnmr_info_file.exists():
         with open(uxnmr_info_file, encoding="utf-8") as f:
@@ -314,6 +318,11 @@ def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetada
                 if line.startswith("1H-frequency"):
                     # Line has format "1H-frequency : 300.26 MHz"
                     metadata.frequency = float(line.split()[2])
+                if line.startswith("Host"):
+                    # Line has format "Host         : av300"
+                    metadata.instrument = line.split()[2]
+                if metadata.frequency and metadata.instrument:
+                    # Found everything we need, we can stop iterating
                     break
 
     return metadata
@@ -332,56 +341,38 @@ def get_metadata_agilent(folder: Path, rules: MetadataRules) -> MeasurementMetad
     # One folder contains multiple measurements
     metadata.experiment = "various"
 
-    # Get magnet strength
+
+    # Each measurement has a procpar file that we can get everything from
     for subfolder in folder.iterdir():
-        text_file = subfolder / "text"
-        if text_file.exists():
-            with open(text_file, encoding="utf-8") as f:
-                spectrum_info = f.read().splitlines()
-                # I assume that what we get here is the configured name of the spectrometer,
-                # and it's just that the convention in Münster is to call them s600, v500 etc.,
-                # so I don't know how portable this is
+        procpar_file = subfolder / "procpar"
+        if procpar_file.exists():
+            with open(procpar_file, encoding="utf-8") as f:
+                procpar = f.read().splitlines()
+            # Contains sets of three lines, where the first line starts with the parameter name,
+            # and the second line has the value as the second item
+            # Specify those which we want to extract and how, with the name of the
+            # parameter in the procpar file as the keys
+            pars = {
+                "sfrq": {"field": "frequency", "dtype": float},
+                "solvent": {"field": "solvent", "dtype": str},
+                "kbspec": {"field": "instrument", "dtype": str},
+            }
+            # Turns out we can't rely on the lines being in sets of three, so have
+            # to iterate through all of them
+            for i, line in enumerate(procpar):
                 try:
-                    spec_name = spectrum_info[3].split(",")[0]
+                    par = line.split()[0]  # Note that for 2 of 3 lines this won't actually be a parameter name
                 except IndexError:
                     continue
-                magnet_freq = ""
-                for char in spec_name:
-                    # Only want numbers, naturally
-                    if char.isdigit():
-                        magnet_freq += char
-                if magnet_freq:
-                    metadata.frequency = float(magnet_freq)
+                if par in pars:
+                    # Value on next line in second position
+                    val = procpar[i + 1].split()[1]
+                    processed_val = pars[par]["dtype"](val.strip('"'))
+                    setattr(metadata, pars[par]["field"], processed_val)
+                if metadata.frequency and metadata.instrument and metadata.solvent:
+                    # Found everything we need, we can stop iterating
                     break
-
-    # Get solvent
-    # First try top-level `studypar` file
-    studypar_file = folder / "studypar"
-    if studypar_file.exists():
-        with open(studypar_file, encoding="utf-8") as f:
-            sample_id = f.read()
-        # Contains two lines in the format
-        # solvent 2 2 6 0 0 2 1 11 1 64
-        # 1 "cdcl3"
-        try:
-            lines = sample_id.splitlines()
-            for i, line in enumerate(lines):
-                if line.startswith("solvent"):
-                    solvent = lines[i + 1].split()[1].strip('"')
-                    metadata.solvent = solvent
-        except Exception:
-            pass
-    # Failing that, try `sampleinfo`, buried a bit deeper
-    sample_id_file = folder / "dirinfo/macdir/sampleinfo"
-    if metadata.solvent is None and sample_id_file.exists():
-        with open(sample_id_file, encoding="utf-8") as f:
-            sample_id = f.read()
-        # Contains a line in the format "SOLVENT: cdcl3"
-        try:
-            solvent = sample_id.splitlines()[3].split()[1]
-            metadata.solvent = solvent
-        except Exception:
-            pass
+    print(metadata)
 
     return metadata
 

@@ -37,6 +37,7 @@ class NamingOptions:
     group: bool
     user: bool
     solvent: bool
+    instrument: bool
     frequency: bool
     experiment: bool
     original: bool

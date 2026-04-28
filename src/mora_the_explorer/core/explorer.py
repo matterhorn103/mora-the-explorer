@@ -119,6 +119,8 @@ class Explorer:
         name_format.append("sample_id")
         if options.naming.solvent:
             name_format.append("solvent")
+        if options.naming.instrument:
+            name_format.append("instrument")
         if options.naming.frequency:
             name_format.append("frequency")
         if options.naming.experiment:
