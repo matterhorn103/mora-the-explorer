@@ -27,6 +27,11 @@ save = "~/Documents/nmr"
 [admin]
 user_name_is_admin_only = true
 pattern_separator = '[\s_-]'
+version = "42"
+email = "milner@uni-muenster.de"
+changelog = """
+- No changes, because this is just a mock config
+"""
 
 [groups]
 gil = "gilmour"

@@ -29,22 +29,12 @@ dev = [
     "nuitka>=4.0.8",
 ]
 
-#[tool.hatch.build]
-#include = [
-#    "src/mora_the_explorer/config.toml"
-#]
-
 [tool.pytest]
 addopts = [
     "--import-mode=importlib",
 ]
-#log_cli = true
-#log_cli_level = "DEBUG"
 log_file = "pytest.log"
 log_file_level = "DEBUG"
-#pythonpath = [
-#  "."
-#]
 
 [tool.ruff]
 line-length = 100

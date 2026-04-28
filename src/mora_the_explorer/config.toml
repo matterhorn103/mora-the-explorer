@@ -1,14 +1,16 @@
 # This file configures mora_the_explorer's *default* internal settings and should not be
 # changed by anyone other than the NMR department.
 
-# If you are looking for your user configuration, it is stored in the user's own
-# config.toml file, at:
+# If you are looking for your user configuration, it is stored in the user's config.toml file, at:
 # Windows:  %USERPROFILE%\AppData\Roaming\mora_the_explorer\config.toml
 # macOS:    ~/Library/Application Support/mora_the_explorer/config.toml
 # Linux:    $XDG_CONFIG_HOME/mora_the_explorer or ~/.config/mora_the_explorer/config.toml
 
-# Values specified in the user version of config.toml take precedence over those
-# specified here.
+# Values specified in the user config.toml take precedence over those specified here.
+
+# Before bundling the app with pyinstaller or compiling it with pyside6-deploy,
+# the config file must be transpiled to a QResource, which is done by running:
+# `uv run pyside6-rcc ./src/mora_the_explorer/resources.qrc -o ./src/mora_the_explorer/resources.py`
 
 [options]
 user = "mjm"
@@ -44,6 +46,18 @@ save = "~/nmr"  # The location spectra should be copied to
 [admin]
 user_name_is_admin_only = true
 pattern_separator = '[\s_-]'
+version = "2.0.0b4"
+email = "milner@uni-muenster.de"
+changelog = """
+- Update for move to new server
+- Big rewrite, codebase is now much more structured and maintainable
+- Inclusion of experiment in folder name is now optional
+- Solvent and frequency metadata available on all spectrometers
+- Option to include the original folder name
+- Buttons to select paths using the system file explorer
+- Field to specify the server address from the GUI (useful on macOS and Linux)
+- CLI and API work entirely independently of a GUI
+"""
 
 
 [groups]

@@ -14,12 +14,12 @@ from ..core.config import Config, USER_CONFIG_PATH
 from .controller import Controller
 
 
-def load_text_resource(path: str) -> str:
+def load_resource(path: str) -> bytes:
     f = QFile(path)
     if not f.open(QIODevice.OpenModeFlag.ReadOnly):
         raise RuntimeError(f"Could not open resource: {path}")
     try:
-        data: str = f.readAll().data().decode("utf-8")
+        data: bytes = f.readAll().data()
     finally:
         f.close()
     return data
@@ -49,15 +49,12 @@ class App:
 
         logging.info("Loading program settings…")
         if app_config_file is None:
-            app_config_file = load_text_resource(":/config.toml")
+            app_config_file = load_resource(":/config.toml")
         config = Config(app_config_file, user_config_file)
         logging.info("…complete")
 
-        # Load the version header
-        version_header = load_text_resource(":/version.txt")
-
         # Create singleton instance of `Controller` to handle the various components
-        self.controller = Controller(config, version_header)
+        self.controller = Controller(config)
 
         if darkdetect.isDark() is True and platform.system() == "Windows":
             self.set_dark_mode()

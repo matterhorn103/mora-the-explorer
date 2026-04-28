@@ -76,8 +76,11 @@ class Paths:
 
 
 @dataclass
-class AdminOptions:
+class Admin:
     pattern_separator: str
+    version: str
+    email: str
+    changelog: str
     user_name_is_admin_only: bool | None = None
 
 
@@ -110,8 +113,8 @@ class Config:
     ```
 
     At runtime, two files are consulted:
-    1. The "app config": a `config.toml` in the app's resources directory, with default settings
-    2. The "user config": a `config.toml` in the user's personal data folder, with personal settings
+    1. The "app config": `config.toml`, in the app's resources directory, with default settings
+    2. The "user config": `config.toml`, in the user's personal data folder, with personal settings
 
     The contents of the two files are merged upon loading, with anything in the
     user config taking priority over the app config.
@@ -155,7 +158,7 @@ class Config:
         self.options = UserOptions(**user_opts)
         self.appearance = Appearance(**(self.app_config["appearance"]))
         self.paths = Paths(**(self.app_config["paths"]))
-        self.admin = AdminOptions(**(self.app_config["admin"]))
+        self.admin = Admin(**(self.app_config["admin"]))
         # Flatten the list of groups
         all_groups: dict = self.app_config["groups"].copy()
         if "other" in all_groups:
