@@ -411,8 +411,11 @@ class FolderNamePreview(RowComponent):
         self.title = QLabel("Preview:")
         self.preview = QLabel()
 
+        # Right align the title (but top align vertically)
+        self.title.setAlignment(Qt.AlignRight | Qt.AlignTop)
+
         # Centre-align the preview within the column
-        self.preview.setAlignment(Qt.AlignCenter)
+        self.preview.setAlignment(Qt.AlignCenter | Qt.AlignTop)
 
         self.regenerate_preview()
 
