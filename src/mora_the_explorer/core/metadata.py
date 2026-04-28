@@ -156,7 +156,7 @@ class MeasurementMetadata:
     group: str | None = None
     group_name: str | None = None
     experiment: str | None = None
-    frequency: int | None = None
+    frequency: float | None = None
     solvent: str | None = None
     sample_id: str | None = None
     # Access fields programmatically using `getattr(mdata, field)` or `asdict(mdata)`
@@ -313,7 +313,7 @@ def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetada
             for line in f:
                 if line.startswith("1H-frequency"):
                     # Line has format "1H-frequency : 300.26 MHz"
-                    metadata.frequency = int(float(line.split()[2]))
+                    metadata.frequency = float(line.split()[2])
                     break
 
     return metadata
@@ -351,7 +351,7 @@ def get_metadata_agilent(folder: Path, rules: MetadataRules) -> MeasurementMetad
                     if char.isdigit():
                         magnet_freq += char
                 if magnet_freq:
-                    metadata.frequency = int(magnet_freq)
+                    metadata.frequency = float(magnet_freq)
                     break
 
     # Get solvent
