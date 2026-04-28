@@ -110,12 +110,12 @@ class MainWindow(QMainWindow):
             self.group_name_entry.add_to_grid(self.grid, 4)
 
         # Server path
-        self.server_entry = rows.DirSelector("Server:")
+        self.server_entry = rows.DirSelector("Server:", False)
         self.server_entry.set_path(config.paths.server())
         self.server_entry.add_to_grid(self.grid, 5)
 
         # Destination path
-        self.dest_entry = rows.DirSelector("Save in:", "Ctrl+G")
+        self.dest_entry = rows.DirSelector("Save in:", True, "Ctrl+G")
         self.dest_entry.set_path(config.paths.save)
         self.dest_entry.add_to_grid(self.grid, 6)
 
@@ -348,7 +348,7 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _on_dest_path_changed(self):
-        self.config.paths.save = self.dest_entry.path()
+        self.config.paths.save = str(self.dest_entry.path())
         self.save_button.setEnabled(True)
 
     @Slot()

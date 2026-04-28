@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QSpinBox,
     QHBoxLayout,
+    QStyle,
     QVBoxLayout,
     QGridLayout,
     QFileDialog,
@@ -44,26 +45,48 @@ class DirSelector(RowComponent):
 
     changed = Signal()
 
-    def __init__(self, title: str, go_shortcut: str | None = None):
+    def __init__(self, title: str, go_button: bool = False, go_shortcut: str | None = None):
         super().__init__()
 
-        # Groups four widgets - a title string, an entry field, then two buttons
+        # Store the path as a Path object
+        self._path: Path = None
+
+        # Groups three items - a title string, a path field, then two buttons
         self.title = QLabel(title)
+        self.path_layout = QHBoxLayout()
+        self.go_button = QPushButton("go to")
+
+        # The path field consists of a button to click to select a folder and the
+        # entry field itself
+        self.pick_button = QPushButton("")
         self.entry_field = QLineEdit()
-        self.pick_button = QPushButton("Pick")
-        # self.go_button = QPushButton("go to")
-        # self.go_button.hide()
+        self.path_layout.addWidget(self.pick_button)
+        self.path_layout.addWidget(self.entry_field)
+        # We want no gap
+        self.path_layout.setSpacing(0)
+        # However the entry field is disabled to prevent accidental changes,
+        # changes have to be made using the pick button
+        self.entry_field.setEnabled(False)
+
+        # Give the pick button the appropriate icon, make it square
+        pick_icon = self.pick_button.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon)
+        self.pick_button.setIcon(pick_icon)
+        self.pick_button.setFixedSize(24, 24)
+        #self.pick_button.setIconSize(24)
 
         # Right align the title
         self.title.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
         # Set the method that is called when the buttons are pressed
         self.pick_button.clicked.connect(self.pick_path)
-        # self.go_button.clicked.connect(self.go_to)
+        self.go_button.clicked.connect(self.go_to)
+
+        if not go_button:
+            self.go_button.hide()
 
         # Set a shortcut for the "go to" button, if desired
         if go_shortcut:
-            self.go_shortcut = QShortcut(QKeySequence(go_shortcut), self.entry_field)
+            self.go_shortcut = QShortcut(QKeySequence(go_shortcut), self.go_button)
             self.go_shortcut.activated.connect(self.go_to)
 
         # Connect a change in the field to the instance's signal
@@ -71,16 +94,16 @@ class DirSelector(RowComponent):
 
     def add_to_grid(self, grid: QGridLayout, row: int):
         grid.addWidget(self.title, row, 0)
-        grid.addWidget(self.entry_field, row, 1)
-        grid.addWidget(self.pick_button, row, 2)
-        # grid.addWidget(self.go_button, row, 2)
+        grid.addLayout(self.path_layout, row, 1)
+        grid.addWidget(self.go_button, row, 2)
 
-    def path(self) -> str:
-        """Get the current path (as a string) in the entry field."""
-        return self.entry_field.text()
+    def path(self) -> Path:
+        """Get the current path in the entry field."""
+        return self._path
 
     def set_path(self, path: str | Path):
         """Set the path in the entry field."""
+        self._path = Path(path)
         self.entry_field.setText(str(path))
 
     @Slot()
@@ -90,15 +113,16 @@ class DirSelector(RowComponent):
         The file dialog is shown centred over the `parent` window.
         """
         choice = QFileDialog.getExistingDirectory(
-            self.pick_button, "Select Folder", str(Path.home())
+            self.pick_button, "Select Folder", str(self.path().expanduser().parent),
         )
-        self.set_path(choice)
+        if choice:
+            self.set_path(choice)
 
     @Slot()
     def go_to(self):
         """Opens the path in the system file explorer."""
 
-        target = Path(self.path()).expanduser()
+        target = self.path().expanduser()
         if target.exists():
             QDesktopServices.openUrl(QUrl.fromLocalFile(target))
 
