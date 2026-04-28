@@ -113,7 +113,7 @@ class Config:
     ```
 
     At runtime, two files are consulted:
-    1. The "app config": `mora.toml`, in the app's resources directory, with default settings
+    1. The "app config": `config.toml`, in the app's resources directory, with default settings
     2. The "user config": `config.toml`, in the user's personal data folder, with personal settings
 
     The contents of the two files are merged upon loading, with anything in the
@@ -143,7 +143,7 @@ class Config:
         app_config_file: Path | bytes | str = None,
         user_config_file: Path = USER_CONFIG_PATH,
     ):
-        # Load app config from mora.toml
+        # Load app config from config.toml
         self.app_config = self.load_config_toml(app_config_file)
         if isinstance(app_config_file, Path):
             logging.info(f"App configuration loaded from: {app_config_file}")

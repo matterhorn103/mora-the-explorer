@@ -49,7 +49,7 @@ class App:
 
         logging.info("Loading program settings…")
         if app_config_file is None:
-            app_config_file = load_resource(":/mora.toml")
+            app_config_file = load_resource(":/config.toml")
         config = Config(app_config_file, user_config_file)
         logging.info("…complete")
 

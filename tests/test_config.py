@@ -55,7 +55,7 @@ class TestConfig:
 
     def test_init_real_app_and_user(self):
         # Test config object creation using the proper app config and a fresh user config
-        config = fresh_config(get_rsrc_dir() / "mora.toml")
+        config = fresh_config(get_rsrc_dir() / "config.toml")
         assert (
             "rav" in config.groups.all
         )  # Mock app config only has "gil", "glo", "stu", "biochemie", "pharmazie"

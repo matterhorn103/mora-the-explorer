@@ -179,13 +179,13 @@ class Controller(QObject):
         """Check for updates at the specified location.
         
         Assumes that the directory at `update_path` contains a copy of the source code
-        of Mora the Explorer, under the subdirectory name `src`. The `mora.toml`
+        of Mora the Explorer, under the subdirectory name `src`. The `config.toml`
         file within the source code is then checked and compare to the local one
         to see if a newer version has been released.
         """
 
         logging.info(f"Checking for updates at: {update_path}")
-        remote_config_file = update_path / "src/src/mora_the_explorer/mora.toml"
+        remote_config_file = update_path / "src/src/mora_the_explorer/config.toml"
         try:
             if remote_config_file.exists() is True:
                 with open(remote_config_file, "rb", encoding="utf-8") as f:
