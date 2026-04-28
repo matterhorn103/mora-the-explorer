@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import dataclasses
+import io
 import json
 import logging
 from pathlib import Path
@@ -134,10 +135,17 @@ class Config:
     file.
     """
 
-    def __init__(self, app_config_file: Path, user_config_file: Path = USER_CONFIG_PATH):
+    def __init__(
+        self,
+        app_config_file: Path | bytes | str = None,
+        user_config_file: Path = USER_CONFIG_PATH,
+    ):
         # Load app config from config.toml
         self.app_config = self.load_config_toml(app_config_file)
-        logging.info(f"App configuration loaded from: {app_config_file}")
+        if isinstance(app_config_file, Path):
+            logging.info(f"App configuration loaded from: {app_config_file}")
+        else:
+            logging.info("App configuration loaded from provided config file")
 
         # Extract the parts of the configuration from the app config
         # Extract the naming options
@@ -207,13 +215,17 @@ class Config:
         self.user_config_file.parent.mkdir(parents=True, exist_ok=True)
         self.save()
 
-    def load_config_toml(self, path: Path):
-        """Load a config from a TOML file."""
-        with open(path, "rb") as f:
-            config = tomllib.load(f)
+    def load_config_toml(self, file: Path | str | bytes) -> dict:
+        if isinstance(file, Path):
+            with open(file, "rb") as f:
+                config = tomllib.load(f)
+        elif isinstance(file, str):
+            config = tomllib.loads(file)
+        elif isinstance(file, bytes):
+            config = tomllib.load(io.BytesIO(file))
         return config
 
-    def load_user_config_json(self, path: Path):
+    def load_user_config_json(self, path: Path) -> dict:
         """Load a user's config from a JSON file."""
         with open(path, encoding="utf-8") as f:
             config = json.load(f)
