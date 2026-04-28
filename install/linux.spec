@@ -7,7 +7,7 @@ title = mora_the_explorer
 project_dir = .
 
 # source file entry point path. default = main.py
-input_file = ./main.py
+input_file = ./install/main.py
 
 # directory where the executable output is generated
 exec_directory = ./build
@@ -16,7 +16,7 @@ exec_directory = ./build
 project_file = 
 
 # application icon
-icon = ./explorer.png
+icon = ./install/explorer.png
 
 [python]
 
