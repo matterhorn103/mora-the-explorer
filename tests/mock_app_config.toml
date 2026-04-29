@@ -5,6 +5,7 @@ group = "gil"
 spec = "av300"
 repeat_switch = false
 repeat_delay = 5
+sort = 3
 
 [options.naming]
 group = false
@@ -93,7 +94,8 @@ date_entry = "dd MMM yyyy"
 single_check_only = false
 
 [spectrometers.v600]
-measurement_pattern = '<user!><sample_id>'
+sample_pattern = '<user!><sample_id>'
+measurement_pattern = '<user!><sample_id>\_(\d{6})\_(\d{3}k)\_(.+)_\d\.fid'
 check_paths = [
     "v600/<group_name>/{%Y}",
 ]

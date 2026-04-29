@@ -1,6 +1,6 @@
 """Metadata handling."""
 
-from dataclasses import asdict, dataclass, fields
+from dataclasses import asdict, dataclass
 import datetime
 import logging
 from pathlib import Path
@@ -30,8 +30,10 @@ class MetadataRules:
     def __init__(
         self,
         substitutions: VariableSubstitutions,
+        sample_pattern: str | None,
         measurement_pattern: str,
-        dest_fields: list[str],
+        sample_name_fields: list[str],
+        measurement_name_fields: list[str],
         pattern_sep: str = r"[\s_-]",
         dest_sep: str = "-",
     ):
@@ -42,9 +44,10 @@ class MetadataRules:
            is a match, and extracting any metadata
         2. Generating a folder name by combining metadata fields
 
-        `measurement_pattern` is a regex pattern indicating the expected
-        components of the measurement title. It is a normal regex in all ways,
-        and uses normal regex syntax, with the exception of two extensions:
+        `sample_pattern` and `measurement_pattern` are regex patterns indicating
+        the expected components of the sample and measurement titles respectively.
+        It is a normal regex in all ways, and uses normal regex syntax, with the
+        exception of two extensions:
 
         1. Any occurrence of a backslash-escaped underscore `\_` will be replaced
            by `pattern_sep`, which represents allowed "separator" characters
@@ -55,6 +58,9 @@ class MetadataRules:
         The resulting patterns are compiled when the `MeasurementRules` object is
         instantiated, and can be accessed using the `sample_pattern` and
         `measurement_pattern` properties.
+
+        `sample_pattern` is only relevant for Agilent spectrometers, that save the
+        spectra organized by sample; rules for Bruker spectrometers should use `None`.
         
         `pattern_sep` is typically a character class. The default value matches
         whitespace, underscores, and hyphens.
@@ -90,22 +96,32 @@ class MetadataRules:
         names of the sample folder and the contained measurement folders.
         (Note that these are not the only source of a measurement's metadata.)
 
-        `dest_fields` indicates the desired metadata fields to include in the
-        measurement folder name when it is saved to the destination location, and
-        `dest_sep` the separator character (or string) that should be used to join
-        the fields.
+        `sample_name_fields` and `measurement_name_fields` indicate the desired
+        metadata fields to include in the sample and measurement folder names when
+        it is saved to the destination location, and `dest_sep` the separator
+        character (or string) that should be used to join the fields.
         See `MeasurementMetadata.generate_folder_name()` for more details.
         """
 
         self.src_sep = pattern_sep
-        self.dest_fields = dest_fields
         self.dest_sep = dest_sep
+        self.sample_name_fields = sample_name_fields
+        self.measurement_name_fields = measurement_name_fields
         
         # Normalize the substitution values to lowercase now
         self.substitutions = VariableSubstitutions(
             **{k: v.casefold() for k, v in asdict(substitutions).items()}
         )
+        if sample_pattern:
+            self._sample_pattern = re.compile(self.process_pattern(sample_pattern))
+        else:
+            self._sample_pattern = sample_pattern
         self._measurement_pattern = re.compile(self.process_pattern(measurement_pattern))
+    
+    @property
+    def sample_pattern(self) -> re.Pattern:
+        """Get the processed regex that should be used to match the sample title."""
+        return self._sample_pattern
 
     @property
     def measurement_pattern(self) -> re.Pattern:
@@ -186,15 +202,18 @@ class MeasurementMetadata:
     def generate_folder_name(
         self,
         rules: MetadataRules,
+        sample: bool = False,
         drop_missing: bool = True,
     ) -> str:
         """Get a formatted folder name according to the prescribed rules.
 
         The metadata fields to be included in the name are those in
-        `rules.dest_fields`, and the name is constructed by joining the values of
-        those fields with the desired separator (specified by `rules.dest_sep`).
+        `rules.sample_name_fields` or `rules.measurement_name_fields`, as
+        appropriate according to the value of `sample`, and the name is constructed
+        by joining the values of those fields with the desired separator (specified
+        by `rules.dest_sep`).
 
-        If an item in `rules.dest_fields` is not a variable but a list of variables,
+        If an item in the list of fields is not a variable but a list of variables,
         they are treated as mutually exclusive options and the first variable in the
         sublist with a value will be used. For example, `["user", "user_name"]`
         would be an instruction to "include the `user` field if available, if not,
@@ -209,21 +228,22 @@ class MeasurementMetadata:
         is `True`, in which case the field is simply skipped. The same applies if
         a requested field is not an actual metadata field.
         
-        If `sample_id` is to be included (it is listed in `rules.dest_fields`)
-        it is normalized so that all instances of `rules.src_sep` become
-        `rules.dest_sep`.
+        If `sample_id` is to be included (it is listed in `rules.sample_name_fields`
+        /`measurement_name_fields`) it is normalized so that all instances of
+        `rules.src_sep` become `rules.dest_sep`.
         
         Additionally, all non-ASCII, non-alphanumerical characters are normalized
         by replacing them with the Unicode code point prefixed with an `"x"`.
 
         For example, if the metadata are:
         `{"group": "stu", "user": "mjm", "sample_id": "213-4 repeat", "frequency": "300", "solvent": "DMSO-d6"}`
-        and `dest_fields` had the value `["user", "sample_id", "solvent"]`
+        and the requested fields were `["user", "sample_id", "solvent"]`
         then the measurement folder would be saved with the path
         `<dest_path>/mjm-213-4-repeat-DMSO-d6/`
         """
         parts = []
-        for field in rules.dest_fields:
+        fields = rules.sample_name_fields if sample else rules.measurement_name_fields
+        for field in fields:
             if isinstance(field, list):
                 for mutually_exclusive_field in field:
                     if getattr(self, mutually_exclusive_field, None) is not None:
@@ -241,7 +261,7 @@ class MeasurementMetadata:
                         parts.append(normalized)
                     elif field == "frequency":
                         # Round it
-                        parts.append(str(round(value)))
+                        parts.append(str(round(value)) + "mhz")
                     else:
                         parts.append(str(value))
                 # What do we do if the user wants something in the folder name but
@@ -277,16 +297,16 @@ class MeasurementMetadata:
             tomli_w.dump(d, f)
 
 
-def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetadata | None:
+def get_metadata_bruker(dir: Path, rules: MetadataRules) -> MeasurementMetadata | None:
     # Extract title and experiment details from title file in spectrum folder
-    title_file = folder / "pdata/1/title"
+    title_file = dir / "pdata/1/title"
     if not title_file.exists():
-        logging.info(f"No title file for {folder} – presumably not a measurement")
+        logging.info(f"No title file for {dir} – presumably not a measurement")
         return None
     with open(title_file, encoding="utf-8") as f:
         title_contents = f.read().splitlines()
     if len(title_contents) < 2:
-        logging.info(f"Title file for {folder} is empty!")
+        logging.info(f"Title file for {dir} is empty!")
         title = ""
         details = ""
     else:
@@ -294,15 +314,15 @@ def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetada
         details = title_contents[1]
         # Make a note if the title is empty
         if not title:
-            logging.info(f"No measurement title was given for {folder}!")
+            logging.info(f"No measurement title was given for {dir}!")
 
     logging.debug(title)
     metadata = MeasurementMetadata.from_measurement_title(title, rules)
     if metadata is None:
         # Isn't a match
         return None
-    metadata.path = str(folder)
-    metadata.folder_name = folder.name
+    metadata.path = str(dir)
+    metadata.folder_name = dir.name
     metadata.manufacturer = Manufacturer.BRUKER
 
     if details:
@@ -311,7 +331,7 @@ def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetada
         metadata.solvent = details_split[1]
 
     # Get magnet frequency and instrument name
-    uxnmr_info_file = folder / "uxnmr.info"
+    uxnmr_info_file = dir / "uxnmr.info"
     if uxnmr_info_file.exists():
         with open(uxnmr_info_file, encoding="utf-8") as f:
             for line in f:
@@ -328,62 +348,59 @@ def get_metadata_bruker(folder: Path, rules: MetadataRules) -> MeasurementMetada
     return metadata
 
 
-def get_metadata_agilent(folder: Path, rules: MetadataRules) -> MeasurementMetadata | None:
-    title = folder.name
+def get_metadata_agilent(dir: Path, rules: MetadataRules) -> MeasurementMetadata | None:
+    title = dir.name
     metadata = MeasurementMetadata.from_measurement_title(title, rules)
     if metadata is None:
         # Isn't a match
         return None
-    metadata.path = str(folder)
-    metadata.folder_name = folder.name
-    metadata.group_name = folder.parent.parent.name
+    metadata.path = str(dir)
+    metadata.folder_name = dir.name
+    metadata.group_name = dir.parent.parent.parent.name
     metadata.manufacturer = Manufacturer.AGILENT
-    # One folder contains multiple measurements
+    # One folder contains multiple measurements TODO Extract properly
     metadata.experiment = "various"
 
-
-    # Each measurement has a procpar file that we can get everything from
-    for subfolder in folder.iterdir():
-        procpar_file = subfolder / "procpar"
-        if procpar_file.exists():
-            with open(procpar_file, encoding="utf-8") as f:
-                procpar = f.read().splitlines()
-            # Contains sets of three lines, where the first line starts with the parameter name,
-            # and the second line has the value as the second item
-            # Specify those which we want to extract and how, with the name of the
-            # parameter in the procpar file as the keys
-            pars = {
-                "sfrq": {"field": "frequency", "dtype": float},
-                "solvent": {"field": "solvent", "dtype": str},
-                "kbspec": {"field": "instrument", "dtype": str},
-            }
-            # Turns out we can't rely on the lines being in sets of three, so have
-            # to iterate through all of them
-            for i, line in enumerate(procpar):
-                try:
-                    par = line.split()[0]  # Note that for 2 of 3 lines this won't actually be a parameter name
-                except IndexError:
-                    continue
-                if par in pars:
-                    # Value on next line in second position
-                    val = procpar[i + 1].split()[1]
-                    processed_val = pars[par]["dtype"](val.strip('"'))
-                    setattr(metadata, pars[par]["field"], processed_val)
-                if metadata.frequency and metadata.instrument and metadata.solvent:
-                    # Found everything we need, we can stop iterating
-                    break
-    print(metadata)
+    procpar_file = dir / "procpar"
+    if procpar_file.exists():
+        with open(procpar_file, encoding="utf-8") as f:
+            procpar = f.read().splitlines()
+        # Contains sets of three lines, where the first line starts with the parameter name,
+        # and the second line has the value as the second item
+        # Specify those which we want to extract and how, with the name of the
+        # parameter in the procpar file as the keys
+        pars = {
+            "kbpslabel": {"field": "experiment", "dtype": str},
+            "sfrq": {"field": "frequency", "dtype": float},
+            "solvent": {"field": "solvent", "dtype": str},
+            "kbspec": {"field": "instrument", "dtype": str},
+        }
+        # Turns out we can't rely on the lines being in sets of three, so have
+        # to iterate through all of them
+        for i, line in enumerate(procpar):
+            try:
+                par = line.split()[0]  # Note that for 2 of 3 lines this won't actually be a parameter name
+            except IndexError:
+                continue
+            if par in pars:
+                # Value on next line in second position
+                val = procpar[i + 1].split()[1]
+                processed_val = pars[par]["dtype"](val.strip('"'))
+                setattr(metadata, pars[par]["field"], processed_val)
+            if metadata.frequency and metadata.instrument and metadata.solvent:
+                # Found everything we need, we can stop iterating
+                break
 
     return metadata
 
 
 def get_metadata(
-    folder: Path, rules: MetadataRules, manufacturer: Manufacturer
+    dir: Path, rules: MetadataRules, manufacturer: Manufacturer
 ) -> MeasurementMetadata:
     match manufacturer:
         case Manufacturer.BRUKER:
-            return get_metadata_bruker(folder, rules)
+            return get_metadata_bruker(dir, rules)
         case Manufacturer.AGILENT:
-            return get_metadata_agilent(folder, rules)
+            return get_metadata_agilent(dir, rules)
         case _:
             raise ValueError(f"{repr(manufacturer)} is not a valid manufacturer!")

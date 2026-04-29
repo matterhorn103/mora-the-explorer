@@ -5,6 +5,7 @@ group = "stu"
 spec = "av300"
 repeat_switch = true
 repeat_delay = 3
+sort = 3
 
 [options.naming]
 group = false

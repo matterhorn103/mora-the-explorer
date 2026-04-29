@@ -32,6 +32,7 @@ class Spectrometer:
     manufacturer: the manufacturer of the spectrometer(s)
     display_name: the text shown next to the button in the user interface
         (note that some characters need escaping, e.g. write && for &)
+    sample_pattern: the expected fields in the sample folder name (Agilent only)
     measurement_pattern: the expected fields in the measurement title
     date_entry: whether the user selects the full date "dd MMM yyyy" or just year "yyyy"
     check_paths: the paths that should be searched for new spectra
@@ -55,11 +56,12 @@ class Spectrometer:
 
     manufacturer: Manufacturer
     display_name: str
-    measurement_pattern: list[str]
+    measurement_pattern: str
     date_entry: str
     check_paths: list[str]
     archives: list[str] = field(default_factory=list)
     include: list[Self | str] = field(default_factory=list)
+    sample_pattern: str | None = None
     restrict_to: list[str] = field(default_factory=list)
     admin_only: bool = False
     single_check_only: bool = False

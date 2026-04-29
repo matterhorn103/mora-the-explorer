@@ -9,6 +9,7 @@ import tomllib
 import tomli_w
 import platformdirs
 
+from .checknmr import SpectraSorting
 from .spec import Manufacturer, Spectrometer
 
 
@@ -52,6 +53,7 @@ class UserOptions:
     repeat_switch: bool
     repeat_delay: int
     naming: NamingOptions
+    sort: SpectraSorting
 
 
 @dataclass
@@ -207,6 +209,9 @@ class Config:
         self.groups.all.update(self.user_config.get("groups", {}))
         # Spectrometer selection is also simply updated
         self.specs.update(self.user_config.get("spectrometers", {}))
+
+        # Convert to the sort enum from the raw integer
+        self.options.sort = SpectraSorting(self.options.sort)
 
         logging.info("The app is now configured as follows:")
         logging.info(f"- options: {self.options}")

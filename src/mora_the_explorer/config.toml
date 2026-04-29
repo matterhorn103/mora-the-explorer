@@ -19,6 +19,7 @@ group = "gil"
 spec = "neo400"
 repeat_switch = false
 repeat_delay = 5
+sort = 3  # How to sort when saving; 0 = original sorting, 1 = measurement (Bruker-style), 2 = sample & spec, 3 = sample (Agilent-style) 
 
 [options.naming]
 group = false
@@ -165,7 +166,8 @@ single_check_only = false
 [spectrometers.hf]
 manufacturer = "agilent"
 display_name = "High-field spectrometers (500 && 600 MHz)"
-measurement_pattern = '<user!><sample_id>'
+sample_pattern = '<user!><sample_id>'
+measurement_pattern = '<user!><sample_id>\_(\d{6})\_(\d{3}k)\_(.+)_\d\.fid'
 date_entry = "yyyy"
 check_paths = [
     "500-600er/<group_name>/{%Y}",

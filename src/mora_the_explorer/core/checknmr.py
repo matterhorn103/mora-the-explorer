@@ -1,11 +1,12 @@
 """UI-independent backend logic for checking the server and copying new spectra."""
 
 from abc import ABC, abstractmethod
+from enum import IntEnum
 import filecmp
 import logging
 from os import PathLike
+import re
 import shutil
-import sys
 import datetime
 from pathlib import Path
 
@@ -14,6 +15,31 @@ from .metadata import (
     Manufacturer,
     get_metadata,
 )
+
+
+class SpectraSorting(IntEnum):
+    """The way in which spectra should be sorted when copied to the destination.
+    
+    Sorting by measurement means all measurement folders are copied individually
+    and stored in the same folder. This is effectively no extra sorting, and is
+    the Bruker style.
+
+    Sorting by sample means all measurements on the same sample are grouped
+    together into a single folder, with the measurements as subfolders. This is
+    the Agilent style.
+
+    Sorting by sample and spectrometer means that all measurements on the same
+    sample are grouped, but only if they were measured on the same spectrometer.
+    This way, spectra measured on Bruker and Agilent spectrometers can be kept
+    separate.
+
+    Original sorting means that Bruker spectra are sorted by measurement and
+    Agilent spectra by sample.
+    """
+    ORIGINAL = 0
+    MEASUREMENT = 1
+    SAMPLE_AND_SPEC = 2
+    SAMPLE = 3
 
 
 class Reporter(ABC):
@@ -85,25 +111,6 @@ class Reporter(ABC):
         It is expected that the completion message will also be added to the normal list of messages.
         """
         pass
-
-
-def get_number_spectra(paths: list[Path]):
-    """Get the total number of spectra folders in the given directories.
-
-    We can then use the length of it to measure progress.
-    """
-    # Can't remember why it was done this way, I guess the hf check used to be done
-    # differently to how it is today
-    # if paths is None:
-    #    n = sum(1 for x in path.iterdir() if x.is_dir())
-    # else:
-    #    n = 0
-    #    for path in paths:
-    #        n += sum(1 for x in path.iterdir() if x.is_dir())
-    n = 0
-    for path in paths:
-        n += sum(1 for x in path.iterdir() if x.is_dir())
-    return n
 
 
 def compare_spectra(server_folder, dest_folder) -> tuple[bool, bool]:
@@ -218,13 +225,15 @@ def copy_folder(src: Path, target: Path, reporter: Reporter) -> Path | None:
         num = 1
         while not same_spectrum_found:
             num += 1
-            target = target.with_name(target.name + "-" + str(num))
-            if target.exists():
-                same_spectrum_found, incomplete_copy = compare_spectra(src, target)
+            alt = target.with_name(target.name + "-" + str(num))
+            if alt.exists():
+                # Check if this spectrum is the same one or yet another unique one
+                same_spectrum_found, incomplete_copy = compare_spectra(src, alt)
             else:
-                # We have exhausted all possible candidates for the same spectrum
-                # and have arrived at a new unique name, so we need to copy the
-                # spectrum and use this unique name
+                # We have exhausted all possible candidates for the same spectrum,
+                # it's definitely not already been copied, and we have now finally
+                # arrived at a new unique name, so stop the loop and use it
+                target = alt
                 break
 
     # Try and fix only partially copied spectra
@@ -260,6 +269,56 @@ def copy_folder(src: Path, target: Path, reporter: Reporter) -> Path | None:
         return None
 
 
+def filter_and_expand_sample_dirs(
+    check_paths: list[Path],
+    rules: MetadataRules,
+    manufacturer: Manufacturer,
+) -> list[Path]:
+    """Expand a list of directories containing sample directories into a list
+    of measurement directories that match the provided rules.
+    
+    The Bruker spectrometers don't group spectra by sample, so this just returns
+    all the measurement directories in all `check_paths`.
+
+    On Agilent spectrometers, it returns a list of all the `.fid` subdirectories
+    across all of the sample directories across all `check_paths`, but only after
+    filtering them to restrict them to those that match `rules.sample_pattern`.
+    (This generally means that the sample directory name starts with the value of
+    `user`.)
+    """
+    measurement_dirs = []
+    # We handle Bruker and Agilent a bit differently
+    # Each folder in check_paths contains subfolders either for individual measurements (Bruker)
+    # or for different samples with multiple measurements in each folder (Agilent)
+    # For Agilent checks we thus expand each entry in check_paths, but since the
+    # user's initials should appear in the title of the sample folder, and each
+    # measurement folder ends with `.fid`, we can do some preliminary filtering
+    # to save checking every single one of them
+    if manufacturer is Manufacturer.AGILENT:
+        # Get the expected pattern for the sample folder title
+        pattern: re.Pattern = rules.sample_pattern
+        for check_path in check_paths:
+            sample_folders = [
+                x for x in check_path.iterdir()
+                if x.is_dir()
+                and pattern.fullmatch(x.name)
+            ]
+            for sample_folder in sample_folders:
+                measurement_dirs.extend([
+                    x for x in sample_folder.iterdir()
+                    if x.is_dir()
+                    #and x.suffix == ".fid"  # Not needed since we'll be checking for exact regex matches!
+                ])
+    else:
+        for check_path in check_paths:
+            measurement_dirs.extend([
+                x for x in check_path.iterdir()
+                if x.is_dir()
+                #and not x.name.startswith(".")  # Ignore hidden directories - but not needed since we'll be checking for exact regex matches!
+            ])
+    return measurement_dirs
+
+
 def check_nmr(
     src: list[PathLike],
     dest: PathLike,
@@ -267,6 +326,7 @@ def check_nmr(
     manufacturer: Manufacturer,
     reporter: Reporter,
     date: datetime.date | None = None,
+    sort: SpectraSorting = SpectraSorting.SAMPLE_AND_SPEC,
 ):
     """Main checking function for Mora the Explorer."""
 
@@ -310,16 +370,22 @@ def check_nmr(
         for p in check_paths:
             logging.info(str(p))
 
+    reporter.reset_progress()
+
+    measurement_dirs = filter_and_expand_sample_dirs(check_paths, rules, manufacturer)
+
     # Initialize progress bar
-    # Get total number of folders that we're going to be checking across all src paths
-    n_spectra = get_number_spectra(paths=check_paths)
-    logging.info(f"Total spectra in these paths: {n_spectra}")
-    try:
-        reporter.set_max_progress(n_spectra)
-        reporter.reset_progress()
-    except Exception:
-        # This stops Python from hanging when the program is closed, no idea why
-        sys.exit()
+    n_measurements = len(measurement_dirs)
+    # If we are checking an Agilent spectrometer, let's assume that the above
+    # filtering and expansion operation took some time, and now that it's done
+    # make the progress bar move by an appropriate amount
+    if manufacturer is Manufacturer.AGILENT:
+        logging.info(f"Total spectra in these paths matching the given user: {n_measurements}")
+        reporter.set_max_progress(n_measurements + 10)
+        reporter.increment_progress(10)
+    else:
+        logging.info(f"Total spectra in these paths: {n_measurements}")
+        reporter.set_max_progress(n_measurements)
     reporter.set_status("Checking…")
 
     # Start the actual search process
@@ -327,33 +393,15 @@ def check_nmr(
     # the folder for a spectrum is manufacturer-dependent
 
     logging.info("The following spectra were checked for potential matches:")
-    # Loop through each folder in check_paths
-    # Each is a folder that contains measurement folders
-    for check_path in check_paths:
-        # Iterate over the measurement folders
-        for folder in [x for x in check_path.iterdir() if x.is_dir() and not x.name.startswith(".")]:
-            logging.info(folder)
+    # Loop over all the measurements
+    for measurement_dir in measurement_dirs:
+            logging.info(measurement_dir)
 
-            # Extract title and experiment details from title file in spectrum folder
-            # For Agilent spectra the name of the folder itself ought to include the user
-            # initials so if that's a condition for a match (it usually is) we can save
-            # some time by checking for it straight away and short-circuiting if they are
-            # are missing from the folder name of the sample
-            if (
-                manufacturer is Manufacturer.AGILENT
-                and rules.substitutions.user not in folder.name
-            ):
-                logging.info(
-                    "User missing from folder name - skipping detailed metadata analysis"
-                )
-                reporter.increment_progress()
-                continue
-
-            # Otherwise resolve the metadata fully
+            # Resolve the metadata fully
             try:
-                metadata = get_metadata(folder, rules, manufacturer)
+                metadata = get_metadata(measurement_dir, rules, manufacturer)
             except FileNotFoundError:
-                reporter.add_error(f"No metadata could be found for {folder}!")
+                reporter.add_error(f"No metadata could be found for {measurement_dir}!")
                 logging.info("No metadata found")
                 reporter.increment_progress()
                 continue
@@ -369,21 +417,32 @@ def check_nmr(
             logging.debug(f"Measurement title: {metadata.title}")
 
             # Some things are not typically resolved by the get_metadata function
+            # (at least not at this point in time)
             # but can be supplied because we know them already
             metadata.manufacturer = manufacturer
             if metadata.date is None:
                 metadata.date = date
 
-            # Formatting
-            new_folder_name = metadata.generate_folder_name(rules, drop_missing=False)
+            # Generate the appropriate names and target path
+            measurement_name = metadata.generate_folder_name(rules, drop_missing=False)
+            if sort is SpectraSorting.ORIGINAL:
+                # Use the native Bruker or Agilent style
+                sort = SpectraSorting.MEASUREMENT if manufacturer is Manufacturer.BRUKER else SpectraSorting.SAMPLE
+            if sort is SpectraSorting.MEASUREMENT:
+                # Just save spectra in a completely flat fashion
+                target = dest_path / measurement_name
+            else:  # Covers sorting by sample and by sample+spectrometer
+                sample_name = metadata.generate_folder_name(rules, drop_missing=False, sample=True)
+                # Save in nested folders
+                target = dest_path / sample_name / measurement_name
 
             # Copy, add output messages to main output list
             reporter.set_status("Comparing metadata…")
-            copy_dest = copy_folder(folder, dest_path / new_folder_name, reporter)
+            final_dest = copy_folder(measurement_dir, target, reporter)
 
             # If we copied, add a file with the metadata
-            if copy_dest:
-                metadata.write_toml(copy_dest / "mora.toml")
+            if final_dest:
+                metadata.write_toml(final_dest / "mora.toml")
 
             # Update progress bar to make sure there's a noticeable movement after
             # copying a spectrum, otherwise it looks frozen

@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
 )
 
-from ...core.config import Config
+from ...core.config import Config, SpectraSorting
 from . import rows
 from .display import Display
 from .status import StatusBar
@@ -60,10 +60,10 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Mora the Explorer")
 
         if platform.system() == "Windows":
-            self.setMinimumSize(QSize(420, 680))
+            self.setMinimumSize(QSize(420, 850))
         else:
             # macOS and Linux space things out more than Windows
-            self.setMinimumSize(QSize(450, 780))
+            self.setMinimumSize(QSize(450, 950))
 
         # As always with Qt, have to set a central widget and give that widget a
         # layout, but we won't actually need to access the central widget
@@ -76,6 +76,7 @@ class MainWindow(QMainWindow):
         self.version = Version(version_header.splitlines()[2])
         self.version_info = create_version_label(version_header)
         self.grid.addWidget(self.version_info, 0, 0, 1, 2)
+        self.version_info.linkActivated.connect(self._on_bug_report_link_clicked)
 
         # Initialize the row counter
         # We already have one thing in the grid (the version info) so start at 1
@@ -85,16 +86,19 @@ class MainWindow(QMainWindow):
         self.user_entry = rows.FreeEntryField("User:", "(initials)")
         self.user_entry.set_text(config.options.user)
         self.add_row(self.user_entry)
+        self.user_entry.changed.connect(self._on_user_changed)
 
         # User name entry
         self.name_entry = rows.FreeEntryField("User name:", None)
         self.name_entry.set_text(config.options.user_name)
         self.add_row(self.name_entry)
+        self.name_entry.changed.connect(self._on_name_changed)
         # If config says this should only be active in admin mode, and we aren't
         # in admin mode, then hide it
         if config.admin.user_name_is_admin_only and not admin_mode:
             self.name_entry.hide()
 
+        # Group entry
         if not admin_mode:
             # Group entry from an allowed selection, for normal usage
             self.group_entry = rows.OverflowSelector(
@@ -112,16 +116,26 @@ class MainWindow(QMainWindow):
             self.group_name_entry = rows.FreeEntryField("Group name:", None)
             self.group_name_entry.set_text(config.groups.all.get(config.options.group, ""))
             self.add_row(self.group_name_entry)
-
+            self.group_name_entry.changed.connect(self._on_group_name_changed)
+        self.group_entry.changed.connect(self._on_group_changed)
+        
         # Server path
         self.server_entry = rows.DirSelector("Server:", False)
         self.server_entry.set_path(config.paths.server())
         self.add_row(self.server_entry)
+        self.server_entry.changed.connect(self._on_server_path_changed)
 
         # Destination path
         self.dest_entry = rows.DirSelector("Save in:", True, "Ctrl+G")
         self.dest_entry.set_path(config.paths.save)
         self.add_row(self.dest_entry)
+        self.dest_entry.changed.connect(self._on_dest_path_changed)
+
+        # Sorting selection
+        self.sort_selector = rows.SortingSelector()
+        self.sort_selector.set_selected(config.options.sort)
+        self.add_row(self.sort_selector)
+        self.sort_selector.changed.connect(self._on_sort_changed)
 
         # Folder name options
         self.folder_name_options = rows.FolderNameOptions()
@@ -129,6 +143,7 @@ class MainWindow(QMainWindow):
         # (except for frequency)
         self.folder_name_options.set_checked(**(asdict(config.options.naming)))
         self.add_row(self.folder_name_options)
+        self.folder_name_options.changed.connect(self._on_folder_name_options_changed)
 
         # Preview of the result of the user's choices
         self.folder_name_preview = rows.FolderNamePreview(config)
@@ -139,6 +154,7 @@ class MainWindow(QMainWindow):
         self.refresh_visible_specs()
         self.spec_selector.set_selected(config.options.spec)
         self.add_row(self.spec_selector)
+        self.spec_selector.changed.connect(self._on_spec_changed)
 
         # Match pattern customization via a free-form entry box, for admin use
         if admin_mode:
@@ -148,29 +164,39 @@ class MainWindow(QMainWindow):
             self.pattern_entry.set_text(config.specs[config.options.spec].measurement_pattern)
             self.pattern_entry.entry_field.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
             self.add_row(self.pattern_entry)
+            self.pattern_entry.changed.connect(self._on_pattern_changed)
 
         # Repeat options
         self.repeat_options = rows.RepeatSelector()
         self.repeat_options.set_repeat_checked(config.options.repeat_switch)
         self.repeat_options.set_interval(config.options.repeat_delay)
         self.add_row(self.repeat_options)
+        self.repeat_options.changed.connect(self._on_repeat_changed)
 
         # Save button
         self.save_button = QPushButton("Save options as defaults for next time")
         # Remains disabled until the config is changed
         self.save_button.setEnabled(False)
         self.grid.addWidget(self.save_button, self.next_row(), 0, 1, 2)
+        self.save_button.clicked.connect(self._on_save_button_clicked)
 
         # Date selection
         self.date_selector = rows.DateSelector()
         self.date_selector.set_mode("current")
         self.add_row(self.date_selector)
+        # Connect specifically to the buttons not the overall changed signal
+        # because we don't need to do anything when the date is changed
+        self.date_selector.date_button_group.buttonClicked.connect(self._on_date_mode_changed)
+        # self.date_selector.date_selector.userDateChanged.connect(self._on_date_changed)
 
         # Status bar to start and cancel a check, as well as show the status
         # during a check
         self.status_bar = StatusBar()
         self.status_bar.set_colour(config.appearance.start_button_colour)
         self.grid.addWidget(self.status_bar, self.next_row(), 0, 1, 2)
+        # Connect the start/cancel buttons directly to the main window's own signals
+        self.status_bar.start_button.clicked.connect(self.started)
+        self.status_bar.cancel_button.clicked.connect(self.cancelled)
 
         # Progress bar for check
         self.prog_bar = QProgressBar()
@@ -188,34 +214,16 @@ class MainWindow(QMainWindow):
         self.notification = QPushButton()
         self.notification.hide()
         self.grid.addWidget(self.notification, self.next_row(), 0, 1, 2)
-
-        # Connect all the signals and slots
-        self.version_info.linkActivated.connect(self._on_bug_report_link_clicked)
-        self.user_entry.changed.connect(self._on_user_changed)
-        self.group_entry.changed.connect(self._on_group_changed)
-        if admin_mode:
-            self.group_name_entry.changed.connect(self._on_group_name_changed)
-            self.pattern_entry.changed.connect(self._on_pattern_changed)
-        self.server_entry.changed.connect(self._on_server_path_changed)
-        self.dest_entry.changed.connect(self._on_dest_path_changed)
-        self.folder_name_options.changed.connect(self._on_folder_name_options_changed)
-        self.spec_selector.changed.connect(self._on_spec_changed)
-        self.repeat_options.changed.connect(self._on_repeat_changed)
-        self.save_button.clicked.connect(self._on_save_button_clicked)
-        # Connect specifically to the buttons not the overall changed signal
-        # because we don't need to do anything when the date is changed
-        self.date_selector.date_button_group.buttonClicked.connect(self._on_date_mode_changed)
-        # self.date_selector.date_selector.userDateChanged.connect(self._on_date_changed)
         self.notification.clicked.connect(self._on_notification_clicked)
-        # Connect the start/cancel buttons directly to the main window's own signals
-        self.status_bar.start_button.clicked.connect(self.started)
-        self.status_bar.cancel_button.clicked.connect(self.cancelled)
         # When a new check is started also hide any notification
         self.status_bar.start_button.clicked.connect(self.notification.hide)
 
         # A shortcut to switch to and from admin mode
         admin_shortcut = QShortcut(QKeySequence("Ctrl+Shift+A"), self)
         admin_shortcut.activated.connect(self.admin_mode_toggled)
+
+        # Finally, refresh a few things
+        self.adapt_to_sort()
 
     def add_row(self, row: rows.RowComponent):
         """Adds a row component to the next row in the grid."""
@@ -251,6 +259,21 @@ class MainWindow(QMainWindow):
         self.date_selector.set_format(spec_info.date_entry)
         if self.admin_mode:
             self.pattern_entry.set_text(spec_info.measurement_pattern)
+
+    def adapt_to_sort(self):
+        """Make sure the available options reflect what makes sense for the current sort style."""
+        match self.config.options.sort:
+            case SpectraSorting.ORIGINAL:
+                self.folder_name_options.set_enabled(instrument=True)
+            case SpectraSorting.MEASUREMENT:
+                self.folder_name_options.set_enabled(instrument=True)
+            case SpectraSorting.SAMPLE_AND_SPEC:
+                # Make sure the user includes the spectrometer in the name,
+                # otherwise what's the point?
+                self.folder_name_options.set_checked(instrument=True)
+                self.folder_name_options.set_enabled(instrument=False)
+            case SpectraSorting.SAMPLE:
+                self.folder_name_options.set_enabled(instrument=True)
 
     def notify_spectra(self):
         """Inform the user that spectra were found."""
@@ -375,6 +398,12 @@ class MainWindow(QMainWindow):
     def _on_dest_path_changed(self):
         self.config.paths.save = str(self.dest_entry.path())
         self.save_button.setEnabled(True)
+
+    @Slot()
+    def _on_sort_changed(self):
+        self.config.options.sort = self.sort_selector.selected()
+        self.adapt_to_sort()
+        self.folder_name_preview.regenerate_preview()
 
     @Slot()
     def _on_folder_name_options_changed(self):

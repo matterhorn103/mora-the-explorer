@@ -1,5 +1,4 @@
 import datetime
-import re
 
 from mora_the_explorer.core import (
     MetadataRules,
@@ -17,14 +16,18 @@ SUBSTITUTIONS = VariableSubstitutions(
 )
 
 BRUKER_RULES = MetadataRules(
-    SUBSTITUTIONS,
-    r'<group!>\_*<user_name>?\_*<user!>\_*<sample_id>',
-    ["user", "sample_id", "experiment", "solvent"],
+    substitutions=SUBSTITUTIONS,
+    sample_pattern=None,
+    measurement_pattern=r'<group!>\_*<user_name>?\_*<user!>\_*<sample_id>',
+    sample_name_fields=["user", "sample_id", "solvent"],
+    measurement_name_fields=["user", "sample_id", "solvent", "experiment"],
 )
 AGILENT_RULES = MetadataRules(
-    SUBSTITUTIONS,
-    r'<user!><sample_id>',
-    ["user", "sample_id", "experiment", "solvent"],
+    substitutions=SUBSTITUTIONS,
+    sample_pattern=r'<user!><sample_id>',
+    measurement_pattern=r'<user!><sample_id>\_(\d{6})\_(\d{3}k)\_(.+)_\d\.fid',
+    sample_name_fields=["user", "sample_id", "solvent"],
+    measurement_name_fields=["user", "sample_id", "solvent", "experiment"],
 )
 
 
@@ -44,6 +47,21 @@ class TestRules:
 
 class TestMetadata:
 
+    def test_name_gen(self):
+        metadata = MeasurementMetadata(group="stu", user="mjm", sample_id="213-4 repeat")
+        metadata.manufacturer = Manufacturer.BRUKER
+        metadata.date = datetime.date.today()
+        # Note that the name generation is independent of the manufacturer these days
+        name = metadata.generate_folder_name(BRUKER_RULES)
+        assert name == "mjm-213-4-repeat"
+
+    def test_name_gen_disallowed_chars(self):
+        metadata = MeasurementMetadata(user="mjm", sample_id="304-1-ß")
+        # Note that the name generation is independent of the manufacturer these days
+        name = metadata.generate_folder_name(AGILENT_RULES)
+        # Characters outside of [a-zA-Z0-9-] are normalized to their hexadecimal Unicode code points
+        assert name == "mjm-304-1-0xdf"
+
     def test_bruker_title_extraction(self):
         title = "stu mjm 213-4 repeat"
         metadata = MeasurementMetadata.from_measurement_title(title, BRUKER_RULES)
@@ -54,26 +72,14 @@ class TestMetadata:
             title=title,
         )
 
-    def test_bruker_name_gen(self):
-        metadata = MeasurementMetadata(group="stu", user="mjm", sample_id="213-4 repeat")
-        metadata.manufacturer = Manufacturer.BRUKER
-        metadata.date = datetime.date.today()
-        name = metadata.generate_folder_name(BRUKER_RULES)
-        assert name == "mjm-213-4-repeat"
-
     def test_agilent_title_extraction(self):
-        title = "mjm304-1-ß"
+        title = "mjm500-1_151023_299k_1h_1.fid"
         metadata = MeasurementMetadata.from_measurement_title(title, AGILENT_RULES)
         assert metadata == MeasurementMetadata(
             user="mjm",
-            sample_id="304-1-ß",
+            sample_id="500-1",
             title=title,
         )
-
-    def test_agilent_name_gen(self):
-        metadata = MeasurementMetadata(user="mjm", sample_id="304-1-ß")
-        name = metadata.generate_folder_name(AGILENT_RULES)
-        assert name == "mjm-304-1-0xdf"
     
     def test_no_rules_mutation(self):
         # This is related to the bug tested by `TestExplorer.test_agilent_inconsistent_match_bug()`
@@ -94,7 +100,9 @@ class TestMetadata:
                 sample_id="",
             ),
             r'<user!><sample_id>',
-            ["user", "sample_id", "experiment", "solvent"],
+            r'<user!><sample_id>',
+            ["user", "sample_id", "solvent", "experiment"],
+            ["user", "sample_id", "solvent", "experiment"],
         )
         for title in titles:
             metadata = MeasurementMetadata.from_measurement_title(title, rules)
