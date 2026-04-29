@@ -189,7 +189,7 @@ class Controller(QObject):
         try:
             if remote_config_file.exists() is True:
                 with open(remote_config_file, "rb", encoding="utf-8") as f:
-                    remote_config = tomllib.read(f)
+                    remote_config = tomllib.load(f)
             else:
                 logging.info(f"No remote version information found at {remote_config_file}")
                 return
