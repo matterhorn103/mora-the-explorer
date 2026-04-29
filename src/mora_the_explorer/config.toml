@@ -48,17 +48,21 @@ save = "~/nmr"  # The location spectra should be copied to
 [admin]
 user_name_is_admin_only = true
 pattern_separator = '[\s_-]'
-version = "2.0.0b4"
+version = "2.0.0b5"
 email = "milner@uni-muenster.de"
 changelog = """
 - Update for move to new server
 - Big rewrite, codebase is now much more structured and maintainable
-- Inclusion of experiment in folder name is now optional
-- Solvent and frequency metadata available on all spectrometers
+- The search can be set to always check the current date which changes accordingly
+- Spectra can be sorted into subfolders (like Agilent spectra) if desired, or not at all
+- Folder name is now entirely customizable
+- Preview of the current folder name style is shown
+- Solvent, instrument, experiment metadata available on all spectrometers
 - Option to include the original folder name
-- Buttons to select paths using the system file explorer
-- Field to specify the server address from the GUI (useful on macOS and Linux)
-- CLI and API work entirely independently of a GUI
+- Paths are selected using the system file explorer
+- Ability to specify the server address from the GUI (useful on macOS and Linux)
+- Metadata are saved to the measurement folder in mora.toml
+- CLI and Python API work entirely independently of a GUI
 """
 
 
