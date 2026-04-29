@@ -86,6 +86,7 @@ ipc = "ipc"
 kb = "kb"
 meet = "meet"
 nuk = "nuk"
+ocf = "ocf"
 pharmazie = "pharmazie"
 
 
@@ -122,7 +123,7 @@ check_paths = [
     "archiv/av300/{%y}-av300_{%Y}/{%b%d-%Y}",
     "archiv/av400/{%y}-av400_{%Y}/{%b%d-%Y}",
     "archiv/neo400a/{%y}-neo400a_{%Y}/neo400a_{%b%d-%Y}",
-    "archiv/neo400/{%y}-neo400b_{%Y}/neo400a_{%b%d-%Y}",
+    "archiv/neo400b/{%y}-neo400b_{%Y}/neo400b_{%b%d-%Y}",
     "archiv/neo400c/{%y}-neo400c_{%Y}/neo400c_{%b%d-%Y}",
 ]
 admin_only = true
@@ -171,5 +172,8 @@ measurement_pattern = '<user!><sample_id>\_(\d{6})\_(\d{3}k)\_(.+)_\d\.fid'
 date_entry = "yyyy"
 check_paths = [
     "500-600er/<group_name>/{%Y}",
+]
+archives = [
+    "archiv/500-600er/<group_name>/{%Y}",
 ]
 single_check_only = true
