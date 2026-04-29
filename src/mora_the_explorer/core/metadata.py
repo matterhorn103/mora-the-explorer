@@ -208,7 +208,9 @@ class MeasurementMetadata:
             return None
         # Get the expected pattern for the title
         pattern: re.Pattern = rules.measurement_pattern
+        print(pattern)
         match = pattern.fullmatch(title)
+        print(match)
         # If the title didn't match the pattern, pass that information on
         if match is None:
             return None

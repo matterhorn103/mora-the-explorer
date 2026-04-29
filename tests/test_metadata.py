@@ -1,3 +1,4 @@
+from copy import copy
 import datetime
 
 from mora_the_explorer.core import (
@@ -71,6 +72,17 @@ class TestMetadata:
             sample_id="213-4 repeat",
             title=title,
         )
+    
+    def test_bruker_title_with_username(self):
+        title = "stu milner mjm 213-4 repeat"
+        metadata = MeasurementMetadata.from_measurement_title(title, BRUKER_RULES)
+        assert metadata == MeasurementMetadata(
+            group="stu",
+            user="mjm",
+            user_name="milner",
+            sample_id="213-4 repeat",
+            title=title,
+        )
 
     def test_agilent_title_extraction(self):
         title = "mjm500-1_151023_299k_1h_1.fid"
@@ -107,3 +119,29 @@ class TestMetadata:
         for title in titles:
             metadata = MeasurementMetadata.from_measurement_title(title, rules)
             assert metadata.user == "akw"
+    
+    def test_ocf_title_matching(self):
+        titles = [
+            "ocf p 64 v 52 1",
+            "ocfp 64 v 52 1",
+            "ocf p64 v 52 1",
+            "ocf p 64v 52 1",
+        ]
+        rules = MetadataRules(
+            VariableSubstitutions(
+                group="ocf",
+                group_name="ocf",
+                user="p",
+                user_name="p",  # Doesn't matter what this is since we won't require it anyway
+                sample_id="",   # Same applies here
+            ),
+            sample_pattern=None,
+            measurement_pattern=r'<group!>\_*<user_name>?\_*<user!>\_*<sample_id>',
+            sample_name_fields=["user", "sample_id", "solvent"],
+            measurement_name_fields=["user", "sample_id", "solvent", "experiment"],
+        )
+        for title in titles:
+            print(title)
+            metadata = MeasurementMetadata.from_measurement_title(title, rules)
+            assert metadata.group == "ocf"
+            assert metadata.user == "p"
