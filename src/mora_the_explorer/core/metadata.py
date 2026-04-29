@@ -30,8 +30,10 @@ class MetadataRules:
     def __init__(
         self,
         substitutions: VariableSubstitutions,
+        sample_pattern: str | None,
         measurement_pattern: str,
-        dest_fields: list[str],
+        sample_name_fields: list[str],
+        measurement_name_fields: list[str],
         pattern_sep: str = r"[\s_-]",
         dest_sep: str = "-",
     ):
@@ -42,9 +44,10 @@ class MetadataRules:
            is a match, and extracting any metadata
         2. Generating a folder name by combining metadata fields
 
-        `measurement_pattern` is a regex pattern indicating the expected
-        components of the measurement title. It is a normal regex in all ways,
-        and uses normal regex syntax, with the exception of two extensions:
+        `sample_pattern` and `measurement_pattern` are regex patterns indicating
+        the expected components of the sample and measurement titles respectively.
+        It is a normal regex in all ways, and uses normal regex syntax, with the
+        exception of two extensions:
 
         1. Any occurrence of a backslash-escaped underscore `\_` will be replaced
            by `pattern_sep`, which represents allowed "separator" characters
@@ -55,6 +58,9 @@ class MetadataRules:
         The resulting patterns are compiled when the `MeasurementRules` object is
         instantiated, and can be accessed using the `sample_pattern` and
         `measurement_pattern` properties.
+
+        `sample_pattern` is only relevant for Agilent spectrometers, that save the
+        spectra organized by sample; rules for Bruker spectrometers should use `None`.
         
         `pattern_sep` is typically a character class. The default value matches
         whitespace, underscores, and hyphens.
@@ -90,22 +96,33 @@ class MetadataRules:
         names of the sample folder and the contained measurement folders.
         (Note that these are not the only source of a measurement's metadata.)
 
-        `dest_fields` indicates the desired metadata fields to include in the
-        measurement folder name when it is saved to the destination location, and
-        `dest_sep` the separator character (or string) that should be used to join
-        the fields.
-        See `MeasurementMetadata.generate_folder_name()` for more details.
+        `sample_name_fields` and `measurement_name_fields` indicate the desired
+        metadata fields to include in the sample and measurement folder names when
+        it is saved to the destination location, and `dest_sep` the separator
+        character (or string) that should be used to join the fields.
+        See `MeasurementMetadata.generate_sample_name()` and
+        `MeasurementMetadata.generate_measurement_name()` for more details.
         """
 
         self.src_sep = pattern_sep
-        self.dest_fields = dest_fields
         self.dest_sep = dest_sep
+        self.sample_name_fields = sample_name_fields
+        self.measurement_name_fields = measurement_name_fields
         
         # Normalize the substitution values to lowercase now
         self.substitutions = VariableSubstitutions(
             **{k: v.casefold() for k, v in asdict(substitutions).items()}
         )
+        if sample_pattern:
+            self._sample_pattern = re.compile(self.process_pattern(sample_pattern))
+        else:
+            self._sample_pattern = sample_pattern
         self._measurement_pattern = re.compile(self.process_pattern(measurement_pattern))
+    
+    @property
+    def sample_pattern(self) -> re.Pattern:
+        """Get the processed regex that should be used to match the sample title."""
+        return self._sample_pattern
 
     @property
     def measurement_pattern(self) -> re.Pattern:
@@ -223,7 +240,7 @@ class MeasurementMetadata:
         `<dest_path>/mjm-213-4-repeat-DMSO-d6/`
         """
         parts = []
-        for field in rules.dest_fields:
+        for field in rules.measurement_name_fields:
             if isinstance(field, list):
                 for mutually_exclusive_field in field:
                     if getattr(self, mutually_exclusive_field, None) is not None:

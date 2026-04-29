@@ -108,30 +108,47 @@ class Explorer:
         )
 
         # Put together the way the folder names should be formatted
-        name_format = []
+        # We create the sample folder format too even if it's only relevant when
+        # the user wants to sort by sample 
+        sample_format = []
+        measurement_format = []
+        # Sample-specific metadata fields go in both
         if options.naming.group:
             # Treat group name and group as mutually exclusive, prioritise the group
-            name_format.append(["group", "group_name"])
+            sample_format.append(["group", "group_name"])
+            measurement_format.append(["group", "group_name"])
         if options.naming.user:
             # Treat user name and user as mutually exclusive, prioritise the user
-            name_format.append(["user", "user_name"])
+            sample_format.append(["user", "user_name"])
+            measurement_format.append(["user", "user_name"])
         # Always include the sample info
-        name_format.append("sample_id")
+        sample_format.append("sample_id")
+        measurement_format.append("sample_id")
         if options.naming.solvent:
-            name_format.append("solvent")
+            sample_format.append("solvent")
+            measurement_format.append("solvent")
+        # Only include the instrument/frequency in the sample name if sorting by
+        # sample and instrument was chosen
         if options.naming.instrument:
-            name_format.append("instrument")
+            # TODO implement conditional once option is added
+            sample_format.append("instrument")
+            measurement_format.append("instrument")
         if options.naming.frequency:
-            name_format.append("frequency")
+            # TODO implement conditional once option is added
+            sample_format.append("frequency")
+            measurement_format.append("frequency")
+        # Spectrum-specific metadata fields only go in the measurement name
         if options.naming.experiment:
-            name_format.append("experiment")
+            measurement_format.append("experiment")
         if options.naming.original:
-            name_format.append("folder_name")
+            measurement_format.append("folder_name")
 
         rules = MetadataRules(
             substitutions=substitutions,
+            sample_pattern=spec_info.sample_pattern,
             measurement_pattern=spec_info.measurement_pattern,
-            dest_fields=name_format,
+            sample_name_fields=sample_format,
+            measurement_name_fields=measurement_format,
             pattern_sep=self.config.admin.pattern_separator,
         )
         return rules

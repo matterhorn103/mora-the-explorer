@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 import filecmp
 import logging
 from os import PathLike
+import re
 import shutil
 import sys
 import datetime
@@ -243,6 +244,56 @@ def copy_folder(src: Path, target: Path, reporter: Reporter) -> Path | None:
         return None
 
 
+def filter_and_expand_sample_dirs(
+    check_paths: list[Path],
+    rules: MetadataRules,
+    manufacturer: Manufacturer,
+) -> list[Path]:
+    """Expand a list of directories containing sample directories into a list
+    of measurement directories that match the provided rules.
+    
+    The Bruker spectrometers don't group spectra by sample, so this just returns
+    all the measurement directories in all `check_paths`.
+
+    On Agilent spectrometers, it returns a list of all the `.fid` subdirectories
+    across all of the sample directories across all `check_paths`, but only after
+    filtering them to restrict them to those that match `rules.sample_pattern`.
+    (This generally means that the sample directory name starts with the value of
+    `user`.)
+    """
+    measurement_dirs = []
+    # We handle Bruker and Agilent a bit differently
+    # Each folder in check_paths contains subfolders either for individual measurements (Bruker)
+    # or for different samples with multiple measurements in each folder (Agilent)
+    # For Agilent checks we thus expand each entry in check_paths, but since the
+    # user's initials should appear in the title of the sample folder, and each
+    # measurement folder ends with `.fid`, we can do some preliminary filtering
+    # to save checking every single one of them
+    if manufacturer is Manufacturer.AGILENT:
+        # Get the expected pattern for the sample folder title
+        pattern: re.Pattern = rules.sample_pattern
+        for check_path in check_paths:
+            sample_folders = [
+                x for x in check_path.iterdir()
+                if x.is_dir()
+                and pattern.fullmatch(x.name)
+            ]
+            for sample_folder in sample_folders:
+                measurement_dirs.extend([
+                    x for x in sample_folder.iterdir()
+                    if x.is_dir()
+                    #and x.suffix == ".fid"  # Not needed since we'll be checking for exact regex matches!
+                ])
+    else:
+        for check_path in check_paths:
+            measurement_dirs.extend([
+                x for x in check_path.iterdir()
+                if x.is_dir()
+                #and not x.name.startswith(".")  # Ignore hidden directories - but not needed since we'll be checking for exact regex matches!
+            ])
+    return measurement_dirs
+
+
 def check_nmr(
     src: list[PathLike],
     dest: PathLike,
@@ -295,28 +346,13 @@ def check_nmr(
 
     reporter.reset_progress()
 
-    # Now we handle Bruker and Agilent a bit differently
-    # Each folder in check_paths contains subfolders either for individual measurements (Bruker)
-    # or for different samples with multiple measurements in each folder (Agilent)
-    # For Agilent checks we thus expand each entry in check_paths, but since the
-    # user's initials should appear in the title of the sample folder, and each
-    # measurement folder ends with `.fid`, we can do some preliminary filtering
-    # to save checking every single one of these
-    measurement_dirs = []
-    for check_path in check_paths:
-        if manufacturer is Manufacturer.AGILENT:
-            sample_folders = [x for x in check_path.iterdir() if x.is_dir() and not x.name.startswith(".")]
-            hits = [s for s in sample_folders if rules.substitutions.user in s.name]
-            for sample_folder in hits:
-                measurement_dirs.extend([x for x in sample_folder.iterdir() if x.is_dir() and x.suffix == ".fid"])
-        else:
-            measurement_dirs.extend([x for x in check_path.iterdir() if x.is_dir() and not x.name.startswith(".")])
+    measurement_dirs = filter_and_expand_sample_dirs(check_paths, rules, manufacturer)
 
     # Initialize progress bar
     n_measurements = len(measurement_dirs)
     # If we are checking an Agilent spectrometer, let's assume that the above
-    # expansion operation took some time, and now that it's done make the progress
-    # bar move by an appropriate amount
+    # filtering and expansion operation took some time, and now that it's done
+    # make the progress bar move by an appropriate amount
     if manufacturer is Manufacturer.AGILENT:
         logging.info(f"Total spectra in these paths matching the given user: {n_measurements}")
         reporter.set_max_progress(n_measurements + 10)

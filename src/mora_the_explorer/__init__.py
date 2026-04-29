@@ -42,7 +42,7 @@ LOG_FILE = (
 
 def get_rsrc_dir():
     """Gets the location of the program's resources, which is platform-dependent."""
-    # For whatever reason __file__ doesn't give the right location on a mac when a .app has
+    # __file__ doesn't give the right location on a mac when a .app has
     # been generated with pyinstaller
     if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
         return Path(sys._MEIPASS)

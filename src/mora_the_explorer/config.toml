@@ -165,6 +165,7 @@ single_check_only = false
 [spectrometers.hf]
 manufacturer = "agilent"
 display_name = "High-field spectrometers (500 && 600 MHz)"
+sample_pattern = '<user!><sample_id>'
 measurement_pattern = '<user!><sample_id>\_(\d{6})\_(\d{3}k)\_(.+)_\d\.fid'
 date_entry = "yyyy"
 check_paths = [

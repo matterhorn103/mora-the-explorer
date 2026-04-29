@@ -93,6 +93,7 @@ date_entry = "dd MMM yyyy"
 single_check_only = false
 
 [spectrometers.v600]
+sample_pattern = '<user!><sample_id>'
 measurement_pattern = '<user!><sample_id>\_(\d{6})\_(\d{3}k)\_(.+)_\d\.fid'
 check_paths = [
     "v600/<group_name>/{%Y}",

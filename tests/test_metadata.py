@@ -1,5 +1,4 @@
 import datetime
-import re
 
 from mora_the_explorer.core import (
     MetadataRules,
@@ -17,14 +16,18 @@ SUBSTITUTIONS = VariableSubstitutions(
 )
 
 BRUKER_RULES = MetadataRules(
-    SUBSTITUTIONS,
-    r'<group!>\_*<user_name>?\_*<user!>\_*<sample_id>',
-    ["user", "sample_id", "experiment", "solvent"],
+    substitutions=SUBSTITUTIONS,
+    sample_pattern=None,
+    measurement_pattern=r'<group!>\_*<user_name>?\_*<user!>\_*<sample_id>',
+    sample_name_fields=["user", "sample_id", "solvent"],
+    measurement_name_fields=["user", "sample_id", "solvent", "experiment"],
 )
 AGILENT_RULES = MetadataRules(
-    SUBSTITUTIONS,
-    r'<user!><sample_id>\_(\d{6})\_(\d{3}k)\_(.+)_\d\.fid',
-    ["user", "sample_id", "experiment", "solvent"],
+    substitutions=SUBSTITUTIONS,
+    sample_pattern=r'<user!><sample_id>',
+    measurement_pattern=r'<user!><sample_id>\_(\d{6})\_(\d{3}k)\_(.+)_\d\.fid',
+    sample_name_fields=["user", "sample_id", "solvent"],
+    measurement_name_fields=["user", "sample_id", "solvent", "experiment"],
 )
 
 
@@ -97,7 +100,9 @@ class TestMetadata:
                 sample_id="",
             ),
             r'<user!><sample_id>',
-            ["user", "sample_id", "experiment", "solvent"],
+            r'<user!><sample_id>',
+            ["user", "sample_id", "solvent", "experiment"],
+            ["user", "sample_id", "solvent", "experiment"],
         )
         for title in titles:
             metadata = MeasurementMetadata.from_measurement_title(title, rules)
