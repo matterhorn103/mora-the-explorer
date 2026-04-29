@@ -23,11 +23,11 @@ from PySide6.QtWidgets import (
     QFileDialog,
 )
 
-from mora_the_explorer.core.config import Config, NamingOptions
-from mora_the_explorer.core.explorer import Explorer
-from mora_the_explorer.core.metadata import MeasurementMetadata, MetadataRules
-
+from ...core.config import Config
+from ...core.explorer import Explorer
+from ...core.metadata import MeasurementMetadata
 from ...core.spec import Manufacturer, Spectrometer
+from ...core.checknmr import SpectraSorting
 
 
 class RowComponent(QObject):
@@ -302,6 +302,55 @@ class OverflowSelector(RowComponent):
 # context and have more stuff hard-coded
 
 
+class SortingSelector(RowComponent):
+    """The component to select how the spectra should be sorted when saving."""
+
+    # A signal emitted whenever any of the options are toggled
+    changed = Signal()
+
+    def __init__(self):
+        super().__init__()
+
+        # Two items: a title and a stack of mutually exclusive radio buttons
+        self.title = QLabel("Sort by:")
+        self.button_stack = QVBoxLayout()
+
+        # Right align the title (but top align vertically)
+        self.title.setAlignment(Qt.AlignRight | Qt.AlignTop)
+
+        # A button group to make the buttons mutually exclusive
+        self.buttons = QButtonGroup()
+
+        self.original_button = QRadioButton("keep original sorting")
+        self.measurement_button = QRadioButton("measurement (i.e. no sorting, Bruker-style)")
+        self.sample_spec_button = QRadioButton("sample AND instrument")
+        self.sample_button = QRadioButton("sample (Agilent-style)")
+
+        for i, b in enumerate([
+            self.original_button,
+            self.measurement_button,
+            self.sample_spec_button,
+            self.sample_button,
+        ]):
+            self.buttons.addButton(b, id=i)
+            self.button_stack.addWidget(b)
+
+        self.buttons.buttonClicked.connect(self.changed)
+    
+    def add_to_grid(self, grid: QGridLayout, row: int):
+        grid.addWidget(self.title, row, 0)
+        grid.addLayout(self.button_stack, row, 1)
+
+    def selected(self) -> SpectraSorting:
+        """Get the selected option."""
+        return SpectraSorting(self.buttons.checkedId())
+
+    def set_selected(self, sort: SpectraSorting):
+        """Set the selected option."""
+        i = int(sort)
+        self.buttons.button(i).setChecked(True)
+
+
 class FolderNameOptions(RowComponent):
     """The component for choices relating to folder name customization."""
 
@@ -326,6 +375,11 @@ class FolderNameOptions(RowComponent):
         self.options = {
             "group": "group",
             "user": "user",
+            # An additional checkbox for the "sample ID" that is a dummy and can't
+            # be deselected - it's there just to make it clearer how the names are
+            # generated (as everything that's in the generated names then has a
+            # corresponding checkbox)
+            "sample_id": "sample ID",
             "solvent": "solvent",
             "instrument": "instrument",
             "experiment": "experiment",
@@ -344,16 +398,11 @@ class FolderNameOptions(RowComponent):
                 self.box_grid.addWidget(box, 0, i)
             else:
                 self.box_grid.addWidget(box, 1, i - first_i_in_row2)
-            box.toggled.connect(self.changed)
-        
-        # Add an additional checkbox for the "sample ID" that is a dummy, can't
-        # be deselected, and doesn't feature in any of the other logic - it's
-        # there just to make it clearer how the names are generated (as everything
-        # that's in the generated names then has a corresponding checkbox)
-        id_checkbox = QCheckBox("sample ID")
-        id_checkbox.setChecked(True)
-        id_checkbox.setEnabled(False)
-        self.box_grid.addWidget(id_checkbox, 0, first_i_in_row2)
+            if option == "sample_id":
+                box.setChecked(True)
+                box.setEnabled(False)
+            else:
+                box.toggled.connect(self.changed)
 
     def add_to_grid(self, grid: QGridLayout, row: int):
         grid.addWidget(self.title, row, 0)
@@ -370,12 +419,19 @@ class FolderNameOptions(RowComponent):
         return {k: self.boxes[k].isChecked() for k in self.options.keys()}
 
     def set_checked(self, **kwargs: bool):
-        """Set the status of all the checkboxes."""
+        """Set the status of any or all of the checkboxes."""
         for k, v in kwargs.items():
             if k in self.boxes:
                 self.boxes[k].setChecked(v)
             # Otherwise don't do anything, there's no box for this option, it
             # can only be set via the config file
+
+    def set_enabled(self, **kwargs: bool):
+        """Enable or disable any or all of the checkboxes."""
+        for k, v in kwargs.items():
+            if k in self.boxes:
+                self.boxes[k].setEnabled(v)
+            # Otherwise don't do anything, there's no box for this option
 
 
 class FolderNamePreview(RowComponent):
@@ -394,7 +450,7 @@ class FolderNamePreview(RowComponent):
         # Keep a single copy hanging around, just replace the user/group if they change
         # Some strings start off empty because they are generated in a call to
         # regenerate_preview() in a second anyway
-        self.metadata = MeasurementMetadata(
+        self.mdata = MeasurementMetadata(
             path="",
             folder_name="170",
             manufacturer=Manufacturer.BRUKER,
@@ -428,19 +484,25 @@ class FolderNamePreview(RowComponent):
         """Update the preview based on the current config."""
 
         # Update the demo metadata first
-        self.metadata.user = self.config.options.user
-        self.metadata.group = self.config.options.group
-        self.metadata.manufacturer = self.config.specs[self.config.options.spec].manufacturer
-        if self.metadata.manufacturer == Manufacturer.BRUKER:
-            self.metadata.folder_name = "170"
-            self.metadata.instrument = "av300"
+        self.mdata.user = self.config.options.user
+        self.mdata.group = self.config.options.group
+        self.mdata.manufacturer = self.config.specs[self.config.options.spec].manufacturer
+        if self.mdata.manufacturer is Manufacturer.BRUKER:
+            self.mdata.folder_name = "170"
+            self.mdata.instrument = "av300"
         else:
-            self.metadata.folder_name = self.config.options.user + self.metadata.sample_id
-            self.metadata.instrument = "v500"
+            self.mdata.folder_name = f"{self.config.options.user}{self.mdata.sample_id}_{self.mdata.date.strftime('%d%m%y')}_299k_1h_1.fid"
+            self.mdata.instrument = "v500"
         # Don't bother with this so long as we don't offer the ability to include the path
         #self.metadata.path = self.explorer.get_check_paths(datetime.date.today())[0] / self.metadata.folder_name
         
-        preview = self.metadata.generate_folder_name(self.explorer.generate_rules(), drop_missing=False)
+        preview = self.mdata.generate_folder_name(self.explorer.generate_rules(), drop_missing=False)
+        if (
+            (self.config.options.sort is SpectraSorting.SAMPLE_AND_SPEC or self.config.options.sort is SpectraSorting.SAMPLE)
+            or (self.config.options.sort is SpectraSorting.ORIGINAL and self.mdata.manufacturer is Manufacturer.AGILENT)
+        ):
+            sample = self.mdata.generate_folder_name(self.explorer.generate_rules(), drop_missing=False, sample=True)
+            preview = sample + " / " + preview
         self.preview.setText(preview)
 
 

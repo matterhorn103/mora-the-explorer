@@ -1,6 +1,6 @@
 """Metadata handling."""
 
-from dataclasses import asdict, dataclass, fields
+from dataclasses import asdict, dataclass
 import datetime
 import logging
 from pathlib import Path
@@ -100,8 +100,7 @@ class MetadataRules:
         metadata fields to include in the sample and measurement folder names when
         it is saved to the destination location, and `dest_sep` the separator
         character (or string) that should be used to join the fields.
-        See `MeasurementMetadata.generate_sample_name()` and
-        `MeasurementMetadata.generate_measurement_name()` for more details.
+        See `MeasurementMetadata.generate_folder_name()` for more details.
         """
 
         self.src_sep = pattern_sep
@@ -203,15 +202,18 @@ class MeasurementMetadata:
     def generate_folder_name(
         self,
         rules: MetadataRules,
+        sample: bool = False,
         drop_missing: bool = True,
     ) -> str:
         """Get a formatted folder name according to the prescribed rules.
 
         The metadata fields to be included in the name are those in
-        `rules.dest_fields`, and the name is constructed by joining the values of
-        those fields with the desired separator (specified by `rules.dest_sep`).
+        `rules.sample_name_fields` or `rules.measurement_name_fields`, as
+        appropriate according to the value of `sample`, and the name is constructed
+        by joining the values of those fields with the desired separator (specified
+        by `rules.dest_sep`).
 
-        If an item in `rules.dest_fields` is not a variable but a list of variables,
+        If an item in the list of fields is not a variable but a list of variables,
         they are treated as mutually exclusive options and the first variable in the
         sublist with a value will be used. For example, `["user", "user_name"]`
         would be an instruction to "include the `user` field if available, if not,
@@ -226,21 +228,22 @@ class MeasurementMetadata:
         is `True`, in which case the field is simply skipped. The same applies if
         a requested field is not an actual metadata field.
         
-        If `sample_id` is to be included (it is listed in `rules.dest_fields`)
-        it is normalized so that all instances of `rules.src_sep` become
-        `rules.dest_sep`.
+        If `sample_id` is to be included (it is listed in `rules.sample_name_fields`
+        /`measurement_name_fields`) it is normalized so that all instances of
+        `rules.src_sep` become `rules.dest_sep`.
         
         Additionally, all non-ASCII, non-alphanumerical characters are normalized
         by replacing them with the Unicode code point prefixed with an `"x"`.
 
         For example, if the metadata are:
         `{"group": "stu", "user": "mjm", "sample_id": "213-4 repeat", "frequency": "300", "solvent": "DMSO-d6"}`
-        and `dest_fields` had the value `["user", "sample_id", "solvent"]`
+        and the requested fields were `["user", "sample_id", "solvent"]`
         then the measurement folder would be saved with the path
         `<dest_path>/mjm-213-4-repeat-DMSO-d6/`
         """
         parts = []
-        for field in rules.measurement_name_fields:
+        fields = rules.sample_name_fields if sample else rules.measurement_name_fields
+        for field in fields:
             if isinstance(field, list):
                 for mutually_exclusive_field in field:
                     if getattr(self, mutually_exclusive_field, None) is not None:

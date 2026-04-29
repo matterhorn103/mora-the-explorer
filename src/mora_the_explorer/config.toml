@@ -19,6 +19,7 @@ group = "gil"
 spec = "neo400"
 repeat_switch = false
 repeat_delay = 5
+sort = 3  # How to sort when saving; 0 = original sorting, 1 = measurement (Bruker-style), 2 = sample & spec, 3 = sample (Agilent-style) 
 
 [options.naming]
 group = false

@@ -211,6 +211,7 @@ class Explorer:
             manufacturer=spec.manufacturer,
             reporter=reporter,
             date=date,
+            sort=self.config.options.sort,
         )
 
         return reporter

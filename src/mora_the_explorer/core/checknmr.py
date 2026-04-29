@@ -1,12 +1,12 @@
 """UI-independent backend logic for checking the server and copying new spectra."""
 
 from abc import ABC, abstractmethod
+from enum import IntEnum
 import filecmp
 import logging
 from os import PathLike
 import re
 import shutil
-import sys
 import datetime
 from pathlib import Path
 
@@ -15,6 +15,31 @@ from .metadata import (
     Manufacturer,
     get_metadata,
 )
+
+
+class SpectraSorting(IntEnum):
+    """The way in which spectra should be sorted when copied to the destination.
+    
+    Sorting by measurement means all measurement folders are copied individually
+    and stored in the same folder. This is effectively no extra sorting, and is
+    the Bruker style.
+
+    Sorting by sample means all measurements on the same sample are grouped
+    together into a single folder, with the measurements as subfolders. This is
+    the Agilent style.
+
+    Sorting by sample and spectrometer means that all measurements on the same
+    sample are grouped, but only if they were measured on the same spectrometer.
+    This way, spectra measured on Bruker and Agilent spectrometers can be kept
+    separate.
+
+    Original sorting means that Bruker spectra are sorted by measurement and
+    Agilent spectra by sample.
+    """
+    ORIGINAL = 0
+    MEASUREMENT = 1
+    SAMPLE_AND_SPEC = 2
+    SAMPLE = 3
 
 
 class Reporter(ABC):
@@ -301,6 +326,7 @@ def check_nmr(
     manufacturer: Manufacturer,
     reporter: Reporter,
     date: datetime.date | None = None,
+    sort: SpectraSorting = SpectraSorting.SAMPLE_AND_SPEC,
 ):
     """Main checking function for Mora the Explorer."""
 
@@ -397,16 +423,26 @@ def check_nmr(
             if metadata.date is None:
                 metadata.date = date
 
-            # Formatting
-            new_folder_name = metadata.generate_folder_name(rules, drop_missing=False)
+            # Generate the appropriate names and target path
+            measurement_name = metadata.generate_folder_name(rules, drop_missing=False)
+            if sort is SpectraSorting.ORIGINAL:
+                # Use the native Bruker or Agilent style
+                sort = SpectraSorting.MEASUREMENT if manufacturer is Manufacturer.BRUKER else SpectraSorting.SAMPLE
+            if sort is SpectraSorting.MEASUREMENT:
+                # Just save spectra in a completely flat fashion
+                target = dest_path / measurement_name
+            else:  # Covers sorting by sample and by sample+spectrometer
+                sample_name = metadata.generate_folder_name(rules, drop_missing=False, sample=True)
+                # Save in nested folders
+                target = dest_path / sample_name / measurement_name
 
             # Copy, add output messages to main output list
             reporter.set_status("Comparing metadata…")
-            copy_dest = copy_folder(measurement_dir, dest_path / new_folder_name, reporter)
+            final_dest = copy_folder(measurement_dir, target, reporter)
 
             # If we copied, add a file with the metadata
-            if copy_dest:
-                metadata.write_toml(copy_dest / "mora.toml")
+            if final_dest:
+                metadata.write_toml(final_dest / "mora.toml")
 
             # Update progress bar to make sure there's a noticeable movement after
             # copying a spectrum, otherwise it looks frozen
