@@ -319,6 +319,44 @@ def filter_and_expand_sample_dirs(
     return measurement_dirs
 
 
+def confirm_check_paths(check_paths: list[PathLike]) -> list[Path]:
+    """Confirm the server can be reached and filter the paths to those at which
+    directories actually exist.
+    
+    Converts all `PathLike`s to `Path` objects.
+
+    For directories that do exist, the existence of additional overflow directories
+    is also checked for, and any found are added to the list.
+    """
+    valid_paths: list[Path] = []
+    not_found = []
+    for p in check_paths:
+        p = Path(p)
+        if p.exists() is False:
+            not_found.append(f"No folder could be found at {p}")
+        else:
+            valid_paths.append(p)
+            # Look for potential overflow folders for same day (these are generated
+            # on mora when two samples are submitted with same exp. no.)
+            for n in range(2, 99):
+                overflow_path = p.with_name(p.name + f"_{n}")
+                if overflow_path.exists():
+                    valid_paths.append(overflow_path)
+                else:
+                    # Stop as soon as we reach the max number
+                    break
+    if len(valid_paths) == 0:
+        logging.info("No folders could be found!")
+        for message in not_found:
+            logging.info(message)
+    else:
+        logging.info("The following paths could be reached and will be checked for new spectra:")
+        for p in valid_paths:
+            logging.info(str(p))
+    
+    return valid_paths
+
+
 def check_nmr(
     src: list[PathLike],
     dest: PathLike,
@@ -342,33 +380,10 @@ def check_nmr(
     if dest_path.exists() is False:
         logging.info("Given destination folder not found!")
         reporter.add_error("Given destination folder not found!")
-    # Confirm server can be reached
-    check_paths: list[Path] = []
-    not_found = []
-    for p in src:
-        p = Path(p)
-        if p.exists() is False:
-            not_found.append(f"No folder could be found at {p}")
-        else:
-            check_paths.append(p)
-            # Look for potential overflow folders for same day (these are generated
-            # on mora when two samples are submitted with same exp. no.)
-            for n in range(2, 99):
-                overflow_path = p.with_name(p.name + f"_{n}")
-                if overflow_path.exists():
-                    check_paths.append(overflow_path)
-                else:
-                    # Stop as soon as we reach the max number
-                    break
-    if len(check_paths) == 0:
-        logging.info("No folders could be found!")
-        for message in not_found:
-            logging.info(message)
+    # Confirm source directories exist
+    check_paths = confirm_check_paths(src)
+    if not check_paths:
         reporter.add_error("No folders could be found!")
-    else:
-        logging.info("The following paths could be reached and will be checked for new spectra:")
-        for p in check_paths:
-            logging.info(str(p))
 
     reporter.reset_progress()
 
