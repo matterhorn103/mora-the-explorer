@@ -60,10 +60,10 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Mora the Explorer")
 
         if platform.system() == "Windows":
-            self.setMinimumSize(QSize(420, 680))
+            self.setMinimumSize(QSize(420, 850))
         else:
             # macOS and Linux space things out more than Windows
-            self.setMinimumSize(QSize(450, 780))
+            self.setMinimumSize(QSize(450, 950))
 
         # As always with Qt, have to set a central widget and give that widget a
         # layout, but we won't actually need to access the central widget

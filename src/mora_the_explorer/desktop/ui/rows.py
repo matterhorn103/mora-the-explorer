@@ -490,9 +490,11 @@ class FolderNamePreview(RowComponent):
         if self.mdata.manufacturer is Manufacturer.BRUKER:
             self.mdata.folder_name = "170"
             self.mdata.instrument = "av300"
+            self.mdata.experiment = "proton"
         else:
             self.mdata.folder_name = f"{self.config.options.user}{self.mdata.sample_id}_{self.mdata.date.strftime('%d%m%y')}_299k_1h_1.fid"
             self.mdata.instrument = "v500"
+            self.mdata.experiment = "1h"
         # Don't bother with this so long as we don't offer the ability to include the path
         #self.metadata.path = self.explorer.get_check_paths(datetime.date.today())[0] / self.metadata.folder_name
         

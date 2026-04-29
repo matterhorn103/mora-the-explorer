@@ -5,7 +5,7 @@ import sys
 
 from .config import Config
 from .spec import Spectrometer
-from . import get_check_paths, check_nmr, MetadataRules, Reporter, VariableSubstitutions
+from . import get_check_paths, check_nmr, MetadataRules, Reporter, VariableSubstitutions, SpectraSorting
 
 
 class PrintingReporter(Reporter):
@@ -112,6 +112,7 @@ class Explorer:
         # the user wants to sort by sample 
         sample_format = []
         measurement_format = []
+
         # Sample-specific metadata fields go in both
         if options.naming.group:
             # Treat group name and group as mutually exclusive, prioritise the group
@@ -127,15 +128,23 @@ class Explorer:
         if options.naming.solvent:
             sample_format.append("solvent")
             measurement_format.append("solvent")
-        # Only include the instrument/frequency in the sample name if sorting by
-        # sample and instrument was chosen
+
+        # The instrument isn't actually sample specific, but the app offers the
+        # ability to sort by it, and in the case that `SpectraSorting.SAMPLE_AND_SPEC`
+        # is chosen, it is treated as sample specific (i.e. a sample is treated as
+        # if it is a different sample when measured on different instruments)
         if options.naming.instrument:
-            # TODO implement conditional once option is added
-            sample_format.append("instrument")
-            measurement_format.append("instrument")
+            if options.sort is SpectraSorting.SAMPLE_AND_SPEC:
+                sample_format.append("instrument")
+                # TODO consider not including it in the measurement title to avoid
+                # duplication - this would then be handled differently to every
+                # other field though, which seems like it'd be unexpected
+                measurement_format.append("instrument")
+            else:
+                measurement_format.append("instrument")
         if options.naming.frequency:
-            # TODO implement conditional once option is added
-            sample_format.append("frequency")
+            # This option is no longer available in the GUI so is unimportant, but
+            # is preserved in case anyone finds it useful (it can be set in config.toml)
             measurement_format.append("frequency")
         # Spectrum-specific metadata fields only go in the measurement name
         if options.naming.experiment:
