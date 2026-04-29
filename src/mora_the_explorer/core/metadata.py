@@ -1,10 +1,11 @@
 """Metadata handling."""
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, fields
 import datetime
 import logging
 from pathlib import Path
 import re
+import tomllib
 from typing import Self
 
 import tomli_w
@@ -179,6 +180,26 @@ class MeasurementMetadata:
     # Access fields programmatically using `getattr(mdata, field)` or `asdict(mdata)`
 
     @classmethod
+    def from_toml(cls, file: Path, ignore_invalid: bool = False) -> Self:
+        """Read the metadata from a TOML file.
+        
+        If `ignore_invalid` is `True`, any fields in the file that are not (currently)
+        valid attributes of the dataclass are just ignored; otherwise, their presence
+        results in a `TypeError`.
+        """
+
+        with open(file, "rb") as f:
+            d = tomllib.load(f)
+        # Manufacturer has to be converted from a string
+        if "manufacturer" in d:
+            d["manufacturer"] = Manufacturer.from_str(d["manufacturer"])
+        if ignore_invalid:
+            valid_fields = [f.name for f in fields(MeasurementMetadata)]
+            d = {k: v for k, v in d.items() if k in valid_fields}
+        metadata = MeasurementMetadata(**d)
+        return metadata
+
+    @classmethod
     def from_measurement_title(cls, title: str, rules: MetadataRules) -> Self | None:
         """Create a metadata object with the values extracted from `title` according
         to the pattern in `rules`. Returns `None` if the pattern is not matched."""
@@ -198,7 +219,31 @@ class MeasurementMetadata:
         # Add the original title too
         result.title = title
         return result
+
+    def fields(self, skip_missing: bool = False) -> list[str]:
+        """Get a list of the possible metadata fields, optionally restricting it
+        to only those for which values have been set.
+        
+        Note that this method intentionally differs in behaviour from that of
+        `dataclasses.fields(MeasurementMetadata)`.
+        """
+        if skip_missing:
+            return [k for k, v in asdict(self).items() if v is not None]
+        else:
+            return [f.name for f in fields(self)]
     
+    def write_toml(self, file: Path):
+        """Write the metadata as TOML to `file`."""
+
+        d = asdict(self)
+        # Can't serialize the `Manufacturer` enum as-is
+        d["manufacturer"] = str(d["manufacturer"]) if d["manufacturer"] else None
+        # Remove anything that has a value of `None` (TOML has no null value)
+        d = {k: v for k, v in d.items() if v is not None}
+
+        with open(file, "wb") as f:
+            tomli_w.dump(d, f)
+
     def generate_folder_name(
         self,
         rules: MetadataRules,
@@ -251,7 +296,10 @@ class MeasurementMetadata:
             if field.startswith("%"):
                 # strftime formatting strings beginning with `%` are replaced by the
                 # appropriately formatted component of the date
-                parts.append(self.date.strftime(field))
+                if self.date:
+                    parts.append(self.date.strftime(field))
+                else:
+                    parts.append("unknown")
             else:
                 value = getattr(self, field, None)
                 if value is not None:
@@ -283,18 +331,6 @@ class MeasurementMetadata:
             logging.info(f"Char {x} not permitted in folder names, replaced with {str(hex(ord(x)))}")
             name = name.replace(x, str(hex(ord(x))))
         return name
-    
-    def write_toml(self, file: Path):
-        """Write the metadata as TOML to `file`."""
-
-        d = asdict(self)
-        # Can't serialize the `Manufacturer` enum as-is
-        d["manufacturer"] = str(d["manufacturer"])
-        # Remove anything that has a value of `None` (TOML has no null value)
-        d = {k: v for k, v in d.items() if v is not None}
-
-        with open(file, "wb") as f:
-            tomli_w.dump(d, f)
 
 
 def get_metadata_bruker(dir: Path, rules: MetadataRules) -> MeasurementMetadata | None:

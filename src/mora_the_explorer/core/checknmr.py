@@ -11,6 +11,7 @@ import datetime
 from pathlib import Path
 
 from .metadata import (
+    MeasurementMetadata,
     MetadataRules,
     Manufacturer,
     get_metadata,
@@ -113,89 +114,89 @@ class Reporter(ABC):
         pass
 
 
-def compare_spectra(server_folder, dest_folder) -> tuple[bool, bool]:
-    """Check that two spectra with the same name are actually the same measurement and not e.g. different proton measurements.
+def cmp_spectra(src: Path, target: Path, src_metadata: MeasurementMetadata) -> tuple[bool, bool]:
+    """Check that two spectra with the same name are actually the same measurement
+    and not e.g. different proton measurements.
 
     In the event that the spectra are the same, a check is made to see if everything has
     been copied; if not, `incomplete` is returned as `True`.
     Result is a tuple with the result in the form `(same, incomplete)`.
     """
 
-    # These are files which can be used to assess if two folders are the same sample
-    # On Agilent spectrometers, various files seem to be good candidates for this job
-    # but actually often they change after each individual experiment
-    diagnostic_files = [
-        "fid",  # The actual spectrum
-        "audita.txt",  # On Bruker
-    ]
+    # Compare metadata
+    # We should distinguish between the situations where:
+    # 1. the metadata actually differ in some field
+    # 2. the previously copied metadata are less complete than the other, but all
+    #    overlapping fields are identical
+    # as the second case could pertain to two copies of the same spectrum if the
+    # first time it was copied it didn't have all the necessary files available
+    # to extract the metadata from, or the extraction rules were different, or
+    # it was copied with an older version of the app where fewer fields were
+    # extracted.
 
-    # Start with the assumption that they are not the same spectrum/spectra and try
-    # to prove otherwise
-    same = False
-
-    # Compares the list of files between the two directories provided and returns a
-    # tuple of three lists (matches, mismatches, errors) - any files not in both
-    # directories gets put into errors
-    # By setting `shallow = False`, we don't compare metadata but rather the size and
-    # content of the files themselves
-    top_level_cmp = filecmp.cmpfiles(
-        server_folder,
-        dest_folder,
-        diagnostic_files,
-        shallow=False,
-    )
-    if len(top_level_cmp[0]) > 0:
-        same = True
-        logging.info(f"Determined to be the same based on {top_level_cmp[0]} being identical")
-
-    # If don't seem to be same so far, check any subfolders (which are each spectra
-    # on Agilent specs) to see if they are identical spectra
-    if not same:
-        for x in [x for x in server_folder.iterdir() if x.is_dir()]:
-            subdir_cmp = filecmp.cmpfiles(
-                x,
-                dest_folder / x.name,
-                diagnostic_files,
-                shallow=False,
-            )
-            if len(subdir_cmp[0]) > 0:
-                same = True
-                logging.info(
-                    f"Determined to be the same based on {x.name}/{subdir_cmp[0]} being identical"
-                )
-                # Stop as soon as we find a single hint that they are the same folder
-                break
-
-    # This compares the contents of the two folders but on metadata only
-    comparison = filecmp.dircmp(server_folder, dest_folder)
-
-    # One final check
-    # This compares just the metadata of any top-level files including modified time,
-    # which means even the same spectra might give a false negative, so we can't use it
-    # as the main test, but it is unlikely to give a false positive
-    if not same:
-        if len(comparison.same_files) > 0:
-            same = True
-            logging.info(
-                f"Determined to be the same based on the metadata of {comparison.same_files} being identical"
-            )
-
-    if same:
-        # See if there are any subdirectories or files that we are missing
-        # Note that this doesn't look within subfolders
-        if len(comparison.left_only) > 0:
-            incomplete = True
-            logging.info(f"but {comparison.left_only} are missing in copied folder")
-        else:
-            incomplete = False
+    # We know the src metadata already
+    # Load that of the target from the TOML file we left behind when we copied it
+    target_metadata_file = target / "mora.toml"
+    metadata_match = True  # Assume a match until anything proves it wrong
+    metadata_incomplete = False
+    if not target_metadata_file.exists():
+        metadata_match = False
+        metadata_incomplete = False
     else:
-        logging.info("The folders are for different measurements/samples")
-        incomplete = False
+        try:
+            target_metadata: MeasurementMetadata = MeasurementMetadata.from_toml(target_metadata_file)
+        except TypeError:
+            # Probably caused by the metadata being old and containing a field that is no longer valid
+            try:
+                target_metadata: MeasurementMetadata = MeasurementMetadata.from_toml(
+                    target_metadata_file,
+                    ignore_invalid=True,
+                )
+                # If that isn't the case, an exception will be raised again, otherwise
+                # we consider the metadata to be outdated and therefore incomplete
+                metadata_incomplete = True
+            except Exception:
+                metadata_match = False
+                metadata_incomplete = False
+        except Exception:
+            metadata_match = False
+            metadata_incomplete = False
+        # Check if the src is a superset of target (unless we already know it's not)
+        if metadata_match:
+            for f in target_metadata.fields(skip_missing=True):
+                target_val = getattr(target_metadata, f)
+                src_val = getattr(src_metadata, f)
+                if target_val == src_val:
+                    continue
+                else:
+                    logging.info(f"Metadata field {f} differs: {src_val} in src, {target_val} in target")
+                    metadata_match = False
+        # If it's a superset, check if they're actually truly identical or if there's stuff missing
+        # (unless we already know there is)
+        if metadata_match and not metadata_incomplete:
+            metadata_incomplete = not (src_metadata == target_metadata)
+    if metadata_match:
+        logging.info("Metadata match (are not contradictory)")
+        if metadata_incomplete:
+            logging.info("Metadata in target appear to be incomplete")
+    else:
+        logging.info("Metadata do not match, implying different spectra")
+
+    # Compare fids
+    # fid is a binary file at the top level in a measurement folder regardless of manufacturer
+    src_fid = src / "fid"
+    target_fid = src / "fid"
+    fids_match = filecmp.cmp(src_fid, target_fid)
+
+    # Err on the side of caution - can only be sure they're the same if both matched
+    same = fids_match and metadata_match
+    # If the metadata and fids match, but there are missing metadata, it should be recopied
+    incomplete = same and metadata_incomplete
 
     return same, incomplete
 
 
-def copy_folder(src: Path, target: Path, reporter: Reporter) -> Path | None:
+def copy_folder(src: Path, target: Path, src_metadata: MeasurementMetadata, reporter: Reporter) -> Path | None:
     """Copy a spectra folder over to the target if it isn't already there.
 
     Returns the destination that was saved to, if any.
@@ -221,14 +222,14 @@ def copy_folder(src: Path, target: Path, reporter: Reporter) -> Path | None:
         # proton measurements
         # If confirmed to be unique spectra, need to extend spectrum name with
         # -2, -3 etc. to avoid conflict with spectra already in dest
-        same_spectrum_found, incomplete_copy = compare_spectra(src, target)
+        same_spectrum_found, incomplete_copy = cmp_spectra(src, target, src_metadata)
         num = 1
         while not same_spectrum_found:
             num += 1
             alt = target.with_name(target.name + "-" + str(num))
             if alt.exists():
                 # Check if this spectrum is the same one or yet another unique one
-                same_spectrum_found, incomplete_copy = compare_spectra(src, alt)
+                same_spectrum_found, incomplete_copy = cmp_spectra(src, alt, src_metadata)
             else:
                 # We have exhausted all possible candidates for the same spectrum,
                 # it's definitely not already been copied, and we have now finally
@@ -236,22 +237,33 @@ def copy_folder(src: Path, target: Path, reporter: Reporter) -> Path | None:
                 target = alt
                 break
 
-    # Try and fix only partially copied spectra
-    if same_spectrum_found is True and incomplete_copy is True:
+    # Don't copy spectra yet if they have no fid or only a small placeholder fid
+    fid = src / "fid"
+    if not fid.exists():
+        logging.info(f"No fid found for {src.name}!")
+        reporter.add_error(f"No fid found for {src.name}!")
+    
+    # Even a proton spectrum is 200-250 KiB, so assume anything smaller than one
+    # kilobyte is malformed
+    if fid.stat().st_size < 1028:
+        logging.info(f"fid of {src.name} is less than a KiB and presumed malformed")
+        reporter.add_error(f"fid of {src.name} is invalid!")
+        return None
+
+    # Try and fix only partially copied spectra by copying them again
+    if same_spectrum_found and incomplete_copy:
         logging.info("The existing copy is only partial")
-        reporter.set_status("Copying additional files…")
+        reporter.set_status("Copying…")
         reporter.add_message("New files found for: " + target.name)
-        for x in src.iterdir():
-            # Copy any file or subdirectory that isn't already in destination
-            if not (target / x.name).exists():
-                try:
-                    if x.is_dir():
-                        shutil.copytree(x, target / x.name)
-                    elif x.is_file():
-                        shutil.copy2(x, target / x.name)
-                except PermissionError:
-                    reporter.add_error("You do not have permission to write to the given folder")
-                    return None
+        # Used to try and just add the missing files, but easier just to replace
+        # entirely (as long as we are sure that they are the same spectra)
+        try:
+            shutil.copytree(src, target)
+        except PermissionError:
+            logging.info("No write permission for destination")
+            reporter.add_error("You do not have permission to write to the given folder")
+            return None
+        logging.info(f"Spectrum overwritten with fresh copy at {target}")
         reporter.add_copied(target.name)
         return target
     elif same_spectrum_found is False:
@@ -262,10 +274,12 @@ def copy_folder(src: Path, target: Path, reporter: Reporter) -> Path | None:
             logging.info("No write permission for destination")
             reporter.add_error("You do not have permission to write to the given folder")
             return None
-        logging.info(f"Spectrum saved to {target.name}")
+        logging.info(f"Spectrum saved to {target}")
         reporter.add_copied(target.name)
         return target
     else:
+        # Identified an existing copy of the spectrum
+        logging.info(f"Copy of the spectrum already found at {target}")
         return None
 
 
@@ -453,7 +467,7 @@ def check_nmr(
 
             # Copy, add output messages to main output list
             reporter.set_status("Comparing metadata…")
-            final_dest = copy_folder(measurement_dir, target, reporter)
+            final_dest = copy_folder(measurement_dir, target, metadata, reporter)
 
             # If we copied, add a file with the metadata
             if final_dest:
