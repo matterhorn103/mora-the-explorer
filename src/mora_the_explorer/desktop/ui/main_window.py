@@ -146,8 +146,8 @@ class MainWindow(QMainWindow):
         self.folder_name_options.changed.connect(self._on_folder_name_options_changed)
 
         # Preview of the result of the user's choices
-        self.folder_name_preview = rows.FolderNamePreview(config)
-        self.add_row(self.folder_name_preview)
+        #self.folder_name_preview = rows.FolderNamePreview(config)
+        #self.add_row(self.folder_name_preview)
 
         # Spectrometer selection
         self.spec_selector = rows.SpectrometerSelector(config.specs)
@@ -353,7 +353,7 @@ class MainWindow(QMainWindow):
     @Slot()
     def _on_user_changed(self):
         self.config.options.user = self.user_entry.text()
-        self.folder_name_preview.regenerate_preview()
+        #self.folder_name_preview.regenerate_preview()
         self.save_button.setEnabled(True)
 
     @Slot()
@@ -372,13 +372,13 @@ class MainWindow(QMainWindow):
         else:
             self.config.options.group = self.group_entry.selected()
             self.refresh_visible_specs()
-        self.folder_name_preview.regenerate_preview()
+        #self.folder_name_preview.regenerate_preview()
         self.save_button.setEnabled(True)
 
     @Slot()
     def _on_group_name_changed(self):
         self.config.options.group_name = self.group_name_entry.text()
-        self.folder_name_preview.regenerate_preview()
+        #self.folder_name_preview.regenerate_preview()
         self.save_button.setEnabled(True)
     
     @Slot()
@@ -403,21 +403,21 @@ class MainWindow(QMainWindow):
     def _on_sort_changed(self):
         self.config.options.sort = self.sort_selector.selected()
         self.adapt_to_sort()
-        self.folder_name_preview.regenerate_preview()
+        #self.folder_name_preview.regenerate_preview()
 
     @Slot()
     def _on_folder_name_options_changed(self):
         # Returns {"user": True, "experiment": False, ...}
         for k, v in self.folder_name_options.checked().items():
             setattr(self.config.options.naming, k, v)
-        self.folder_name_preview.regenerate_preview()
+        #self.folder_name_preview.regenerate_preview()
         self.save_button.setEnabled(True)
 
     @Slot()
     def _on_spec_changed(self):
         self.config.options.spec = self.spec_selector.selected()
         self.adapt_to_spec()
-        self.folder_name_preview.regenerate_preview()
+        #self.folder_name_preview.regenerate_preview()
         self.save_button.setEnabled(True)
 
     @Slot()

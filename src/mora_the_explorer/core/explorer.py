@@ -5,7 +5,7 @@ import sys
 
 from .config import Config
 from .spec import Spectrometer
-from . import get_check_paths, check_nmr, MetadataRules, Reporter, VariableSubstitutions, SpectraSorting
+from . import get_check_paths, check_nmr, MetadataRules, Reporter, MatchValues, SpectraSorting
 
 
 class PrintingReporter(Reporter):
@@ -99,7 +99,7 @@ class Explorer:
             group_name = options.group_name
         else:
             group_name = self.config.groups.all[options.group]
-        substitutions = VariableSubstitutions(
+        substitutions = MatchValues(
             user=options.user,
             user_name=options.user_name,
             group=options.group,
@@ -153,11 +153,11 @@ class Explorer:
             measurement_format.append("folder_name")
 
         rules = MetadataRules(
-            substitutions=substitutions,
+            values=substitutions,
             sample_pattern=spec_info.sample_pattern,
             measurement_pattern=spec_info.measurement_pattern,
-            sample_name_fields=sample_format,
-            measurement_name_fields=measurement_format,
+            sample_format=sample_format,
+            measurement_format=measurement_format,
             pattern_sep=self.config.admin.pattern_separator,
         )
         return rules
