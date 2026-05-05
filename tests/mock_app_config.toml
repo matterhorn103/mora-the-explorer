@@ -47,7 +47,7 @@ pharmazie = "pharmazie"
 [spectrometers.dpx300]
 measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
 check_paths = [
-    "dpx300/{%y}-dpx300_{%Y}/{%b%d-%Y}",
+    "dpx300/{date:%y}-dpx300_{date:%Y}/{date:%b%d-%Y}",
 ]
 manufacturer = "bruker"
 display_name = "dpx300 (bruker)"
@@ -58,11 +58,11 @@ admin_only = true
 [spectrometers.av300]
 measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
 check_paths = [
-    "av300/{%b%d-%Y}",
+    "av300/{date:%b%d-%Y}",
 ]
 archives = [
-    "av300/{%y}-av300_{%Y}/{%b%d-%Y}",
-    "av300/{%y}-dpx300_{%Y}/{%b%d-%Y}",
+    "av300/{date:%y}-av300_{date:%Y}/{date:%b%d-%Y}",
+    "av300/{date:%y}-dpx300_{date:%Y}/{date:%b%d-%Y}",
 ]
 manufacturer = "bruker"
 display_name = "av300 (bruker)"
@@ -75,15 +75,15 @@ restrict_to = [
 [spectrometers.neo400]
 measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
 check_paths = [
-    "neo400/neo400a_{%b%d-%Y}",
-    "neo400/neo400b_{%b%d-%Y}",
-    "neo400/neo400c_{%b%d-%Y}",
+    "neo400/neo400a_{date:%b%d-%Y}",
+    "neo400/neo400b_{date:%b%d-%Y}",
+    "neo400/neo400c_{date:%b%d-%Y}",
 ]
 archives = [
-    "neo400/{%y}-av400_{%Y}/{%b%d-%Y}",
-    "neo400/{%y}-neo400a_{%Y}/{%b%d-%Y}",
-    "neo400/{%y}-neo400b_{%Y}/{%b%d-%Y}",
-    "neo400/{%y}-neo400c_{%Y}/{%b%d-%Y}",
+    "neo400/{date:%y}-av400_{date:%Y}/{date:%b%d-%Y}",
+    "neo400/{date:%y}-neo400a_{date:%Y}/{date:%b%d-%Y}",
+    "neo400/{date:%y}-neo400b_{date:%Y}/{date:%b%d-%Y}",
+    "neo400/{date:%y}-neo400c_{date:%Y}/{date:%b%d-%Y}",
 ]
 manufacturer = "bruker"
 include = [
@@ -97,7 +97,7 @@ single_check_only = false
 sample_pattern = '<user!><sample_id>'
 measurement_pattern = '<user!><sample_id>\_(\d{6})\_(\d{3}k)\_(.+)_\d\.fid'
 check_paths = [
-    "v600/<group_name>/{%Y}",
+    "v600/{group_name}/{date:%Y}",
 ]
 manufacturer = "agilent"
 display_name = "v600 (agilent)"

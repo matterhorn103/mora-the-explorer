@@ -187,7 +187,7 @@ class Explorer:
         check_paths = get_check_paths(
             spec_info=spec,
             server_path=server_path,
-            check_date=date,
+            date=date,
             groups=groups,
         )
 

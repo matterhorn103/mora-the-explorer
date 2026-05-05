@@ -111,11 +111,14 @@ pharmazie = "pharmazie"
 #   allow_solvent: whether to enable the folder naming option to include the solvent
 #   single_check_only: whether users may use multiday and repeat checks for this spec
 #
-# Possible variable fields in `check_paths` and `archives` are:
-# - <group>         (the chosen group's ID)
-# - <group_name>    (the chosen group's name)
-# - any strftime formatting string, with % characters, enclosed in {}
-#   - for the format codes see https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
+# Variables can be interpolated into the entries in `check_paths` and `archives`
+# by wrapping them in curly brackets. The following variables can be used:
+# - group         (the chosen group's ID)
+# - group_name    (the chosen group's name)
+# - date
+# 
+# For `date`, it may be desirable to format it using e.g. `{date:%Y}` to get `2026`
+# For the format codes see https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
 
 [spectrometers.archiv]
 manufacturer = "bruker"
@@ -123,12 +126,12 @@ display_name = "Pre-2020 archive (Bruker)"
 measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
 date_entry = "dd MMM yyyy"
 check_paths = [
-    "archiv/dpx300/{%y}-dpx300_{%Y}/{%b%d-%Y}",
-    "archiv/av300/{%y}-av300_{%Y}/{%b%d-%Y}",
-    "archiv/av400/{%y}-av400_{%Y}/{%b%d-%Y}",
-    "archiv/neo400a/{%y}-neo400a_{%Y}/neo400a_{%b%d-%Y}",
-    "archiv/neo400b/{%y}-neo400b_{%Y}/neo400b_{%b%d-%Y}",
-    "archiv/neo400c/{%y}-neo400c_{%Y}/neo400c_{%b%d-%Y}",
+    "archiv/dpx300/{date:%y}-dpx300_{date:%Y}/{date:%b%d-%Y}",
+    "archiv/av300/{date:%y}-av300_{date:%Y}/{date:%b%d-%Y}",
+    "archiv/av400/{date:%y}-av400_{date:%Y}/{date:%b%d-%Y}",
+    "archiv/neo400a/{date:%y}-neo400a_{date:%Y}/neo400a_{date:%b%d-%Y}",
+    "archiv/neo400b/{date:%y}-neo400b_{date:%Y}/neo400b_{date:%b%d-%Y}",
+    "archiv/neo400c/{date:%y}-neo400c_{date:%Y}/neo400c_{date:%b%d-%Y}",
 ]
 admin_only = true
 single_check_only = false
@@ -139,10 +142,10 @@ display_name = "Studer group NMR only (300 MHz)"
 measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
 date_entry = "dd MMM yyyy"
 check_paths = [
-    "av300/av1/{%b%d-%Y}",
+    "av300/av1/{date:%b%d-%Y}",
 ]
 archives = [
-    "av300/av1/{%y}-av300_{%Y}/{%b%d-%Y}",
+    "av300/av1/{date:%y}-av300_{date:%Y}/{date:%b%d-%Y}",
 ]
 restrict_to = [
     "stu",
@@ -156,14 +159,14 @@ display_name = "Routine NMR (300 && 400 MHz)"
 measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
 date_entry = "dd MMM yyyy"
 check_paths = [
-    "neo400/av1/neo400a_{%b%d-%Y}",
-    "neo400/av1/neo400b_{%b%d-%Y}",
-    "neo400/av1/neo400c_{%b%d-%Y}",
+    "neo400/av1/neo400a_{date:%b%d-%Y}",
+    "neo400/av1/neo400b_{date:%b%d-%Y}",
+    "neo400/av1/neo400c_{date:%b%d-%Y}",
 ]
 archives = [
-    "neo400/av1/{%y}-neo400a_{%Y}/{%b%d-%Y}",
-    "neo400/av1/{%y}-neo400b_{%Y}/{%b%d-%Y}",
-    "neo400/av1/{%y}-neo400c_{%Y}/{%b%d-%Y}",
+    "neo400/av1/{date:%y}-neo400a_{date:%Y}/{date:%b%d-%Y}",
+    "neo400/av1/{date:%y}-neo400b_{date:%Y}/{date:%b%d-%Y}",
+    "neo400/av1/{date:%y}-neo400c_{date:%Y}/{date:%b%d-%Y}",
 ]
 include = [ "av300" ]
 single_check_only = false
@@ -175,9 +178,9 @@ sample_pattern = '<user!><sample_id>'
 measurement_pattern = '<user!><sample_id>\_(\d{6})\_(\d{3}k)\_(.+)_\d\.fid'
 date_entry = "yyyy"
 check_paths = [
-    "500-600er/<group_name>/{%Y}",
+    "500-600er/{group_name}/{date:%Y}",
 ]
 archives = [
-    "archiv/500-600er/<group_name>/{%Y}",
+    "archiv/500-600er/{group_name}/{date:%Y}",
 ]
 single_check_only = true
