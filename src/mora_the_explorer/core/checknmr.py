@@ -449,8 +449,8 @@ def check_nmr(
             # (at least not at this point in time)
             # but can be supplied because we know them already
             metadata.manufacturer = manufacturer
-            if metadata.date is None:
-                metadata.date = date
+            if metadata.submission_time is None:
+                metadata.submission_time = datetime.datetime(date.year, date.month, date.day)
 
             # Generate the appropriate names and target path
             measurement_name = metadata.generate_folder_name(rules, drop_missing=False)

@@ -166,8 +166,10 @@ class MeasurementMetadata:
     path: str | None = None
     folder_name: str | None = None
     manufacturer: Manufacturer | None = None
-    date: datetime.date | None = None
+    submission_time: datetime.date | None = None
+    completion_time: datetime.datetime | None = None
     title: str | None = None
+    sample_id: str | None = None
     user: str | None = None
     user_name: str | None = None
     group: str | None = None
@@ -176,7 +178,8 @@ class MeasurementMetadata:
     instrument: str | None = None
     frequency: float | None = None
     solvent: str | None = None
-    sample_id: str | None = None
+    temperature: int | None = None
+    measurement_no: int | None = None
     # Access fields programmatically using `getattr(mdata, field)` or `asdict(mdata)`
 
     @classmethod
@@ -295,9 +298,9 @@ class MeasurementMetadata:
                         field = mutually_exclusive_field
             if field.startswith("%"):
                 # strftime formatting strings beginning with `%` are replaced by the
-                # appropriately formatted component of the date
-                if self.date:
-                    parts.append(self.date.strftime(field))
+                # appropriately formatted component of the completion time
+                if self.completion_time:
+                    parts.append(self.completion_time.strftime(field))
                 else:
                     parts.append("unknown")
             else:
@@ -377,7 +380,20 @@ def get_metadata_bruker(dir: Path, rules: MetadataRules) -> MeasurementMetadata 
                 if line.startswith("Host"):
                     # Line has format "Host         : av300"
                     metadata.instrument = line.split()[2]
-                if metadata.frequency and metadata.instrument:
+                if line.startswith("Date"):
+                    # TODO Work out if this is a reliable source and if this timestamp
+                    # actually is for the completion time or not?
+                    # Line has format "Date         : Mon Oct 14 14:38:13 2024"
+                    parts = line.split()
+                    year = parts[6]
+                    month = parts[3]
+                    day = parts[4]
+                    time = parts[5].split(":")
+                    hour = time[0]
+                    minute = time[1]
+                    second = time[2]
+                    metadata.completion_time = datetime.datetime(year, month, day, hour, minute, second)
+                if metadata.frequency and metadata.instrument and metadata.completion_time:
                     # Found everything we need, we can stop iterating
                     break
 
@@ -410,6 +426,9 @@ def get_metadata_agilent(dir: Path, rules: MetadataRules) -> MeasurementMetadata
             "sfrq": {"field": "frequency", "dtype": float},
             "solvent": {"field": "solvent", "dtype": str},
             "kbspec": {"field": "instrument", "dtype": str},
+            "tempk_s": {"field": "temperature", "dtype": int},
+            "time_submitted": {"field": "submission_time", "dtype": datetime.datetime},
+            "time_complete": {"field": "completion_time", "dtype": datetime.datetime},
         }
         # Turns out we can't rely on the lines being in sets of three, so have
         # to iterate through all of them

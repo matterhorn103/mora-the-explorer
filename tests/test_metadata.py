@@ -50,7 +50,7 @@ class TestMetadata:
     def test_name_gen(self):
         metadata = MeasurementMetadata(group="stu", user="mjm", sample_id="213-4 repeat")
         metadata.manufacturer = Manufacturer.BRUKER
-        metadata.date = datetime.date.today()
+        metadata.submission_time = datetime.date.today()
         # Note that the name generation is independent of the manufacturer these days
         name = metadata.generate_folder_name(BRUKER_RULES)
         assert name == "mjm-213-4-repeat"

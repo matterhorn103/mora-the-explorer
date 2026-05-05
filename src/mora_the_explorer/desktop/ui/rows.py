@@ -454,7 +454,7 @@ class FolderNamePreview(RowComponent):
             path="",
             folder_name="170",
             manufacturer=Manufacturer.BRUKER,
-            date=datetime.date.today(),
+            submission_time=datetime.date.today(),
             user="",
             group="",
             experiment="proton",
@@ -492,7 +492,7 @@ class FolderNamePreview(RowComponent):
             self.mdata.instrument = "av300"
             self.mdata.experiment = "proton"
         else:
-            self.mdata.folder_name = f"{self.config.options.user}{self.mdata.sample_id}_{self.mdata.date.strftime('%d%m%y')}_299k_1h_1.fid"
+            self.mdata.folder_name = f"{self.config.options.user}{self.mdata.sample_id}_{self.mdata.submission_time.strftime('%d%m%y')}_299k_1h_1.fid"
             self.mdata.instrument = "v500"
             self.mdata.experiment = "1h"
         # Don't bother with this so long as we don't offer the ability to include the path
