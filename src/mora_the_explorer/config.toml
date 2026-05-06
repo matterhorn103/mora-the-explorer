@@ -19,16 +19,10 @@ group = "gil"
 spec = "neo400"
 repeat_switch = false
 repeat_delay = 5
-sort = 3  # How to sort when saving; 0 = original sorting, 1 = measurement (Bruker-style), 2 = sample & spec, 3 = sample (Agilent-style) 
 
 [options.naming]
-group = false
-user = true
-solvent = false
-instrument = false
-frequency = false
-experiment = true
-original = false
+sample_format = "{user}-{sample_id}"
+measurement_format = "{user}-{sample_id}_{instrument}_{completion_time:%d%m%y}_{temperature}k_{experiment}_{measurement_no}"
 
 
 [appearance]
@@ -47,7 +41,7 @@ save = "~/nmr"  # The location spectra should be copied to
 
 [admin]
 user_name_is_admin_only = true
-pattern_separator = '[\s_-]'
+pattern_separator = '[\s_-]' # Note the single quotes! (= literal string)
 version = "2.0.0b5"
 email = "milner@uni-muenster.de"
 changelog = """
@@ -120,10 +114,13 @@ pharmazie = "pharmazie"
 # For `date`, it may be desirable to format it using e.g. `{date:%Y}` to get `2026`
 # For the format codes see https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
 
+# Note that in TOML, single quotes can be used for a literal string to avoid
+# having to use backslash escapes, which is very useful for regex patterns
+
 [spectrometers.archiv]
 manufacturer = "bruker"
 display_name = "Pre-2020 archive (Bruker)"
-measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
+measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>' # Note the single quotes! (= literal string)
 date_entry = "dd MMM yyyy"
 check_paths = [
     "archiv/dpx300/{date:%y}-dpx300_{date:%Y}/{date:%b%d-%Y}",

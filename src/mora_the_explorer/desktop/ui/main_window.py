@@ -132,18 +132,18 @@ class MainWindow(QMainWindow):
         self.dest_entry.changed.connect(self._on_dest_path_changed)
 
         # Sorting selection
-        self.sort_selector = rows.SortingSelector()
-        self.sort_selector.set_selected(config.options.sort)
-        self.add_row(self.sort_selector)
-        self.sort_selector.changed.connect(self._on_sort_changed)
+        #self.sort_selector = rows.SortingSelector()
+        #self.sort_selector.set_selected(config.options.sort)
+        #self.add_row(self.sort_selector)
+        #self.sort_selector.changed.connect(self._on_sort_changed)
 
         # Folder name options
-        self.folder_name_options = rows.FolderNameOptions()
+        #self.folder_name_options = rows.FolderNameOptions()
         # Each option `user`, `solvent` etc. has a corresponding flag in the config
         # (except for frequency)
-        self.folder_name_options.set_checked(**(asdict(config.options.naming)))
-        self.add_row(self.folder_name_options)
-        self.folder_name_options.changed.connect(self._on_folder_name_options_changed)
+        #self.folder_name_options.set_checked(**(asdict(config.options.naming)))
+        #self.add_row(self.folder_name_options)
+        #self.folder_name_options.changed.connect(self._on_folder_name_options_changed)
 
         # Preview of the result of the user's choices
         #self.folder_name_preview = rows.FolderNamePreview(config)
@@ -399,19 +399,19 @@ class MainWindow(QMainWindow):
         self.config.paths.save = str(self.dest_entry.path())
         self.save_button.setEnabled(True)
 
-    @Slot()
-    def _on_sort_changed(self):
-        self.config.options.sort = self.sort_selector.selected()
-        self.adapt_to_sort()
-        #self.folder_name_preview.regenerate_preview()
+    #@Slot()
+    #def _on_sort_changed(self):
+    #    self.config.options.sort = self.sort_selector.selected()
+    #    self.adapt_to_sort()
+    #    #self.folder_name_preview.regenerate_preview()
 
-    @Slot()
-    def _on_folder_name_options_changed(self):
-        # Returns {"user": True, "experiment": False, ...}
-        for k, v in self.folder_name_options.checked().items():
-            setattr(self.config.options.naming, k, v)
-        #self.folder_name_preview.regenerate_preview()
-        self.save_button.setEnabled(True)
+    #@Slot()
+    #def _on_folder_name_options_changed(self):
+    #    # Returns {"user": True, "experiment": False, ...}
+    #    for k, v in self.folder_name_options.checked().items():
+    #        setattr(self.config.options.naming, k, v)
+    #    #self.folder_name_preview.regenerate_preview()
+    #    self.save_button.setEnabled(True)
 
     @Slot()
     def _on_spec_changed(self):

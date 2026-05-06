@@ -453,7 +453,7 @@ def check_nmr(
                 metadata.submission_time = datetime.datetime(date.year, date.month, date.day)
 
             # Generate the appropriate names and target path
-            measurement_name = metadata.generate_folder_name(rules, drop_missing=False)
+            measurement_name = metadata.generate_folder_name(rules.measurement_format)
             if sort is SpectraSorting.ORIGINAL:
                 # Use the native Bruker or Agilent style
                 sort = SpectraSorting.MEASUREMENT if manufacturer is Manufacturer.BRUKER else SpectraSorting.SAMPLE
@@ -461,7 +461,7 @@ def check_nmr(
                 # Just save spectra in a completely flat fashion
                 target = dest_path / measurement_name
             else:  # Covers sorting by sample and by sample+spectrometer
-                sample_name = metadata.generate_folder_name(rules, drop_missing=False, sample=True)
+                sample_name = metadata.generate_folder_name(rules.sample_format)
                 # Save in nested folders
                 target = dest_path / sample_name / measurement_name
 

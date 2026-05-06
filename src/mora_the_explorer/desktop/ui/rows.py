@@ -301,56 +301,6 @@ class OverflowSelector(RowComponent):
 # The classes above are abstract really, whereas the below are specific to their
 # context and have more stuff hard-coded
 
-
-class SortingSelector(RowComponent):
-    """The component to select how the spectra should be sorted when saving."""
-
-    # A signal emitted whenever any of the options are toggled
-    changed = Signal()
-
-    def __init__(self):
-        super().__init__()
-
-        # Two items: a title and a stack of mutually exclusive radio buttons
-        self.title = QLabel("Sort by:")
-        self.button_stack = QVBoxLayout()
-
-        # Right align the title (but top align vertically)
-        self.title.setAlignment(Qt.AlignRight | Qt.AlignTop)
-
-        # A button group to make the buttons mutually exclusive
-        self.buttons = QButtonGroup()
-
-        self.original_button = QRadioButton("keep original sorting")
-        self.measurement_button = QRadioButton("measurement (i.e. no sorting, Bruker-style)")
-        self.sample_spec_button = QRadioButton("sample AND instrument")
-        self.sample_button = QRadioButton("sample (Agilent-style)")
-
-        for i, b in enumerate([
-            self.original_button,
-            self.measurement_button,
-            self.sample_spec_button,
-            self.sample_button,
-        ]):
-            self.buttons.addButton(b, id=i)
-            self.button_stack.addWidget(b)
-
-        self.buttons.buttonClicked.connect(self.changed)
-    
-    def add_to_grid(self, grid: QGridLayout, row: int):
-        grid.addWidget(self.title, row, 0)
-        grid.addLayout(self.button_stack, row, 1)
-
-    def selected(self) -> SpectraSorting:
-        """Get the selected option."""
-        return SpectraSorting(self.buttons.checkedId())
-
-    def set_selected(self, sort: SpectraSorting):
-        """Set the selected option."""
-        i = int(sort)
-        self.buttons.button(i).setChecked(True)
-
-
 class FolderNameOptions(RowComponent):
     """The component for choices relating to folder name customization."""
 

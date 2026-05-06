@@ -162,7 +162,7 @@ class MeasurementMetadata:
     path: str | None = None
     folder_name: str | None = None
     manufacturer: Manufacturer | None = None
-    submission_time: datetime.date | None = None
+    submission_time: datetime.datetime | None = None
     completion_time: datetime.datetime | None = None
     title: str | None = None
     sample_id: str | None = None
@@ -230,16 +230,32 @@ class MeasurementMetadata:
         else:
             return [f.name for f in fields(self)]
     
-    def values(self, skip_missing: bool = False, default: str = "unknown") -> dict[str, str]:
+    def values(self, skip_missing: bool = False, default_str: str = "unknown") -> dict[str, str]:
         """Get a dict of the metadata fields and their values, optionally restricting
         it to only those for which values have been set.
 
-        If `skip_missing` is `False`, any missing values are replaced with `default`.
+        If `skip_missing` is `False`:
+        - any missing string values are replaced with `default_str`.
+        - missing `datetime` objects are replaced with `2001-01-01`.
+        - missing `int` and `float` values are replaced with `0` and `0.0`
         """
         if skip_missing:
             return {k: v for k, v in asdict(self).items() if v is not None}
         else:
-            return {k: (v if v is not None else default) for k, v in asdict(self).items()}
+            output = {}
+            for k, v in asdict(self).items():
+                if v is not None:
+                    output[k] = v
+                # Datetime objects
+                elif k in {"submission_time", "completion_time"}:
+                    output[k] = datetime.datetime(2001, 1, 1)
+                # Integers
+                elif k in {"temperature", "measurement_no"}:
+                    output[k] = 0
+                # Floats
+                elif k in {"frequency"}:
+                    output[k] = 0.0
+            return output
     
     def write_toml(self, file: Path):
         """Write the metadata as TOML to `file`."""
@@ -256,7 +272,6 @@ class MeasurementMetadata:
     def generate_folder_name(
         self,
         template: str,
-        skip_missing: bool = False,
         default: str = "unknown",
     ) -> str:
         """Get a formatted folder name according to the provided template and
@@ -276,15 +291,14 @@ class MeasurementMetadata:
         be included using `{completion_time:%y%m%d}`
 
         If a requested metadata field is missing (i.e. the value of the variable
-        is `None`) the string `"unknown"` is used in its place. The same applies
-        if a requested field is not an actual metadata field.
+        is `None`), `default` is used in its place.
         
         Any spaces are normalized by replacement with underscores.
         Additionally, all non-ASCII, non-alphanumerical characters are normalized
         by replacing them with the Unicode code point prefixed with an `"x"`.
         """
         # Substitute variables
-        substituted = template.format_map(self.values(skip_missing, default))
+        substituted = template.format_map(self.values(skip_missing=False, default_str=default))
         # Normalize
         normalized = str(substituted).lower()
         # Replace spaces with underscores
@@ -348,15 +362,10 @@ def get_metadata_bruker(dir: Path, rules: MetadataRules) -> MeasurementMetadata 
                     # TODO Work out if this is a reliable source and if this timestamp
                     # actually is for the completion time or not?
                     # Line has format "Date         : Mon Oct 14 14:38:13 2024"
-                    parts = line.split()
-                    year = parts[6]
-                    month = parts[3]
-                    day = parts[4]
-                    time = parts[5].split(":")
-                    hour = time[0]
-                    minute = time[1]
-                    second = time[2]
-                    metadata.completion_time = datetime.datetime(year, month, day, hour, minute, second)
+                    metadata.completion_time = datetime.datetime.strptime(
+                        line.rstrip(),
+                        "Date         : %a %b %d %H:%M:%S %Y",
+                    )
                 if metadata.frequency and metadata.instrument and metadata.completion_time:
                     # Found everything we need, we can stop iterating
                     break
