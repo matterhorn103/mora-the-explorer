@@ -14,20 +14,22 @@ SUBSTITUTIONS = MatchValues(
     sample_id="",        # Same applies here
 )
 
+BRUKER_PATTERN = r'<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
+AGILENT_PATTERN = r'<user!><sample_id>_(\d{6})_<temperature>k_<experiment>_<measurement_no>\.fid'
 SAMPLE_FORMAT = "{user}-{sample_id}"
 MEASUREMENT_FORMAT = "{user}-{sample_id}_{instrument}_{completion_time:%d%m%y}_{temperature}k_{experiment}_{measurement_no}"
 
 BRUKER_RULES = MetadataRules(
     values=SUBSTITUTIONS,
     sample_pattern=None,
-    measurement_pattern=r'<group!>\_*<user_name>?\_*<user!>\_*<sample_id>',
+    measurement_pattern=BRUKER_PATTERN,
     sample_format=SAMPLE_FORMAT,
     measurement_format=MEASUREMENT_FORMAT,
 )
 AGILENT_RULES = MetadataRules(
     values=SUBSTITUTIONS,
     sample_pattern=r'<user!><sample_id>',
-    measurement_pattern=r'<user!><sample_id>\_(\d{6})\_(\d{3}k)\_(.+)_\d\.fid',
+    measurement_pattern=AGILENT_PATTERN,
     sample_format=SAMPLE_FORMAT,
     measurement_format=MEASUREMENT_FORMAT,
 )
@@ -35,13 +37,20 @@ AGILENT_RULES = MetadataRules(
 
 class TestRules:
 
-    def test_pattern_processing(self):
-        processed = BRUKER_RULES.process_pattern(
-            r'<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
-        )
+    def test_bruker_pattern_processing(self):
+        processed = BRUKER_RULES.process_pattern(BRUKER_PATTERN)
         print(processed)
         theoretical = (
-            r'(?P<group>stu)(?:[\s_-]*)(?P<user_name>[^\s_-]+)?(?:[\s_-]*)(?P<user>mjm)(?:[\s_-]*)(?P<sample_id>.*)'
+            r'(?P<group>stu)(?:[\s_-]*)(?P<user_name>\S+)?(?:[\s_-]*)(?P<user>mjm)(?:[\s_-]*)(?P<sample_id>.*)'
+        )
+        print(theoretical)
+        assert processed == theoretical
+
+    def test_agilent_pattern_processing(self):
+        processed = AGILENT_RULES.process_pattern(AGILENT_PATTERN)
+        print(processed)
+        theoretical = (
+            r'(?P<user>mjm)(?P<sample_id>.*)_(\d{6})_(?P<temperature>\S+)k_(?P<experiment>\S+)_(?P<measurement_no>\S+)\.fid'
         )
         print(theoretical)
         assert processed == theoretical
@@ -92,9 +101,13 @@ class TestMetadata:
     def test_agilent_title_extraction(self):
         title = "mjm500-1_151023_299k_1h_1.fid"
         metadata = MeasurementMetadata.from_measurement_title(title, AGILENT_RULES)
+        print(metadata)
         assert metadata == MeasurementMetadata(
             user="mjm",
             sample_id="500-1",
+            temperature=299,
+            experiment="1h",
+            measurement_no=1,
             title=title,
         )
     

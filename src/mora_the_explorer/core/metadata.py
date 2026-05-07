@@ -140,20 +140,51 @@ class MetadataRules:
             pattern,
         )
 
-        normal_wildcard = rf'[^{self.src_sep.strip("[]")}]+'  # i.e. anything other than separator characters
-        # `sample_id` is allowed to include separators, so it's a different,
+        # Replace any variables
+        # First those that should just be captured, regardless of value
+        wildcard = r'\S+'  # i.e. anything other than whitespace characters
+        pattern = re.sub(
+            r'<(\w+)>', # A variable name in angle brackets
+            lambda match: f"(?P<{match.group(1)}>{wildcard})",
+            pattern,
+        )
+        print(pattern)
+        # Then those that should be matched literally
+        pattern = re.sub(
+            r'<(\w+)!>', # As above but with an exclamation mark
+            lambda match: f"(?P<{match.group(1)}>{getattr(self.substitutions, match.group(1))})",
+            pattern,
+        )
+        # `sample_id` is allowed to include separators, so it has a different,
         # more general wildcard that matches any characters
         sample_id_wildcard = r".*"
-        for variable, value in asdict(self.substitutions).items():
-            wildcard = sample_id_wildcard if variable == "sample_id" else normal_wildcard
-            # First see if it should just be captured, regardless of value
-            pattern = pattern.replace(f"<{variable}>", f"(?P<{variable}>{wildcard})")
-            # Then see if it is required to match literally
-            # (Important that the wildcard ones are replaced first)
-            pattern = pattern.replace(f"<{variable}!>", f"(?P<{variable}>{value})")
+        # If it's being matched wild, replace the sample ID so that it uses the correct wildcard
+        print(pattern)
+        pattern = pattern.replace(f"<sample_id>{wildcard}", f"<sample_id>{sample_id_wildcard}")
+        print(pattern)
 
         return pattern
 
+
+METADATA_DTYPES = {
+    "path": str,
+    "folder_name": str,
+    "manufacturer": Manufacturer,
+    "submission_time": datetime.datetime,
+    "completion_time": datetime.datetime,
+    "title": str,
+    "sample_id": str,
+    "user": str,
+    "user_name": str,
+    "group": str,
+    "group_name": str,
+    "experiment": str,
+    "instrument": str,
+    "frequency": float,
+    "solvent": str,
+    "temperature": int,
+    "measurement_no": int,
+}
 
 @dataclass
 class MeasurementMetadata:
@@ -213,6 +244,8 @@ class MeasurementMetadata:
         # Get the values of all the named capture groups (which, for literally
         # matched variables, will be the same as the expected values)
         extracted = match.groupdict()
+        # Convert to the correct types
+        extracted = {k: METADATA_DTYPES[k](v) if v is not None else None for k, v in extracted.items()}
         result = MeasurementMetadata(**extracted)
         # Add the original title too
         result.title = title

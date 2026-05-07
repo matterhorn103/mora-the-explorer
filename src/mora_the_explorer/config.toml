@@ -172,7 +172,7 @@ single_check_only = false
 manufacturer = "agilent"
 display_name = "High-field spectrometers (500 && 600 MHz)"
 sample_pattern = '<user!><sample_id>'
-measurement_pattern = '<user!><sample_id>\_(\d{6})\_(\d{3}k)\_(.+)_\d\.fid'
+measurement_pattern = '<user!><sample_id>_(\d{6})_<temperature>k_<experiment>_<measurement_no>\.fid'
 date_entry = "yyyy"
 check_paths = [
     "500-600er/{group_name}/{date:%Y}",
