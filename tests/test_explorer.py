@@ -33,11 +33,13 @@ class TestExplorer:
         explorer = mock_explorer()
         explorer.config.options.spec = "neo400"
         reporter = explorer.single_check(date(2023, 10, 15))
-        # The spectrum should be found twice but determined to be different spectra,
-        # both copied, and automatically numbered as different measurements
+        # The spectrum should be found three times but determined to be different spectra
+        # (both because the instrument is different or because the FIDs are different),
+        # all copied, and automatically named as different measurements
         assert sorted(reporter.copied()) == [
-            "mjm-500-1-cdcl3-proton",
-            "mjm-500-1-cdcl3-proton-2",
+            "mjm-500-1_av300_141024_0k_proton_0",
+            "mjm-500-1_neo400a_141024_0k_proton_0",
+            "mjm-500-1_neo400b_141024_0k_proton_0",
         ]
 
     def test_agilent(self):

@@ -219,12 +219,14 @@ def copy_folder(src: Path, target: Path, src_metadata: MeasurementMetadata, repo
     if target.exists():
         logging.info("Spectrum with this name exists in destination")
         # Check that the spectra are actually identical and not e.g. different
-        # proton measurements
+        # measurements that would be called the same
         # If confirmed to be unique spectra, need to extend spectrum name with
         # -2, -3 etc. to avoid conflict with spectra already in dest
         same_spectrum_found, incomplete_copy = cmp_spectra(src, target, src_metadata)
         num = 1
         while not same_spectrum_found:
+            # Note that with detailed measurement names (as used in Münster by default)
+            # this is exceptionally unlikely, but we still account for the possibility
             num += 1
             alt = target.with_name(target.name + "-" + str(num))
             if alt.exists():

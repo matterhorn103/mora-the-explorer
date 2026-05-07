@@ -255,6 +255,9 @@ class MeasurementMetadata:
                 # Floats
                 elif k in {"frequency"}:
                     output[k] = 0.0
+                # String values
+                else:
+                    output[k] = default_str
             return output
     
     def write_toml(self, file: Path):
