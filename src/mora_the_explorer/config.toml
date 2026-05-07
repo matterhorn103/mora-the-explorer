@@ -48,13 +48,10 @@ changelog = """
 - Update for move to new server
 - Big rewrite, codebase is now much more structured and maintainable
 - The search can be set to always check the current date which changes accordingly
-- Spectra can be sorted into subfolders (like Agilent spectra) if desired, or not at all
-- Folder name is now entirely customizable
-- Preview of the current folder name style is shown
-- Solvent, instrument, experiment metadata available on all spectrometers
-- Option to include the original folder name
+- Spectra always sorted into subfolders by sample (like Agilent spectra)
 - Paths are selected using the system file explorer
 - Ability to specify the server address from the GUI (useful on macOS and Linux)
+- Solvent, instrument, experiment, temperature metadata extracted on all spectrometers
 - Metadata are saved to the measurement folder in mora.toml
 - CLI and Python API work entirely independently of a GUI
 """
