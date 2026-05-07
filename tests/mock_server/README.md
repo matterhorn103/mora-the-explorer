@@ -59,7 +59,7 @@ However, there are two folders for 2023-10-16 due to there being two spectra wit
 
 ## Unique FIDs
 
-Each fid file includes an integer from **1 to 92** to make them each unique across the whole mock server (even when the metadata for two spectra are otherwise identical).
+Each fid file includes an integer from **1 to 93** to make them each unique across the whole mock server (even when the metadata for two spectra are otherwise identical).
 
 ## Spectra
 

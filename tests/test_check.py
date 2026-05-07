@@ -12,7 +12,7 @@ class TestPaths:
         check_paths = get_check_paths(
             spec_info,
             Path(config.paths.linux),
-            check_date=datetime.date(2023, 10, 15),
+            date=datetime.date(2023, 10, 15),
             groups={"stu": "studer"},
         )
         print(check_paths)

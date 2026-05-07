@@ -24,111 +24,22 @@ class TestExplorer:
         reporter = explorer.single_check(date(2023, 10, 15))
         # A single spectrum, mjm-500-1, should be found
         assert len(reporter.copied()) == 1
-        assert sorted(reporter.copied()) == ["mjm-500-1-cdcl3-proton"]
-        assert reporter.messages()[0] == "Spectrum found: mjm-500-1-cdcl3-proton"
+        assert sorted(reporter.copied()) == ["mjm-500-1_av300_141024_0k_proton_0"]
+        assert reporter.messages()[0] == "Spectrum found: mjm-500-1_av300_141024_0k_proton_0"
 
-    def test_bruker_multiple_same_sample(self):
-        explorer = mock_explorer()
-        explorer.config.options.spec = "av300"
-        explorer.config.options.user = "dna"
-        explorer.config.options.naming.solvent = False
-        explorer.config.options.naming.experiment = True
-        reporter = explorer.single_check(date(2023, 10, 15))
-        # 1H, 13C, and 19F should be found for the same sample (dna-1370-1)
-        assert sorted(reporter.copied()) == [
-            "dna-1370-1-carbon",
-            "dna-1370-1-f19cpd",
-            "dna-1370-1-proton",
-        ]
-        # Now run without the experiment naming option, which means the spectra
-        # all get the same theoretical name i.e. we have to disambiguate three spectra
-        explorer.config.options.naming.experiment = False
-        reporter = explorer.single_check(date(2023, 10, 15))
-        assert sorted(reporter.copied()) == [
-            "dna-1370-1",
-            "dna-1370-1-2",
-            "dna-1370-1-3",
-        ]
 
     def test_bruker_400er_checks_300er(self):
         # Check that checking the neo400 also checks the av300
         explorer = mock_explorer()
         explorer.config.options.spec = "neo400"
         reporter = explorer.single_check(date(2023, 10, 15))
-        # The spectrum should be found twice but determined to be different spectra,
-        # both copied, and automatically numbered as different measurements
+        # The spectrum should be found three times but determined to be different spectra
+        # (both because the instrument is different or because the FIDs are different),
+        # all copied, and automatically named as different measurements
         assert sorted(reporter.copied()) == [
-            "mjm-500-1-cdcl3-proton",
-            "mjm-500-1-cdcl3-proton-2",
-        ]
-
-    def test_bruker_with_group(self):
-        explorer = mock_explorer()
-        explorer.config.options.spec = "av300"
-        explorer.config.options.naming.group = True
-        reporter = explorer.single_check(date(2023, 10, 15))
-        # A single spectrum, mjm-500-1, should be found
-        assert sorted(reporter.copied()) == ["stu-mjm-500-1-cdcl3-proton"]
-
-    def test_bruker_no_initials(self):
-        explorer = mock_explorer()
-        explorer.config.options.spec = "av300"
-        explorer.config.options.naming.user = False
-        reporter = explorer.single_check(date(2023, 10, 15))
-        # A single spectrum, mjm-500-1, should be found
-        assert sorted(reporter.copied()) == ["500-1-cdcl3-proton"]
-
-    def test_bruker_no_solvent(self):
-        explorer = mock_explorer()
-        explorer.config.options.spec = "av300"
-        explorer.config.options.naming.solvent = False
-        reporter = explorer.single_check(date(2023, 10, 15))
-        # A single spectrum, mjm-500-1, should be found
-        assert sorted(reporter.copied()) == ["mjm-500-1-proton"]
-
-    def test_bruker_no_experiment(self):
-        explorer = mock_explorer()
-        explorer.config.options.spec = "av300"
-        explorer.config.options.naming.solvent = False
-        explorer.config.options.naming.experiment = False
-        reporter = explorer.single_check(date(2023, 10, 15))
-        # A single spectrum, mjm-500-1, should be found
-        assert sorted(reporter.copied()) == ["mjm-500-1"]
-
-    def test_bruker_with_freq(self):
-        explorer = mock_explorer()
-        explorer.config.options.spec = "av300"
-        explorer.config.options.naming.solvent = False
-        explorer.config.options.naming.frequency = True
-        reporter = explorer.single_check(date(2023, 10, 15))
-        # A single spectrum, mjm-500-1, should be found
-        assert sorted(reporter.copied()) == ["mjm-500-1-300mhz-proton"]
-        # Note that only that specific spectrum has the uxnmr.info file in the mock server setup
-        reporter = explorer.single_check(date(2023, 10, 16))
-        # Whereas these ones don't, so all have the frequency as unknown
-        print(reporter.copied())
-        assert sorted(reporter.copied()) == [
-            "mjm-501-1-unknown-proton",
-            "mjm-501-2-unknown-carbon",
-            "mjm-501-2-unknown-proton",
-        ]
-
-    def test_bruker_with_instrument(self):
-        explorer = mock_explorer()
-        explorer.config.options.spec = "av300"
-        explorer.config.options.naming.solvent = False
-        explorer.config.options.naming.instrument = True
-        reporter = explorer.single_check(date(2023, 10, 15))
-        # A single spectrum, mjm-500-1, should be found
-        assert sorted(reporter.copied()) == ["mjm-500-1-av300-proton"]
-        # Note that only that specific spectrum has the uxnmr.info file in the mock server setup
-        reporter = explorer.single_check(date(2023, 10, 16))
-        # Whereas these ones don't, so all have the instrument as unknown
-        print(reporter.copied())
-        assert sorted(reporter.copied()) == [
-            "mjm-501-1-unknown-proton",
-            "mjm-501-2-unknown-carbon",
-            "mjm-501-2-unknown-proton",
+            "mjm-500-1_av300_141024_0k_proton_0",
+            "mjm-500-1_neo400a_141024_0k_proton_0",
+            "mjm-500-1_neo400b_141024_0k_proton_0",
         ]
 
     def test_agilent(self):
@@ -138,58 +49,12 @@ class TestExplorer:
         # Note that only these two spectra have a populated `procpar` file as required
         # for the metadata extraction, and only the proton spectra have it
         assert sorted(reporter.copied()) == [
-            "mjm-500-1-cdcl3-13c",
-            "mjm-500-1-cdcl3-1h",
-            "mjm-500-1-cdcl3-gcosy",
-            "mjm-501-1-dmso-13c",
-            "mjm-501-1-dmso-1h",
-            "mjm-501-1-dmso-gcosy",
-        ]
-
-    def test_agilent_with_freq(self):
-        explorer = mock_explorer()
-        explorer.config.options.spec = "v600"
-        explorer.config.options.naming.solvent = False
-        explorer.config.options.naming.frequency = True
-        reporter = explorer.single_check(date(2023, 10, 15))
-        assert sorted(reporter.copied()) == [
-            "mjm-500-1-600mhz-13c",
-            "mjm-500-1-600mhz-1h",
-            "mjm-500-1-600mhz-gcosy",
-            "mjm-501-1-600mhz-13c",
-            "mjm-501-1-600mhz-1h",
-            "mjm-501-1-600mhz-gcosy",
-        ]
-    
-    def test_agilent_with_instrument(self):
-        explorer = mock_explorer()
-        explorer.config.options.spec = "v600"
-        explorer.config.options.naming.solvent = False
-        explorer.config.options.naming.instrument = True
-        reporter = explorer.single_check(date(2023, 10, 15))
-        assert sorted(reporter.copied()) == [
-            "mjm-500-1-v600-13c",
-            "mjm-500-1-v600-1h",
-            "mjm-500-1-v600-gcosy",
-            "mjm-501-1-v600-13c",
-            "mjm-501-1-v600-1h",
-            "mjm-501-1-v600-gcosy",
-        ]
-    
-    def test_agilent_with_group(self):
-        explorer = mock_explorer()
-        explorer.config.options.spec = "v600"
-        explorer.config.options.naming.solvent = False
-        explorer.config.options.naming.instrument = True
-        explorer.config.options.naming.group = True
-        reporter = explorer.single_check(date(2023, 10, 15))
-        assert sorted(reporter.copied()) == [
-            "studer-mjm-500-1-v600-13c",
-            "studer-mjm-500-1-v600-1h",
-            "studer-mjm-500-1-v600-gcosy",
-            "studer-mjm-501-1-v600-13c",
-            "studer-mjm-501-1-v600-1h",
-            "studer-mjm-501-1-v600-gcosy",
+            "mjm-500-1_v600_010101_0k_13c_0", #"mjm-500-1-cdcl3-13c",
+            "mjm-500-1_v600_010101_0k_1h_0", #"mjm-500-1-cdcl3-1h",
+            "mjm-500-1_v600_010101_0k_gcosy_0", #"mjm-500-1-cdcl3-gcosy",
+            "mjm-501-1_v600_010101_0k_13c_0", #"mjm-501-1-dmso-13c",
+            "mjm-501-1_v600_010101_0k_1h_0", #"mjm-501-1-dmso-1h",
+            "mjm-501-1_v600_010101_0k_gcosy_0", #"mjm-501-1-dmso-gcosy",
         ]
 
     def test_agilent_inconsistent_match_bug(self):
@@ -205,29 +70,29 @@ class TestExplorer:
         explorer.config.options.naming.experiment = True
         reporter = explorer.single_check(date(2026, 4, 10))
         assert sorted(reporter.copied()) == [
-            "akw-004-4-13c",
-            "akw-004-4-1h",
-            "akw-004-4-gcosy",
-            "akw-004-4-ghmbcad",
-            "akw-004-4-ghsqcad",
-            "akw-017-3-13c-hfdec",
-            "akw-017-3-19f-bb-hdec",
-            "akw-017-3-1h",
-            "akw-017-3-1h-bb-fdec",
-            "akw-032-2-1-13c-hfdec",
-            "akw-032-2-1-19f-bb-hdec",
-            "akw-032-2-1-1h",
-            "akw-032-2-1-1h-bb-fdec",
-            "akw-032-2-1-gcosy",
-            "akw-032-2-1-ghmbcad",
-            "akw-032-2-1-ghsqcad",
-            "akw-17-4-13c-hfdec",
-            "akw-17-4-19f-bb-hdec",
-            "akw-17-4-1h",
-            "akw-17-4-1h-bb-fdec",
-            "akw-17-4-gcosy",
-            "akw-17-4-ghmbcad",
-            "akw-17-4-ghsqcad",
+            "akw-004-4_s600_010101_0k_13c_0",
+            "akw-004-4_s600_010101_0k_1h_0",
+            "akw-004-4_s600_010101_0k_gcosy_0",
+            "akw-004-4_s600_010101_0k_ghmbcad_0",
+            "akw-004-4_s600_010101_0k_ghsqcad_0",
+            "akw-017-3_v500_010101_0k_13c-hfdec_0",
+            "akw-017-3_v500_010101_0k_19f-bb-hdec_0",
+            "akw-017-3_v500_010101_0k_1h-bb-fdec_0",
+            "akw-017-3_v500_010101_0k_1h_0",
+            "akw-032-2-1_s600_010101_0k_13c-hfdec_0",
+            "akw-032-2-1_s600_010101_0k_19f-bb-hdec_0",
+            "akw-032-2-1_s600_010101_0k_1h-bb-fdec_0",
+            "akw-032-2-1_s600_010101_0k_1h_0",
+            "akw-032-2-1_s600_010101_0k_gcosy_0",
+            "akw-032-2-1_s600_010101_0k_ghmbcad_0",
+            "akw-032-2-1_s600_010101_0k_ghsqcad_0",
+            "akw-17-4_s600_010101_0k_13c-hfdec_0",
+            "akw-17-4_s600_010101_0k_19f-bb-hdec_0",
+            "akw-17-4_s600_010101_0k_1h-bb-fdec_0",
+            "akw-17-4_s600_010101_0k_1h_0",
+            "akw-17-4_s600_010101_0k_gcosy_0",
+            "akw-17-4_s600_010101_0k_ghmbcad_0",
+            "akw-17-4_s600_010101_0k_ghsqcad_0",
         ]
     
     def test_bruker_missing_title(self):

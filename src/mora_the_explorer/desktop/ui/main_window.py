@@ -60,10 +60,10 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Mora the Explorer")
 
         if platform.system() == "Windows":
-            self.setMinimumSize(QSize(420, 850))
+            self.setMinimumSize(QSize(360, 700))
         else:
             # macOS and Linux space things out more than Windows
-            self.setMinimumSize(QSize(450, 950))
+            self.setMinimumSize(QSize(400, 750))
 
         # As always with Qt, have to set a central widget and give that widget a
         # layout, but we won't actually need to access the central widget
@@ -132,22 +132,22 @@ class MainWindow(QMainWindow):
         self.dest_entry.changed.connect(self._on_dest_path_changed)
 
         # Sorting selection
-        self.sort_selector = rows.SortingSelector()
-        self.sort_selector.set_selected(config.options.sort)
-        self.add_row(self.sort_selector)
-        self.sort_selector.changed.connect(self._on_sort_changed)
+        #self.sort_selector = rows.SortingSelector()
+        #self.sort_selector.set_selected(config.options.sort)
+        #self.add_row(self.sort_selector)
+        #self.sort_selector.changed.connect(self._on_sort_changed)
 
         # Folder name options
-        self.folder_name_options = rows.FolderNameOptions()
+        #self.folder_name_options = rows.FolderNameOptions()
         # Each option `user`, `solvent` etc. has a corresponding flag in the config
         # (except for frequency)
-        self.folder_name_options.set_checked(**(asdict(config.options.naming)))
-        self.add_row(self.folder_name_options)
-        self.folder_name_options.changed.connect(self._on_folder_name_options_changed)
+        #self.folder_name_options.set_checked(**(asdict(config.options.naming)))
+        #self.add_row(self.folder_name_options)
+        #self.folder_name_options.changed.connect(self._on_folder_name_options_changed)
 
         # Preview of the result of the user's choices
-        self.folder_name_preview = rows.FolderNamePreview(config)
-        self.add_row(self.folder_name_preview)
+        #self.folder_name_preview = rows.FolderNamePreview(config)
+        #self.add_row(self.folder_name_preview)
 
         # Spectrometer selection
         self.spec_selector = rows.SpectrometerSelector(config.specs)
@@ -156,15 +156,20 @@ class MainWindow(QMainWindow):
         self.add_row(self.spec_selector)
         self.spec_selector.changed.connect(self._on_spec_changed)
 
-        # Match pattern customization via a free-form entry box, for admin use
+        # Match pattern customization via free-form entry boxes, for admin use
         if admin_mode:
             from PySide6.QtGui import QFontDatabase
-            self.pattern_entry = rows.FreeEntryField("Pattern:", "(to match)")
-            # Pattern is regex
-            self.pattern_entry.set_text(config.specs[config.options.spec].measurement_pattern)
-            self.pattern_entry.entry_field.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
-            self.add_row(self.pattern_entry)
-            self.pattern_entry.changed.connect(self._on_pattern_changed)
+            self.sample_pattern_entry = rows.FreeEntryField("Sample:", None)
+            self.measurement_pattern_entry = rows.FreeEntryField("Measurement:", None)
+            # Patterns are regex
+            self.sample_pattern_entry.set_text(config.specs[config.options.spec].sample_pattern)
+            self.measurement_pattern_entry.set_text(config.specs[config.options.spec].measurement_pattern)
+            self.sample_pattern_entry.entry_field.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
+            self.measurement_pattern_entry.entry_field.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
+            self.add_row(self.sample_pattern_entry)
+            self.add_row(self.measurement_pattern_entry)
+            self.sample_pattern_entry.changed.connect(self._on_pattern_changed)
+            self.measurement_pattern_entry.changed.connect(self._on_pattern_changed)
 
         # Repeat options
         self.repeat_options = rows.RepeatSelector()
@@ -223,7 +228,7 @@ class MainWindow(QMainWindow):
         admin_shortcut.activated.connect(self.admin_mode_toggled)
 
         # Finally, refresh a few things
-        self.adapt_to_sort()
+        #self.adapt_to_sort()
 
     def add_row(self, row: rows.RowComponent):
         """Adds a row component to the next row in the grid."""
@@ -258,7 +263,8 @@ class MainWindow(QMainWindow):
         self.date_selector.set_multiday_enabled(not spec_info.single_check_only)
         self.date_selector.set_format(spec_info.date_entry)
         if self.admin_mode:
-            self.pattern_entry.set_text(spec_info.measurement_pattern)
+            self.sample_pattern_entry.set_text(spec_info.sample_pattern)
+            self.measurement_pattern_entry.set_text(spec_info.measurement_pattern)
 
     def adapt_to_sort(self):
         """Make sure the available options reflect what makes sense for the current sort style."""
@@ -353,7 +359,7 @@ class MainWindow(QMainWindow):
     @Slot()
     def _on_user_changed(self):
         self.config.options.user = self.user_entry.text()
-        self.folder_name_preview.regenerate_preview()
+        #self.folder_name_preview.regenerate_preview()
         self.save_button.setEnabled(True)
 
     @Slot()
@@ -372,20 +378,21 @@ class MainWindow(QMainWindow):
         else:
             self.config.options.group = self.group_entry.selected()
             self.refresh_visible_specs()
-        self.folder_name_preview.regenerate_preview()
+        #self.folder_name_preview.regenerate_preview()
         self.save_button.setEnabled(True)
 
     @Slot()
     def _on_group_name_changed(self):
         self.config.options.group_name = self.group_name_entry.text()
-        self.folder_name_preview.regenerate_preview()
+        #self.folder_name_preview.regenerate_preview()
         self.save_button.setEnabled(True)
     
     @Slot()
     def _on_pattern_changed(self):
         # Changes the spectrometer configuration object itself, but that's OK,
         # since we don't save the changes to file
-        self.config.specs[self.config.options.spec].measurement_pattern = self.pattern_entry.text()
+        self.config.specs[self.config.options.spec].sample_pattern = self.sample_pattern_entry.text()
+        self.config.specs[self.config.options.spec].measurement_pattern = self.measurement_pattern_entry.text()
 
     @Slot()
     def _on_server_path_changed(self):
@@ -399,25 +406,25 @@ class MainWindow(QMainWindow):
         self.config.paths.save = str(self.dest_entry.path())
         self.save_button.setEnabled(True)
 
-    @Slot()
-    def _on_sort_changed(self):
-        self.config.options.sort = self.sort_selector.selected()
-        self.adapt_to_sort()
-        self.folder_name_preview.regenerate_preview()
+    #@Slot()
+    #def _on_sort_changed(self):
+    #    self.config.options.sort = self.sort_selector.selected()
+    #    self.adapt_to_sort()
+    #    #self.folder_name_preview.regenerate_preview()
 
-    @Slot()
-    def _on_folder_name_options_changed(self):
-        # Returns {"user": True, "experiment": False, ...}
-        for k, v in self.folder_name_options.checked().items():
-            setattr(self.config.options.naming, k, v)
-        self.folder_name_preview.regenerate_preview()
-        self.save_button.setEnabled(True)
+    #@Slot()
+    #def _on_folder_name_options_changed(self):
+    #    # Returns {"user": True, "experiment": False, ...}
+    #    for k, v in self.folder_name_options.checked().items():
+    #        setattr(self.config.options.naming, k, v)
+    #    #self.folder_name_preview.regenerate_preview()
+    #    self.save_button.setEnabled(True)
 
     @Slot()
     def _on_spec_changed(self):
         self.config.options.spec = self.spec_selector.selected()
         self.adapt_to_spec()
-        self.folder_name_preview.regenerate_preview()
+        #self.folder_name_preview.regenerate_preview()
         self.save_button.setEnabled(True)
 
     @Slot()

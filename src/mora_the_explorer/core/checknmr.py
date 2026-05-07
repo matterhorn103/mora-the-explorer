@@ -219,12 +219,14 @@ def copy_folder(src: Path, target: Path, src_metadata: MeasurementMetadata, repo
     if target.exists():
         logging.info("Spectrum with this name exists in destination")
         # Check that the spectra are actually identical and not e.g. different
-        # proton measurements
+        # measurements that would be called the same
         # If confirmed to be unique spectra, need to extend spectrum name with
         # -2, -3 etc. to avoid conflict with spectra already in dest
         same_spectrum_found, incomplete_copy = cmp_spectra(src, target, src_metadata)
         num = 1
         while not same_spectrum_found:
+            # Note that with detailed measurement names (as used in Münster by default)
+            # this is exceptionally unlikely, but we still account for the possibility
             num += 1
             alt = target.with_name(target.name + "-" + str(num))
             if alt.exists():
@@ -449,11 +451,11 @@ def check_nmr(
             # (at least not at this point in time)
             # but can be supplied because we know them already
             metadata.manufacturer = manufacturer
-            if metadata.date is None:
-                metadata.date = date
+            if metadata.submission_time is None:
+                metadata.submission_time = datetime.datetime(date.year, date.month, date.day)
 
             # Generate the appropriate names and target path
-            measurement_name = metadata.generate_folder_name(rules, drop_missing=False)
+            measurement_name = metadata.generate_folder_name(rules.measurement_format)
             if sort is SpectraSorting.ORIGINAL:
                 # Use the native Bruker or Agilent style
                 sort = SpectraSorting.MEASUREMENT if manufacturer is Manufacturer.BRUKER else SpectraSorting.SAMPLE
@@ -461,7 +463,7 @@ def check_nmr(
                 # Just save spectra in a completely flat fashion
                 target = dest_path / measurement_name
             else:  # Covers sorting by sample and by sample+spectrometer
-                sample_name = metadata.generate_folder_name(rules, drop_missing=False, sample=True)
+                sample_name = metadata.generate_folder_name(rules.sample_format)
                 # Save in nested folders
                 target = dest_path / sample_name / measurement_name
 

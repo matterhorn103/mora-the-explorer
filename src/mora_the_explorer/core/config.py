@@ -35,13 +35,8 @@ USER_CONFIG_PATH = (
 
 @dataclass
 class NamingOptions:
-    group: bool
-    user: bool
-    solvent: bool
-    instrument: bool
-    frequency: bool
-    experiment: bool
-    original: bool
+    sample_format: str
+    measurement_format: str
 
 
 @dataclass
@@ -53,7 +48,6 @@ class UserOptions:
     repeat_switch: bool
     repeat_delay: int
     naming: NamingOptions
-    sort: SpectraSorting
 
 
 @dataclass
@@ -209,9 +203,6 @@ class Config:
         self.groups.all.update(self.user_config.get("groups", {}))
         # Spectrometer selection is also simply updated
         self.specs.update(self.user_config.get("spectrometers", {}))
-
-        # Convert to the sort enum from the raw integer
-        self.options.sort = SpectraSorting(self.options.sort)
 
         logging.info("The app is now configured as follows:")
         logging.info(f"- options: {self.options}")

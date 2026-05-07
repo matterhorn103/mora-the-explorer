@@ -5,16 +5,10 @@ group = "stu"
 spec = "av300"
 repeat_switch = true
 repeat_delay = 3
-sort = 3
 
 [options.naming]
-group = false
-user = true
-solvent = true
-instrument = false
-frequency = false
-experiment = true
-original = false
+sample_format = "{user}-{sample_id}"
+measurement_format = "{user}-{sample_id}_{instrument}_{completion_time:%d%m%y}_{temperature}k_{experiment}_{measurement_no}"
 
 [paths]
 windows = "//samba.public.os.wwu.de/usershare/projects/q_nmr-oc/nmr"

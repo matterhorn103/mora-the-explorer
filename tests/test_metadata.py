@@ -3,11 +3,10 @@ import datetime
 from mora_the_explorer.core import (
     MetadataRules,
     MeasurementMetadata,
-    Manufacturer,
-    VariableSubstitutions,
+    MatchValues,
 )
 
-SUBSTITUTIONS = VariableSubstitutions(
+SUBSTITUTIONS = MatchValues(
     group="stu",
     group_name="studer",
     user="mjm",
@@ -15,31 +14,43 @@ SUBSTITUTIONS = VariableSubstitutions(
     sample_id="",        # Same applies here
 )
 
+BRUKER_PATTERN = r'<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
+AGILENT_PATTERN = r'<user!><sample_id>_(\d{6})_<temperature>k_<experiment>_<measurement_no>\.fid'
+SAMPLE_FORMAT = "{user}-{sample_id}"
+MEASUREMENT_FORMAT = "{user}-{sample_id}_{instrument}_{completion_time:%d%m%y}_{temperature}k_{experiment}_{measurement_no}"
+
 BRUKER_RULES = MetadataRules(
-    substitutions=SUBSTITUTIONS,
+    values=SUBSTITUTIONS,
     sample_pattern=None,
-    measurement_pattern=r'<group!>\_*<user_name>?\_*<user!>\_*<sample_id>',
-    sample_name_fields=["user", "sample_id", "solvent"],
-    measurement_name_fields=["user", "sample_id", "solvent", "experiment"],
+    measurement_pattern=BRUKER_PATTERN,
+    sample_format=SAMPLE_FORMAT,
+    measurement_format=MEASUREMENT_FORMAT,
 )
 AGILENT_RULES = MetadataRules(
-    substitutions=SUBSTITUTIONS,
+    values=SUBSTITUTIONS,
     sample_pattern=r'<user!><sample_id>',
-    measurement_pattern=r'<user!><sample_id>\_(\d{6})\_(\d{3}k)\_(.+)_\d\.fid',
-    sample_name_fields=["user", "sample_id", "solvent"],
-    measurement_name_fields=["user", "sample_id", "solvent", "experiment"],
+    measurement_pattern=AGILENT_PATTERN,
+    sample_format=SAMPLE_FORMAT,
+    measurement_format=MEASUREMENT_FORMAT,
 )
 
 
 class TestRules:
 
-    def test_pattern_processing(self):
-        processed = BRUKER_RULES.process_pattern(
-            r'<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
-        )
+    def test_bruker_pattern_processing(self):
+        processed = BRUKER_RULES.process_pattern(BRUKER_PATTERN)
         print(processed)
         theoretical = (
-            r'(?P<group>stu)(?:[\s_-]*)(?P<user_name>[^\s_-]+)?(?:[\s_-]*)(?P<user>mjm)(?:[\s_-]*)(?P<sample_id>.*)'
+            r'(?P<group>stu)(?:[\s_-]*)(?P<user_name>\S+)?(?:[\s_-]*)(?P<user>mjm)(?:[\s_-]*)(?P<sample_id>.*)'
+        )
+        print(theoretical)
+        assert processed == theoretical
+
+    def test_agilent_pattern_processing(self):
+        processed = AGILENT_RULES.process_pattern(AGILENT_PATTERN)
+        print(processed)
+        theoretical = (
+            r'(?P<user>mjm)(?P<sample_id>.*)_(\d{6})_(?P<temperature>\S+)k_(?P<experiment>\S+)_(?P<measurement_no>\S+)\.fid'
         )
         print(theoretical)
         assert processed == theoretical
@@ -47,20 +58,35 @@ class TestRules:
 
 class TestMetadata:
 
-    def test_name_gen(self):
-        metadata = MeasurementMetadata(group="stu", user="mjm", sample_id="213-4 repeat")
-        metadata.manufacturer = Manufacturer.BRUKER
-        metadata.date = datetime.date.today()
-        # Note that the name generation is independent of the manufacturer these days
-        name = metadata.generate_folder_name(BRUKER_RULES)
-        assert name == "mjm-213-4-repeat"
+    def test_sample_name_gen(self):
+        metadata = MeasurementMetadata(group="stu", user="mjm", sample_id="213-4")
+        name = metadata.generate_folder_name(SAMPLE_FORMAT)
+        assert name == "mjm-213-4"
 
-    def test_name_gen_disallowed_chars(self):
-        metadata = MeasurementMetadata(user="mjm", sample_id="304-1-ß")
-        # Note that the name generation is independent of the manufacturer these days
-        name = metadata.generate_folder_name(AGILENT_RULES)
-        # Characters outside of [a-zA-Z0-9-] are normalized to their hexadecimal Unicode code points
-        assert name == "mjm-304-1-0xdf"
+    def test_sample_name_gen_disallowed_chars(self):
+        metadata = MeasurementMetadata(user="mjm", sample_id="304-1-ß repeat")
+        name = metadata.generate_folder_name(SAMPLE_FORMAT)
+        # Spaces should be normalized to underscores
+        # Characters outside of [a-zA-Z0-9-] should be normalized to hexadecimal Unicode code points
+        assert name == "mjm-304-1-0xdf_repeat"
+
+    def test_measurement_name_gen(self):
+        metadata = MeasurementMetadata(
+            completion_time=datetime.datetime(2026, 3, 23),
+            sample_id="17-4",
+            user="akw",
+            user_name=None,
+            group="gil",
+            group_name="gilmour",
+            experiment="1h",
+            instrument="neo400a",
+            frequency=300.26,
+            solvent="CDCl3",
+            temperature=299,
+            measurement_no=260,
+        )
+        name = metadata.generate_folder_name(MEASUREMENT_FORMAT)
+        assert name == "akw-17-4_neo400a_230326_299k_1h_260"
 
     def test_bruker_title_extraction(self):
         title = "stu mjm 213-4 repeat"
@@ -75,9 +101,13 @@ class TestMetadata:
     def test_agilent_title_extraction(self):
         title = "mjm500-1_151023_299k_1h_1.fid"
         metadata = MeasurementMetadata.from_measurement_title(title, AGILENT_RULES)
+        print(metadata)
         assert metadata == MeasurementMetadata(
             user="mjm",
             sample_id="500-1",
+            temperature=299,
+            experiment="1h",
+            measurement_no=1,
             title=title,
         )
     
@@ -92,7 +122,7 @@ class TestMetadata:
             "akw17-4",
         ]
         rules = MetadataRules(
-            VariableSubstitutions(
+            MatchValues(
                 group="",
                 group_name="",
                 user="akw",
@@ -101,8 +131,8 @@ class TestMetadata:
             ),
             r'<user!><sample_id>',
             r'<user!><sample_id>',
-            ["user", "sample_id", "solvent", "experiment"],
-            ["user", "sample_id", "solvent", "experiment"],
+            SAMPLE_FORMAT,
+            MEASUREMENT_FORMAT,
         )
         for title in titles:
             metadata = MeasurementMetadata.from_measurement_title(title, rules)

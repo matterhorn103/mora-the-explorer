@@ -19,16 +19,10 @@ group = "gil"
 spec = "neo400"
 repeat_switch = false
 repeat_delay = 5
-sort = 3  # How to sort when saving; 0 = original sorting, 1 = measurement (Bruker-style), 2 = sample & spec, 3 = sample (Agilent-style) 
 
 [options.naming]
-group = false
-user = true
-solvent = false
-instrument = false
-frequency = false
-experiment = true
-original = false
+sample_format = "{user}-{sample_id}"
+measurement_format = "{user}-{sample_id}_{instrument}_{completion_time:%d%m%y}_{temperature}k_{experiment}_{measurement_no}"
 
 
 [appearance]
@@ -47,20 +41,17 @@ save = "~/nmr"  # The location spectra should be copied to
 
 [admin]
 user_name_is_admin_only = true
-pattern_separator = '[\s_-]'
+pattern_separator = '[\s_-]' # Note the single quotes! (= literal string)
 version = "2.0.0b5"
 email = "milner@uni-muenster.de"
 changelog = """
 - Update for move to new server
 - Big rewrite, codebase is now much more structured and maintainable
 - The search can be set to always check the current date which changes accordingly
-- Spectra can be sorted into subfolders (like Agilent spectra) if desired, or not at all
-- Folder name is now entirely customizable
-- Preview of the current folder name style is shown
-- Solvent, instrument, experiment metadata available on all spectrometers
-- Option to include the original folder name
+- Spectra always sorted into subfolders by sample (like Agilent spectra)
 - Paths are selected using the system file explorer
 - Ability to specify the server address from the GUI (useful on macOS and Linux)
+- Solvent, instrument, experiment, temperature metadata extracted on all spectrometers
 - Metadata are saved to the measurement folder in mora.toml
 - CLI and Python API work entirely independently of a GUI
 """
@@ -111,24 +102,30 @@ pharmazie = "pharmazie"
 #   allow_solvent: whether to enable the folder naming option to include the solvent
 #   single_check_only: whether users may use multiday and repeat checks for this spec
 #
-# Possible variable fields in `check_paths` and `archives` are:
-# - <group>         (the chosen group's ID)
-# - <group_name>    (the chosen group's name)
-# - any strftime formatting string, with % characters, enclosed in {}
-#   - for the format codes see https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
+# Variables can be interpolated into the entries in `check_paths` and `archives`
+# by wrapping them in curly brackets. The following variables can be used:
+# - group         (the chosen group's ID)
+# - group_name    (the chosen group's name)
+# - date
+# 
+# For `date`, it may be desirable to format it using e.g. `{date:%Y}` to get `2026`
+# For the format codes see https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
+
+# Note that in TOML, single quotes can be used for a literal string to avoid
+# having to use backslash escapes, which is very useful for regex patterns
 
 [spectrometers.archiv]
 manufacturer = "bruker"
 display_name = "Pre-2020 archive (Bruker)"
-measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
+measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>' # Note the single quotes! (= literal string)
 date_entry = "dd MMM yyyy"
 check_paths = [
-    "archiv/dpx300/{%y}-dpx300_{%Y}/{%b%d-%Y}",
-    "archiv/av300/{%y}-av300_{%Y}/{%b%d-%Y}",
-    "archiv/av400/{%y}-av400_{%Y}/{%b%d-%Y}",
-    "archiv/neo400a/{%y}-neo400a_{%Y}/neo400a_{%b%d-%Y}",
-    "archiv/neo400b/{%y}-neo400b_{%Y}/neo400b_{%b%d-%Y}",
-    "archiv/neo400c/{%y}-neo400c_{%Y}/neo400c_{%b%d-%Y}",
+    "archiv/dpx300/{date:%y}-dpx300_{date:%Y}/{date:%b%d-%Y}",
+    "archiv/av300/{date:%y}-av300_{date:%Y}/{date:%b%d-%Y}",
+    "archiv/av400/{date:%y}-av400_{date:%Y}/{date:%b%d-%Y}",
+    "archiv/neo400a/{date:%y}-neo400a_{date:%Y}/neo400a_{date:%b%d-%Y}",
+    "archiv/neo400b/{date:%y}-neo400b_{date:%Y}/neo400b_{date:%b%d-%Y}",
+    "archiv/neo400c/{date:%y}-neo400c_{date:%Y}/neo400c_{date:%b%d-%Y}",
 ]
 admin_only = true
 single_check_only = false
@@ -139,10 +136,10 @@ display_name = "Studer group NMR only (300 MHz)"
 measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
 date_entry = "dd MMM yyyy"
 check_paths = [
-    "av300/av1/{%b%d-%Y}",
+    "av300/av1/{date:%b%d-%Y}",
 ]
 archives = [
-    "av300/av1/{%y}-av300_{%Y}/{%b%d-%Y}",
+    "av300/av1/{date:%y}-av300_{date:%Y}/{date:%b%d-%Y}",
 ]
 restrict_to = [
     "stu",
@@ -156,14 +153,14 @@ display_name = "Routine NMR (300 && 400 MHz)"
 measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
 date_entry = "dd MMM yyyy"
 check_paths = [
-    "neo400/av1/neo400a_{%b%d-%Y}",
-    "neo400/av1/neo400b_{%b%d-%Y}",
-    "neo400/av1/neo400c_{%b%d-%Y}",
+    "neo400/av1/neo400a_{date:%b%d-%Y}",
+    "neo400/av1/neo400b_{date:%b%d-%Y}",
+    "neo400/av1/neo400c_{date:%b%d-%Y}",
 ]
 archives = [
-    "neo400/av1/{%y}-neo400a_{%Y}/{%b%d-%Y}",
-    "neo400/av1/{%y}-neo400b_{%Y}/{%b%d-%Y}",
-    "neo400/av1/{%y}-neo400c_{%Y}/{%b%d-%Y}",
+    "neo400/av1/{date:%y}-neo400a_{date:%Y}/{date:%b%d-%Y}",
+    "neo400/av1/{date:%y}-neo400b_{date:%Y}/{date:%b%d-%Y}",
+    "neo400/av1/{date:%y}-neo400c_{date:%Y}/{date:%b%d-%Y}",
 ]
 include = [ "av300" ]
 single_check_only = false
@@ -172,12 +169,12 @@ single_check_only = false
 manufacturer = "agilent"
 display_name = "High-field spectrometers (500 && 600 MHz)"
 sample_pattern = '<user!><sample_id>'
-measurement_pattern = '<user!><sample_id>\_(\d{6})\_(\d{3}k)\_(.+)_\d\.fid'
+measurement_pattern = '<user!><sample_id>_(\d{6})_<temperature>k_<experiment>_<measurement_no>\.fid'
 date_entry = "yyyy"
 check_paths = [
-    "500-600er/<group_name>/{%Y}",
+    "500-600er/{group_name}/{date:%Y}",
 ]
 archives = [
-    "archiv/500-600er/<group_name>/{%Y}",
+    "archiv/500-600er/{group_name}/{date:%Y}",
 ]
 single_check_only = true
