@@ -46,8 +46,8 @@ class TestExplorer:
         explorer = mock_explorer()
         explorer.config.options.spec = "v600"
         reporter = explorer.single_check(date(2023, 10, 15))
-        # Note that only these two spectra have a populated `procpar` file as required
-        # for the metadata extraction, and only the proton spectra have it
+        # Note that only these two sets of spectra have a populated `procpar` file
+        # as required for the metadata extraction, and only the proton spectra have it
         assert sorted(reporter.copied()) == [
             "mjm-500-1_v600_010101_0k_13c_0", #"mjm-500-1-cdcl3-13c",
             "mjm-500-1_v600_010101_0k_1h_0", #"mjm-500-1-cdcl3-1h",
