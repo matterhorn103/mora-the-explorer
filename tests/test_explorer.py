@@ -24,8 +24,8 @@ class TestExplorer:
         reporter = explorer.single_check(date(2023, 10, 15))
         # A single spectrum, mjm-500-1, should be found
         assert len(reporter.copied()) == 1
-        assert sorted(reporter.copied()) == ["mjm-500-1_av300_141024_0k_proton_0"]
-        assert reporter.messages()[0] == "Spectrum found: mjm-500-1_av300_141024_0k_proton_0"
+        assert sorted(reporter.copied()) == ["mjm-500-1_av300_151023_300k_proton_200"]
+        assert reporter.messages()[0] == "Spectrum found: mjm-500-1_av300_151023_300k_proton_200"
 
 
     def test_bruker_400er_checks_300er(self):
@@ -37,9 +37,9 @@ class TestExplorer:
         # (both because the instrument is different or because the FIDs are different),
         # all copied, and automatically named as different measurements
         assert sorted(reporter.copied()) == [
-            "mjm-500-1_av300_141024_0k_proton_0",
-            "mjm-500-1_neo400a_141024_0k_proton_0",
-            "mjm-500-1_neo400b_141024_0k_proton_0",
+            "mjm-500-1_av300_151023_300k_proton_200",
+            "mjm-500-1_neo400a_151023_300k_proton_200",
+            "mjm-500-1_neo400b_151023_300k_proton_200",
         ]
 
     def test_agilent(self):
@@ -49,12 +49,12 @@ class TestExplorer:
         # Note that only these two sets of spectra have a populated `procpar` file
         # as required for the metadata extraction, and only the proton spectra have it
         assert sorted(reporter.copied()) == [
-            "mjm-500-1_v600_010101_0k_13c_0", #"mjm-500-1-cdcl3-13c",
-            "mjm-500-1_v600_010101_0k_1h_0", #"mjm-500-1-cdcl3-1h",
-            "mjm-500-1_v600_010101_0k_gcosy_0", #"mjm-500-1-cdcl3-gcosy",
-            "mjm-501-1_v600_010101_0k_13c_0", #"mjm-501-1-dmso-13c",
-            "mjm-501-1_v600_010101_0k_1h_0", #"mjm-501-1-dmso-1h",
-            "mjm-501-1_v600_010101_0k_gcosy_0", #"mjm-501-1-dmso-gcosy",
+            "mjm-500-1_v600_151023_299k_13c_1", #"mjm-500-1-cdcl3-13c",
+            "mjm-500-1_v600_151023_299k_1h_1", #"mjm-500-1-cdcl3-1h",
+            "mjm-500-1_v600_151023_299k_gcosy_1", #"mjm-500-1-cdcl3-gcosy",
+            "mjm-501-1_v600_151023_299k_13c_1", #"mjm-501-1-dmso-13c",
+            "mjm-501-1_v600_151023_299k_1h_1", #"mjm-501-1-dmso-1h",
+            "mjm-501-1_v600_151023_299k_gcosy_1", #"mjm-501-1-dmso-gcosy",
         ]
 
     def test_agilent_inconsistent_match_bug(self):
@@ -70,29 +70,29 @@ class TestExplorer:
         explorer.config.options.naming.experiment = True
         reporter = explorer.single_check(date(2026, 4, 10))
         assert sorted(reporter.copied()) == [
-            "akw-004-4_s600_010101_0k_13c_0",
-            "akw-004-4_s600_010101_0k_1h_0",
-            "akw-004-4_s600_010101_0k_gcosy_0",
-            "akw-004-4_s600_010101_0k_ghmbcad_0",
-            "akw-004-4_s600_010101_0k_ghsqcad_0",
-            "akw-017-3_v500_010101_0k_13c-hfdec_0",
-            "akw-017-3_v500_010101_0k_19f-bb-hdec_0",
-            "akw-017-3_v500_010101_0k_1h-bb-fdec_0",
-            "akw-017-3_v500_010101_0k_1h_0",
-            "akw-032-2-1_s600_010101_0k_13c-hfdec_0",
-            "akw-032-2-1_s600_010101_0k_19f-bb-hdec_0",
-            "akw-032-2-1_s600_010101_0k_1h-bb-fdec_0",
-            "akw-032-2-1_s600_010101_0k_1h_0",
-            "akw-032-2-1_s600_010101_0k_gcosy_0",
-            "akw-032-2-1_s600_010101_0k_ghmbcad_0",
-            "akw-032-2-1_s600_010101_0k_ghsqcad_0",
-            "akw-17-4_s600_010101_0k_13c-hfdec_0",
-            "akw-17-4_s600_010101_0k_19f-bb-hdec_0",
-            "akw-17-4_s600_010101_0k_1h-bb-fdec_0",
-            "akw-17-4_s600_010101_0k_1h_0",
-            "akw-17-4_s600_010101_0k_gcosy_0",
-            "akw-17-4_s600_010101_0k_ghmbcad_0",
-            "akw-17-4_s600_010101_0k_ghsqcad_0",
+            "akw-004-4_s600_300326_299k_13c_1",
+            "akw-004-4_s600_300326_299k_1h_1",
+            "akw-004-4_s600_300326_299k_gcosy_1",
+            "akw-004-4_s600_300326_299k_ghmbcad_1",
+            "akw-004-4_s600_300326_299k_ghsqcad_1",
+            "akw-017-3_v500_230326_299k_19f-bb-hdec_1",
+            "akw-017-3_v500_230326_299k_1h-bb-fdec_1",
+            "akw-017-3_v500_230326_299k_1h_1",
+            "akw-017-3_v500_240326_299k_13c-hfdec_1",
+            "akw-032-2-1_s600_070426_299k_13c-hfdec_1",
+            "akw-032-2-1_s600_070426_299k_19f-bb-hdec_1",
+            "akw-032-2-1_s600_070426_299k_1h-bb-fdec_1",
+            "akw-032-2-1_s600_070426_299k_1h_1",
+            "akw-032-2-1_s600_080426_299k_gcosy_1",
+            "akw-032-2-1_s600_080426_299k_ghmbcad_1",
+            "akw-032-2-1_s600_080426_299k_ghsqcad_1",
+            "akw-17-4_s600_260326_299k_13c-hfdec_1",
+            "akw-17-4_s600_260326_299k_19f-bb-hdec_1",
+            "akw-17-4_s600_260326_299k_1h-bb-fdec_1",
+            "akw-17-4_s600_260326_299k_1h_1",
+            "akw-17-4_s600_260326_299k_gcosy_1",
+            "akw-17-4_s600_270326_299k_ghmbcad_1",
+            "akw-17-4_s600_270326_299k_ghsqcad_1",
         ]
     
     def test_bruker_missing_title(self):

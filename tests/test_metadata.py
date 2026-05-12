@@ -86,16 +86,16 @@ class TestMetadata:
     
     # Tests of extraction from an actual measurement folder
     def test_bruker_metadata_extraction(self):
-        # This folder has a `title` file and a `uxnmr.info` file and its metadata
+        # This folder has a `title` file and an `acqus` file and its metadata
         # should be complete
-        measurement = MOCK_SERVER / "av300/Oct15-2023/200/pdata/1/title"
+        measurement = MOCK_SERVER / "av300/Oct15-2023/200"
         metadata = get_metadata(measurement, BRUKER_RULES, Manufacturer.BRUKER)
         assert metadata == MeasurementMetadata(
             path=str(measurement),
             folder_name=measurement.name,
             manufacturer=Manufacturer.BRUKER,
             submission_time=None,  # Is set separately based on the check date
-            completion_time=datetime.datetime(2023, 10, 15, 14, 38, 13),  # Mon Oct 15 14:38:13 2023
+            completion_time=datetime.datetime(2023, 10, 15, 19, 57, 3),  # 2023-10-15 19:57:03.652
             title="stu mjm 500-1",
             sample_id="500-1",
             user="mjm",
@@ -104,10 +104,10 @@ class TestMetadata:
             group_name=None,
             experiment="proton",
             instrument="av300",
-            frequency=300.26,
+            frequency=300.23247159,
             solvent="CDCl3",
-            temperature=None,  # TODO
-            measurement_no=200,
+            temperature=300,
+            measurement_no=None,  # Is set separately based on the path
         )
 
     def test_agilent_metadata_extraction(self):
