@@ -17,8 +17,8 @@ jobs:
             artifact_name: mora-the-explorer-linux
           - os: windows-latest
             artifact_name: mora-the-explorer-windows
-          - os: macos-latest
-            artifact_name: mora-the-explorer-macos
+          #- os: macos-latest
+          #  artifact_name: mora-the-explorer-macos
 
     runs-on: ${{ matrix.os }}
 
@@ -98,8 +98,8 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           merge-multiple: true
-          path: dist/
+          path: artifacts/
 
       - uses: softprops/action-gh-release@v3
         with:
-          files: dist/*
+          files: artifacts/*
