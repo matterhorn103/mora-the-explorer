@@ -148,7 +148,6 @@ class MetadataRules:
             lambda match: f"(?P<{match.group(1)}>{wildcard})",
             pattern,
         )
-        print(pattern)
         # Then those that should be matched literally
         pattern = re.sub(
             r'<(\w+)!>', # As above but with an exclamation mark
@@ -159,9 +158,7 @@ class MetadataRules:
         # more general wildcard that matches any characters
         sample_id_wildcard = r".*"
         # If it's being matched wild, replace the sample ID so that it uses the correct wildcard
-        print(pattern)
         pattern = pattern.replace(f"<sample_id>{wildcard}", f"<sample_id>{sample_id_wildcard}")
-        print(pattern)
 
         return pattern
 
@@ -491,9 +488,6 @@ def get_metadata_agilent(dir: Path, rules: MetadataRules) -> MeasurementMetadata
             if par in pars:
                 # Value on next line in second position
                 val = procpar[i + 1].split()[1]
-                print(par)
-                print(val)
-                print(pars[par]["dtype"])
                 processed_val = pars[par]["dtype"](val.strip('"'))
                 setattr(metadata, pars[par]["field"], processed_val)
 

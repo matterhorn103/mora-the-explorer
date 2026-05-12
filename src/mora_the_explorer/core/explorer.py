@@ -107,12 +107,24 @@ class Explorer:
             sample_id="",  # TODO use the actual value once it exists
         )
 
+        # Sample and measurement folder name formats may optionally be customized
+        # to have different formats for each manufacturer (and in Münster it is)
+        if isinstance(options.naming.sample_format, dict):
+            sample_format = options.naming.sample_format[str(spec_info.manufacturer)]
+        else:
+            sample_format = options.naming.sample_format
+        
+        if isinstance(options.naming.measurement_format, dict):
+            measurement_format = options.naming.measurement_format[str(spec_info.manufacturer)]
+        else:
+            measurement_format = options.naming.measurement_format
+
         rules = MetadataRules(
             values=substitutions,
             sample_pattern=spec_info.sample_pattern,
             measurement_pattern=spec_info.measurement_pattern,
-            sample_format=options.naming.sample_format,
-            measurement_format=options.naming.measurement_format,
+            sample_format=sample_format,
+            measurement_format=measurement_format,
             pattern_sep=self.config.admin.pattern_separator,
         )
         return rules

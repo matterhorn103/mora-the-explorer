@@ -14,7 +14,7 @@
 
 [options]
 user = "mjm"
-user_name = ""
+user_name = ".+"
 group = "gil"
 spec = "neo400"
 repeat_switch = false
