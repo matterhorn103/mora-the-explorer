@@ -402,11 +402,7 @@ def get_metadata_bruker(dir: Path, rules: MetadataRules) -> MeasurementMetadata 
             "EXP": {"field": "experiment", "dtype": str},
             "SOLVENT": {"field": "solvent", "dtype": str},
             "SFO1": {"field": "frequency", "dtype": float},
-            # The proper coil temp is not saved on av300, so fall back to this other value
             "TE": {"field": "temperature", "dtype": int},
-            # This value will be read later though (the file is in alphabetical order)
-            # so it will replace the TE value if it's present
-            "ShimCoilTempK": {"field": "temperature", "dtype": int},
             "DATE": {"field": "completion_time", "dtype": datetime.datetime},
         }
         # Not always one parameter per line, so have to iterate over all lines
@@ -428,7 +424,7 @@ def get_metadata_bruker(dir: Path, rules: MetadataRules) -> MeasurementMetadata 
             par = split[0].removeprefix("##$")
             if par in pars:
                 val = split[1]
-                if par in ("TE", "ShimCoilTempK"):
+                if par == "TE":
                     processed_val = int(float(val))
                 elif par == "DATE":
                     processed_val = datetime.datetime.fromtimestamp(int(val))
