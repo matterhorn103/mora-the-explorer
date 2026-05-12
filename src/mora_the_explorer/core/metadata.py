@@ -403,7 +403,6 @@ def get_metadata_bruker(dir: Path, rules: MetadataRules) -> MeasurementMetadata 
             "SOLVENT": {"field": "solvent", "dtype": str},
             "SFO1": {"field": "frequency", "dtype": float},
             "TE": {"field": "temperature", "dtype": int},
-            "DATE": {"field": "completion_time", "dtype": datetime.datetime},
         }
         # Not always one parameter per line, so have to iterate over all lines
         for line in acqus:
@@ -414,9 +413,20 @@ def get_metadata_bruker(dir: Path, rules: MetadataRules) -> MeasurementMetadata 
             #    # Found everything we need, we can stop iterating
             #    break
             if line.startswith("$$") and "@" in line:
-                # Get the instrument name
+                # Get the date and instrument name
                 # Line has the format "$$ 2026-05-11 18:10:02.652 +0200  av1@neo400c"
-                metadata.instrument = line.split("@")[1]
+                split = line.split()
+                metadata.instrument = split[-1].split("@")[1]
+                # Originally wanted to extract the `DATE` parameter as the timestamp
+                # However, `DATE` is a Unix timestamp and therefore requires handling
+                # timezones, as the result of converting it to a datetime object is
+                # different when the code is run in different timezones.
+                # This is contrary to the approach taken otherwise, which is to
+                # handle all timestamps as "naive" datetime objects (without tz info)
+                # and treat them all as corresponding to the local time at the
+                # time of measurement
+                iso_timestamp = split[1] + "T" + split[2][:-4]  # Strip the milliseconds
+                metadata.completion_time = datetime.datetime.fromisoformat(iso_timestamp)
                 continue
             if not line.startswith("##$"):
                 continue
@@ -426,8 +436,6 @@ def get_metadata_bruker(dir: Path, rules: MetadataRules) -> MeasurementMetadata 
                 val = split[1]
                 if par == "TE":
                     processed_val = int(float(val))
-                elif par == "DATE":
-                    processed_val = datetime.datetime.fromtimestamp(int(val))
                 else:
                     processed_val = pars[par]["dtype"](val.strip('<>'))
                 print(par)
