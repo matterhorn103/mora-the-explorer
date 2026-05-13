@@ -43,7 +43,18 @@ class RowComponent(QObject):
         This method should be overridden by subclasses.
         """
         raise NotImplementedError
+    
 
+class SectionHeading(RowComponent):
+    """A heading to introduce a group of related settings."""
+
+    def __init__(self, text: str):
+        super().__init__()
+
+        self.label = QLabel(text)
+
+    def add_to_grid(self, grid: QGridLayout, row: int):
+        grid.addWidget(self.label, row, 0, 1, 2)
 
 class DirSelector(RowComponent):
     """A component for selecting a directory."""

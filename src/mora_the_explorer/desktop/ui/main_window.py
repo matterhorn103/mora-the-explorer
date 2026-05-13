@@ -7,13 +7,14 @@ from packaging.version import Version
 from PySide6.QtCore import QSize, Qt, QUrl, Signal, Slot
 from PySide6.QtGui import QDesktopServices, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
+    QMainWindow,
+    QSpacerItem,
+    QWidget,
     QGridLayout,
     QLabel,
-    QMainWindow,
     QMessageBox,
     QProgressBar,
     QPushButton,
-    QWidget,
 )
 
 from ...core.config import Config
@@ -81,6 +82,9 @@ class MainWindow(QMainWindow):
         # Initialize the row counter
         # We already have one thing in the grid (the version info) so start at 1
         self._row_count = 1
+
+        self.add_spacer()
+        self.add_row(rows.SectionHeading("Search Query"))
 
         # User initials entry
         self.user_entry = rows.FreeEntryField("User:", "(initials)")
@@ -205,6 +209,11 @@ class MainWindow(QMainWindow):
         # A shortcut to switch to and from admin mode
         admin_shortcut = QShortcut(QKeySequence("Ctrl+Shift+A"), self)
         admin_shortcut.activated.connect(self.admin_mode_toggled)
+
+    def add_spacer(self):
+        """Add a spacer to the next row in the grid."""
+        self.grid.addItem(QSpacerItem(0, 20), self._row_count, 0, 1, 2)
+        self._row_count += 1
 
     def add_row(self, row: rows.RowComponent):
         """Adds a row component to the next row in the grid."""
