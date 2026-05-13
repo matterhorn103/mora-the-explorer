@@ -43,7 +43,7 @@ save = "~/nmr"  # The location spectra should be copied to
 [admin]
 user_name_is_admin_only = true
 pattern_separator = '[\s_-]' # Note the single quotes! (= literal string)
-version = "2.0.0b5"
+version = "2.0.0b6"
 email = "milner@uni-muenster.de"
 changelog = """
 - Update for move to new server
