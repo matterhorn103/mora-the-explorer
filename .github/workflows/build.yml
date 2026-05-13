@@ -15,10 +15,10 @@ jobs:
         include:
           - os: ubuntu-latest
             artifact_name: mora-the-explorer-linux
-          #- os: windows-latest
-          #  artifact_name: mora-the-explorer-windows
-          #- os: macos-latest
-          #  artifact_name: mora-the-explorer-macos
+          - os: windows-latest
+            artifact_name: mora-the-explorer-windows
+          - os: macos-latest
+            artifact_name: mora-the-explorer-macos
 
     runs-on: ${{ matrix.os }}
 

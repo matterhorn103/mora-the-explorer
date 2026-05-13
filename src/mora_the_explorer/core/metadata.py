@@ -438,9 +438,6 @@ def get_metadata_bruker(dir: Path, rules: MetadataRules) -> MeasurementMetadata 
                     processed_val = int(float(val))
                 else:
                     processed_val = pars[par]["dtype"](val.strip('<>'))
-                print(par)
-                print(val)
-                print(processed_val)
                 setattr(metadata, pars[par]["field"], processed_val)
     
     # The only thing that's impossible to get is the submission time, but in Münster
