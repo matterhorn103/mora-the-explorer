@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
 )
 
-from ...core.config import Config, SpectraSorting
+from ...core.config import Config
 from . import rows
 from .display import Display
 from .status import StatusBar
@@ -131,24 +131,6 @@ class MainWindow(QMainWindow):
         self.add_row(self.dest_entry)
         self.dest_entry.changed.connect(self._on_dest_path_changed)
 
-        # Sorting selection
-        #self.sort_selector = rows.SortingSelector()
-        #self.sort_selector.set_selected(config.options.sort)
-        #self.add_row(self.sort_selector)
-        #self.sort_selector.changed.connect(self._on_sort_changed)
-
-        # Folder name options
-        #self.folder_name_options = rows.FolderNameOptions()
-        # Each option `user`, `solvent` etc. has a corresponding flag in the config
-        # (except for frequency)
-        #self.folder_name_options.set_checked(**(asdict(config.options.naming)))
-        #self.add_row(self.folder_name_options)
-        #self.folder_name_options.changed.connect(self._on_folder_name_options_changed)
-
-        # Preview of the result of the user's choices
-        #self.folder_name_preview = rows.FolderNamePreview(config)
-        #self.add_row(self.folder_name_preview)
-
         # Spectrometer selection
         self.spec_selector = rows.SpectrometerSelector(config.specs)
         self.refresh_visible_specs()
@@ -159,8 +141,8 @@ class MainWindow(QMainWindow):
         # Match pattern customization via free-form entry boxes, for admin use
         if admin_mode:
             from PySide6.QtGui import QFontDatabase
-            self.sample_pattern_entry = rows.FreeEntryField("Sample:", None)
-            self.measurement_pattern_entry = rows.FreeEntryField("Measurement:", None)
+            self.sample_pattern_entry = rows.FreeEntryField("Sample pattern:", None)
+            self.measurement_pattern_entry = rows.FreeEntryField("Measurement pattern:", None)
             # Patterns are regex
             self.sample_pattern_entry.set_text(config.specs[config.options.spec].sample_pattern)
             self.measurement_pattern_entry.set_text(config.specs[config.options.spec].measurement_pattern)
@@ -227,9 +209,6 @@ class MainWindow(QMainWindow):
         admin_shortcut = QShortcut(QKeySequence("Ctrl+Shift+A"), self)
         admin_shortcut.activated.connect(self.admin_mode_toggled)
 
-        # Finally, refresh a few things
-        #self.adapt_to_sort()
-
     def add_row(self, row: rows.RowComponent):
         """Adds a row component to the next row in the grid."""
         row.add_to_grid(self.grid, self._row_count)
@@ -265,21 +244,6 @@ class MainWindow(QMainWindow):
         if self.admin_mode:
             self.sample_pattern_entry.set_text(spec_info.sample_pattern)
             self.measurement_pattern_entry.set_text(spec_info.measurement_pattern)
-
-    def adapt_to_sort(self):
-        """Make sure the available options reflect what makes sense for the current sort style."""
-        match self.config.options.sort:
-            case SpectraSorting.ORIGINAL:
-                self.folder_name_options.set_enabled(instrument=True)
-            case SpectraSorting.MEASUREMENT:
-                self.folder_name_options.set_enabled(instrument=True)
-            case SpectraSorting.SAMPLE_AND_SPEC:
-                # Make sure the user includes the spectrometer in the name,
-                # otherwise what's the point?
-                self.folder_name_options.set_checked(instrument=True)
-                self.folder_name_options.set_enabled(instrument=False)
-            case SpectraSorting.SAMPLE:
-                self.folder_name_options.set_enabled(instrument=True)
 
     def notify_spectra(self):
         """Inform the user that spectra were found."""
@@ -405,20 +369,6 @@ class MainWindow(QMainWindow):
     def _on_dest_path_changed(self):
         self.config.paths.save = str(self.dest_entry.path())
         self.save_button.setEnabled(True)
-
-    #@Slot()
-    #def _on_sort_changed(self):
-    #    self.config.options.sort = self.sort_selector.selected()
-    #    self.adapt_to_sort()
-    #    #self.folder_name_preview.regenerate_preview()
-
-    #@Slot()
-    #def _on_folder_name_options_changed(self):
-    #    # Returns {"user": True, "experiment": False, ...}
-    #    for k, v in self.folder_name_options.checked().items():
-    #        setattr(self.config.options.naming, k, v)
-    #    #self.folder_name_preview.regenerate_preview()
-    #    self.save_button.setEnabled(True)
 
     @Slot()
     def _on_spec_changed(self):

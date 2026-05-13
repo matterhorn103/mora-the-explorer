@@ -148,7 +148,6 @@ class MetadataRules:
             lambda match: f"(?P<{match.group(1)}>{wildcard})",
             pattern,
         )
-        print(pattern)
         # Then those that should be matched literally
         pattern = re.sub(
             r'<(\w+)!>', # As above but with an exclamation mark
@@ -159,9 +158,7 @@ class MetadataRules:
         # more general wildcard that matches any characters
         sample_id_wildcard = r".*"
         # If it's being matched wild, replace the sample ID so that it uses the correct wildcard
-        print(pattern)
         pattern = pattern.replace(f"<sample_id>{wildcard}", f"<sample_id>{sample_id_wildcard}")
-        print(pattern)
 
         return pattern
 
@@ -378,33 +375,74 @@ def get_metadata_bruker(dir: Path, rules: MetadataRules) -> MeasurementMetadata 
     metadata.folder_name = dir.name
     metadata.manufacturer = Manufacturer.BRUKER
 
+    # This is sadly dependent on the server tree structure and is therefore Münster-specific
+    # If there's a parm.txt, it's in there, but that doesn't seem to get saved on
+    # the neo400 spectrometers
+
     if details:
         details_split = details.split()
         metadata.experiment = details_split[0]
         metadata.solvent = details_split[1]
 
-    # Get magnet frequency and instrument name
-    uxnmr_info_file = dir / "uxnmr.info"
-    if uxnmr_info_file.exists():
-        with open(uxnmr_info_file, encoding="utf-8") as f:
-            for line in f:
-                if line.startswith("1H-frequency"):
-                    # Line has format "1H-frequency : 300.26 MHz"
-                    metadata.frequency = float(line.split()[2])
-                if line.startswith("Host"):
-                    # Line has format "Host         : av300"
-                    metadata.instrument = line.split()[2]
-                if line.startswith("Date"):
-                    # TODO Work out if this is a reliable source and if this timestamp
-                    # actually is for the completion time or not?
-                    # Line has format "Date         : Mon Oct 14 14:38:13 2024"
-                    metadata.completion_time = datetime.datetime.strptime(
-                        line.rstrip(),
-                        "Date         : %a %b %d %H:%M:%S %Y",
-                    )
-                if metadata.frequency and metadata.instrument and metadata.completion_time:
-                    # Found everything we need, we can stop iterating
-                    break
+    # The `acqus` file contains everything we need
+    # Note that the neo400 files contain more than the av300 ones
+    acqus_file = dir / "acqus"
+    if acqus_file.exists():
+        with open(acqus_file, encoding="utf-8") as f:
+            acqus = f.read().splitlines()
+        # Contains the parameters, mostly one per line
+        # The first few invariables have the format "##PAR= VALUE"
+        # Information on the path, user, a timestamp etc. follow on lines that
+        # start with "$$ "
+        # Subsequent parameter lines have the format "##$PAR= VALUE"
+        # Some parameter lines have the format "##$PAR= (0..n)" which indicates
+        # that the following line or lines contain a list of `n` space-separated
+        # values
+        pars = {
+            "EXP": {"field": "experiment", "dtype": str},
+            "SOLVENT": {"field": "solvent", "dtype": str},
+            "SFO1": {"field": "frequency", "dtype": float},
+            "TE": {"field": "temperature", "dtype": int},
+        }
+        # Not always one parameter per line, so have to iterate over all lines
+        for line in acqus:
+            # We could break once all fields are filled, but the temperature comes
+            # at the very bottom of the file, so might as well just save the cost
+            # per loop of checking the condition
+            #if metadata.frequency and metadata.experiment and metadata.temperature and metadata.completion_time:
+            #    # Found everything we need, we can stop iterating
+            #    break
+            if line.startswith("$$") and "@" in line:
+                # Get the date and instrument name
+                # Line has the format "$$ 2026-05-11 18:10:02.652 +0200  av1@neo400c"
+                split = line.split()
+                metadata.instrument = split[-1].split("@")[1]
+                # Originally wanted to extract the `DATE` parameter as the timestamp
+                # However, `DATE` is a Unix timestamp and therefore requires handling
+                # timezones, as the result of converting it to a datetime object is
+                # different when the code is run in different timezones.
+                # This is contrary to the approach taken otherwise, which is to
+                # handle all timestamps as "naive" datetime objects (without tz info)
+                # and treat them all as corresponding to the local time at the
+                # time of measurement
+                iso_timestamp = split[1] + "T" + split[2][:-4]  # Strip the milliseconds
+                metadata.completion_time = datetime.datetime.fromisoformat(iso_timestamp)
+                continue
+            if not line.startswith("##$"):
+                continue
+            split = line.split("= ")
+            par = split[0].removeprefix("##$")
+            if par in pars:
+                val = split[1]
+                if par == "TE":
+                    processed_val = int(float(val))
+                else:
+                    processed_val = pars[par]["dtype"](val.strip('<>'))
+                setattr(metadata, pars[par]["field"], processed_val)
+    
+    # The only thing that's impossible to get is the submission time, but in Münster
+    # we know that (the date, at least) from the folder that it's saved in/the date
+    # that is searched for, so we can add that in the calling context
 
     return metadata
 
@@ -417,10 +455,9 @@ def get_metadata_agilent(dir: Path, rules: MetadataRules) -> MeasurementMetadata
         return None
     metadata.path = str(dir)
     metadata.folder_name = dir.name
+    # This is sadly dependent on the server tree structure and is therefore Münster-specific
     metadata.group_name = dir.parent.parent.parent.name
     metadata.manufacturer = Manufacturer.AGILENT
-    # One folder contains multiple measurements TODO Extract properly
-    metadata.experiment = "various"
 
     procpar_file = dir / "procpar"
     if procpar_file.exists():
@@ -436,12 +473,18 @@ def get_metadata_agilent(dir: Path, rules: MetadataRules) -> MeasurementMetadata
             "solvent": {"field": "solvent", "dtype": str},
             "kbspec": {"field": "instrument", "dtype": str},
             "tempk_s": {"field": "temperature", "dtype": int},
-            "time_submitted": {"field": "submission_time", "dtype": datetime.datetime},
-            "time_complete": {"field": "completion_time", "dtype": datetime.datetime},
+            "time_submitted": {"field": "submission_time", "dtype": datetime.datetime.fromisoformat},
+            "time_complete": {"field": "completion_time", "dtype": datetime.datetime.fromisoformat},
         }
         # Turns out we can't rely on the lines being in sets of three, so have
         # to iterate through all of them
         for i, line in enumerate(procpar):
+            # We could break once all fields are filled, but the timestamps come
+            # pretty near the bottom of the file, so might as well just save the cost
+            # per loop of checking the condition
+            #if metadata.frequency and metadata.instrument and metadata.solvent and metadata.submission_time and metadata.completion_time:
+            #    # Found everything we need, we can stop iterating
+            #    break
             try:
                 par = line.split()[0]  # Note that for 2 of 3 lines this won't actually be a parameter name
             except IndexError:
@@ -451,9 +494,6 @@ def get_metadata_agilent(dir: Path, rules: MetadataRules) -> MeasurementMetadata
                 val = procpar[i + 1].split()[1]
                 processed_val = pars[par]["dtype"](val.strip('"'))
                 setattr(metadata, pars[par]["field"], processed_val)
-            if metadata.frequency and metadata.instrument and metadata.solvent:
-                # Found everything we need, we can stop iterating
-                break
 
     return metadata
 

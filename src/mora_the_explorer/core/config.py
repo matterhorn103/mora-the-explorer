@@ -9,7 +9,6 @@ import tomllib
 import tomli_w
 import platformdirs
 
-from .checknmr import SpectraSorting
 from .spec import Manufacturer, Spectrometer
 
 
@@ -35,8 +34,14 @@ USER_CONFIG_PATH = (
 
 @dataclass
 class NamingOptions:
-    sample_format: str
-    measurement_format: str
+    """The templates to use for the folder names.
+    
+    Each entry can be a single string that applies to all manufacturers, or a
+    dict/table of strings for each manufacturer, with the manufacturer names as
+    the keys.
+    """
+    sample_format: str | dict[str, str]
+    measurement_format: str | dict[str, str]
 
 
 @dataclass

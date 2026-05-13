@@ -5,6 +5,8 @@ from mora_the_explorer.core import (
     MeasurementMetadata,
     MatchValues,
 )
+from mora_the_explorer.core.metadata import get_metadata, Manufacturer
+from . import MOCK_SERVER
 
 SUBSTITUTIONS = MatchValues(
     group="stu",
@@ -58,6 +60,81 @@ class TestRules:
 
 class TestMetadata:
 
+    # Tests of extraction from the "title" with each kind of spectrometer
+    def test_bruker_title_extraction(self):
+        title = "stu mjm 213-4 repeat"
+        metadata = MeasurementMetadata.from_measurement_title(title, BRUKER_RULES)
+        assert metadata == MeasurementMetadata(
+            group="stu",
+            user="mjm",
+            sample_id="213-4 repeat",
+            title=title,
+        )
+
+    def test_agilent_title_extraction(self):
+        title = "mjm500-1_151023_299k_1h_1.fid"
+        metadata = MeasurementMetadata.from_measurement_title(title, AGILENT_RULES)
+        print(metadata)
+        assert metadata == MeasurementMetadata(
+            user="mjm",
+            sample_id="500-1",
+            temperature=299,
+            experiment="1h",
+            measurement_no=1,
+            title=title,
+        )
+    
+    # Tests of extraction from an actual measurement folder
+    def test_bruker_metadata_extraction(self):
+        # This folder has a `title` file and an `acqus` file and its metadata
+        # should be complete
+        measurement = MOCK_SERVER / "av300/Oct15-2023/200"
+        metadata = get_metadata(measurement, BRUKER_RULES, Manufacturer.BRUKER)
+        assert metadata == MeasurementMetadata(
+            path=str(measurement),
+            folder_name=measurement.name,
+            manufacturer=Manufacturer.BRUKER,
+            submission_time=None,  # Is set separately based on the check date
+            completion_time=datetime.datetime(2023, 10, 15, 19, 57, 3),  # 2023-10-15 19:57:03.652
+            title="stu mjm 500-1",
+            sample_id="500-1",
+            user="mjm",
+            user_name=None,
+            group="stu",
+            group_name=None,
+            experiment="proton",
+            instrument="av300",
+            frequency=300.23247159,
+            solvent="CDCl3",
+            temperature=300,
+            measurement_no=None,  # Is set separately based on the path
+        )
+
+    def test_agilent_metadata_extraction(self):
+        # This folder has a `procpar` and its metadata should be complete
+        measurement = MOCK_SERVER / "v600/studer/2023/mjm500-1/mjm500-1_151023_299k_1h_1.fid"
+        metadata = get_metadata(measurement, AGILENT_RULES, Manufacturer.AGILENT)
+        assert metadata == MeasurementMetadata(
+            path=str(measurement),
+            folder_name=measurement.name,
+            manufacturer=Manufacturer.AGILENT,
+            # Submission time and completion time seem to be identical on Agilent specs?
+            submission_time=datetime.datetime(2023, 10, 15, 17, 50, 59),  # 20231015T175059
+            completion_time=datetime.datetime(2023, 10, 15, 17, 50, 59),  # 20231015T175059
+            title="mjm500-1_151023_299k_1h_1.fid",
+            sample_id="500-1",
+            user="mjm",
+            user_name=None,
+            group=None,
+            group_name="studer",  # Is based on the path, unfortunately
+            experiment="1h",
+            instrument="v600",
+            frequency=599.8324892,
+            solvent="cdcl3",
+            temperature=299,
+            measurement_no=1,
+        )
+
     def test_sample_name_gen(self):
         metadata = MeasurementMetadata(group="stu", user="mjm", sample_id="213-4")
         name = metadata.generate_folder_name(SAMPLE_FORMAT)
@@ -88,29 +165,6 @@ class TestMetadata:
         name = metadata.generate_folder_name(MEASUREMENT_FORMAT)
         assert name == "akw-17-4_neo400a_230326_299k_1h_260"
 
-    def test_bruker_title_extraction(self):
-        title = "stu mjm 213-4 repeat"
-        metadata = MeasurementMetadata.from_measurement_title(title, BRUKER_RULES)
-        assert metadata == MeasurementMetadata(
-            group="stu",
-            user="mjm",
-            sample_id="213-4 repeat",
-            title=title,
-        )
-
-    def test_agilent_title_extraction(self):
-        title = "mjm500-1_151023_299k_1h_1.fid"
-        metadata = MeasurementMetadata.from_measurement_title(title, AGILENT_RULES)
-        print(metadata)
-        assert metadata == MeasurementMetadata(
-            user="mjm",
-            sample_id="500-1",
-            temperature=299,
-            experiment="1h",
-            measurement_no=1,
-            title=title,
-        )
-    
     def test_no_rules_mutation(self):
         # This is related to the bug tested by `TestExplorer.test_agilent_inconsistent_match_bug()`
         # Only the first of these four was being properly parsed to give user = "akw",

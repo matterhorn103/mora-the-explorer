@@ -453,6 +453,9 @@ def check_nmr(
             metadata.manufacturer = manufacturer
             if metadata.submission_time is None:
                 metadata.submission_time = datetime.datetime(date.year, date.month, date.day)
+            if manufacturer is Manufacturer.BRUKER:
+                if metadata.measurement_no is None:
+                    metadata.measurement_no = int(measurement_dir.name)
 
             # Generate the appropriate names and target path
             measurement_name = metadata.generate_folder_name(rules.measurement_format)
