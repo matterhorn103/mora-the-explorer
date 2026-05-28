@@ -108,7 +108,7 @@ pharmazie = "pharmazie"
 # - group         (the chosen group's ID)
 # - group_name    (the chosen group's name)
 # - date
-# 
+#
 # For `date`, it may be desirable to format it using e.g. `{date:%Y}` to get `2026`
 # For the format codes see https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
 
@@ -118,7 +118,7 @@ pharmazie = "pharmazie"
 [spectrometers.archiv]
 manufacturer = "bruker"
 display_name = "Pre-2020 archive (Bruker)"
-measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>' # Note the single quotes! (= literal string)
+measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id!>' # Note the single quotes! (= literal string)
 date_entry = "dd MMM yyyy"
 check_paths = [
     "archiv/dpx300/{date:%y}-dpx300_{date:%Y}/{date:%b%d-%Y}",
@@ -134,7 +134,7 @@ single_check_only = false
 [spectrometers.av300]
 manufacturer = "bruker"
 display_name = "Studer group NMR only (300 MHz)"
-measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
+measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id!>'
 date_entry = "dd MMM yyyy"
 check_paths = [
     "av300/av1/{date:%b%d-%Y}",
@@ -151,7 +151,7 @@ single_check_only = false
 [spectrometers.neo400]
 manufacturer = "bruker"
 display_name = "Routine NMR (300 && 400 MHz)"
-measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
+measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id!>'
 date_entry = "dd MMM yyyy"
 check_paths = [
     "neo400/av1/neo400a_{date:%b%d-%Y}",
@@ -169,8 +169,8 @@ single_check_only = false
 [spectrometers.hf]
 manufacturer = "agilent"
 display_name = "High-field spectrometers (500 && 600 MHz)"
-sample_pattern = '<user!><sample_id>'
-measurement_pattern = '<user!><sample_id>_(\d{6})_<temperature>k_<experiment>_<measurement_no>\.fid'
+sample_pattern = '<user!><sample_id!>'
+measurement_pattern = '<user!><sample_id!>_(\d{6})_<temperature>k_<experiment>_<measurement_no>\.fid'
 date_entry = "yyyy"
 check_paths = [
     "500-600er/{group_name}/{date:%Y}",

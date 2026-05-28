@@ -1,11 +1,12 @@
 import datetime
 
 from mora_the_explorer.core import (
-    MetadataRules,
-    MeasurementMetadata,
     MatchValues,
+    MeasurementMetadata,
+    MetadataRules,
 )
-from mora_the_explorer.core.metadata import get_metadata, Manufacturer
+from mora_the_explorer.core.metadata import Manufacturer, get_metadata
+
 from . import MOCK_SERVER
 
 SUBSTITUTIONS = MatchValues(
@@ -13,11 +14,11 @@ SUBSTITUTIONS = MatchValues(
     group_name="studer",
     user="mjm",
     user_name="milner",  # Doesn't matter what this is since we won't require it anyway
-    sample_id="",        # Same applies here
+    sample_id=r".*",  # Different wildcard to the usual
 )
 
-BRUKER_PATTERN = r'<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
-AGILENT_PATTERN = r'<user!><sample_id>_(\d{6})_<temperature>k_<experiment>_<measurement_no>\.fid'
+BRUKER_PATTERN = r"<group!>\_*<user_name>?\_*<user!>\_*<sample_id!>"
+AGILENT_PATTERN = r"<user!><sample_id!>_(\d{6})_<temperature>k_<experiment>_<measurement_no>\.fid"
 SAMPLE_FORMAT = "{user}-{sample_id}"
 MEASUREMENT_FORMAT = "{user}-{sample_id}_{instrument}_{completion_time:%d%m%y}_{temperature}k_{experiment}_{measurement_no}"
 
@@ -30,7 +31,7 @@ BRUKER_RULES = MetadataRules(
 )
 AGILENT_RULES = MetadataRules(
     values=SUBSTITUTIONS,
-    sample_pattern=r'<user!><sample_id>',
+    sample_pattern=r"<user!><sample_id>",
     measurement_pattern=AGILENT_PATTERN,
     sample_format=SAMPLE_FORMAT,
     measurement_format=MEASUREMENT_FORMAT,
@@ -38,28 +39,22 @@ AGILENT_RULES = MetadataRules(
 
 
 class TestRules:
-
     def test_bruker_pattern_processing(self):
         processed = BRUKER_RULES.process_pattern(BRUKER_PATTERN)
         print(processed)
-        theoretical = (
-            r'(?P<group>stu)(?:[\s_-]*)(?P<user_name>\S+)?(?:[\s_-]*)(?P<user>mjm)(?:[\s_-]*)(?P<sample_id>.*)'
-        )
+        theoretical = r"(?P<group>stu)(?:[\s_-]*)(?P<user_name>\S+)?(?:[\s_-]*)(?P<user>mjm)(?:[\s_-]*)(?P<sample_id>.*)"
         print(theoretical)
         assert processed == theoretical
 
     def test_agilent_pattern_processing(self):
         processed = AGILENT_RULES.process_pattern(AGILENT_PATTERN)
         print(processed)
-        theoretical = (
-            r'(?P<user>mjm)(?P<sample_id>.*)_(\d{6})_(?P<temperature>\S+)k_(?P<experiment>\S+)_(?P<measurement_no>\S+)\.fid'
-        )
+        theoretical = r"(?P<user>mjm)(?P<sample_id>.*)_(\d{6})_(?P<temperature>\S+)k_(?P<experiment>\S+)_(?P<measurement_no>\S+)\.fid"
         print(theoretical)
         assert processed == theoretical
 
 
 class TestMetadata:
-
     # Tests of extraction from the "title" with each kind of spectrometer
     def test_bruker_title_extraction(self):
         title = "stu mjm 213-4 repeat"
@@ -83,7 +78,7 @@ class TestMetadata:
             measurement_no=1,
             title=title,
         )
-    
+
     # Tests of extraction from an actual measurement folder
     def test_bruker_metadata_extraction(self):
         # This folder has a `title` file and an `acqus` file and its metadata
@@ -183,8 +178,8 @@ class TestMetadata:
                 user_name="",
                 sample_id="",
             ),
-            r'<user!><sample_id>',
-            r'<user!><sample_id>',
+            r"<user!><sample_id>",
+            r"<user!><sample_id>",
             SAMPLE_FORMAT,
             MEASUREMENT_FORMAT,
         )
