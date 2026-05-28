@@ -49,6 +49,7 @@ class MetadataRules:
         sample_format: str,
         measurement_format: str,
         pattern_sep: str = r"[\s_-]",
+        normalize_sample_id: bool = True,
     ):
         r"""Create a new rules specification.
 
@@ -124,8 +125,12 @@ class MetadataRules:
         the destination location. Values of metadata fields are inserted where
         they are indicated in the strings enclosed in curly brackets.
         See `MeasurementMetadata.generate_folder_name()` for more details.
+
+        If `normalize_sample_id` is `True`, it is an indication that all
+        underscores and spaces in the sample ID should be replaced by hyphens.
         """
 
+        self.normalize_sample_id = normalize_sample_id
         self.src_sep = pattern_sep
         self.sample_format = sample_format
         self.measurement_format = measurement_format
@@ -268,6 +273,8 @@ class MeasurementMetadata:
         extracted = {
             k: METADATA_DTYPES[k](v) if v is not None else None for k, v in extracted.items()
         }
+        if rules.normalize_sample_id and "sample_id" in extracted:
+            extracted["sample_id"] = extracted["sample_id"].replace(" ", "-").replace("_", "-")
         result = MeasurementMetadata(**extracted)
         # Add the original title too
         result.title = title
@@ -292,8 +299,7 @@ class MeasurementMetadata:
         If `skip_missing` is `False`:
         - any missing string values are replaced with `default_str`.
         - missing `datetime` objects are replaced with `2001-01-01`.
-        - missing `int` and `float` values are replaced with `0` and `0.0`
-        """
+        - missing `int` and `float` values are replaced with `0` and `0.0`"""
         if skip_missing:
             return {k: v for k, v in asdict(self).items() if v is not None}
         else:
@@ -327,11 +333,7 @@ class MeasurementMetadata:
         with open(file, "wb") as f:
             tomli_w.dump(d, f)
 
-    def generate_folder_name(
-        self,
-        template: str,
-        missing: str = "unknown",
-    ) -> str:
+    def generate_folder_name(self, template: str, missing: str = "unknown") -> str:
         """Get a formatted folder name according to the provided template and
         the available metadata.
 
@@ -531,7 +533,7 @@ def get_metadata_agilent(dir: Path, rules: MetadataRules) -> MeasurementMetadata
 
 
 def get_metadata(
-    dir: Path, rules: MetadataRules, manufacturer: Manufacturer
+    dir: Path, rules: MetadataRules, manufacturer: Manufacturer,
 ) -> MeasurementMetadata | None:
     match manufacturer:
         case Manufacturer.BRUKER:

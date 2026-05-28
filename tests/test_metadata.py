@@ -19,6 +19,7 @@ BRUKER_PATTERN = r"<group!>\_*<user_name>?\_*<user!>\_*<user2!>?\_*<sample_id!>"
 AGILENT_PATTERN = (
     r"<user!><user2!>?<sample_id!>_(\d{6})_<temperature>k_<experiment>_<measurement_no>\.fid"
 )
+AGILENT_SAMPLE_PATTERN = r"<user!><sample_id!>"
 SAMPLE_FORMAT = "{user}-{sample_id}"
 MEASUREMENT_FORMAT = "{user}-{sample_id}_{instrument}_{completion_time:%d%m%y}_{temperature}k_{experiment}_{measurement_no}"
 
@@ -31,7 +32,7 @@ BRUKER_RULES = MetadataRules(
 )
 AGILENT_RULES = MetadataRules(
     values=SUBSTITUTIONS,
-    sample_pattern=r"<user!><sample_id!>",
+    sample_pattern=AGILENT_SAMPLE_PATTERN,
     measurement_pattern=AGILENT_PATTERN,
     sample_format=SAMPLE_FORMAT,
     measurement_format=MEASUREMENT_FORMAT,
@@ -62,7 +63,7 @@ class TestMetadata:
         assert metadata == MeasurementMetadata(
             group="stu",
             user="mjm",
-            sample_id="213-4 repeat",
+            sample_id="213-4-repeat",
             title=title,
         )
 
@@ -215,3 +216,34 @@ class TestMetadata:
             measurement_no=1,
             title=title,
         )
+
+    def test_sample_id_normalization(self):
+        values = MatchValues(user="nho", group="glo")
+        bruker_rules = MetadataRules(
+            values=values,
+            sample_pattern=None,
+            measurement_pattern=BRUKER_PATTERN,
+            sample_format=SAMPLE_FORMAT,
+            measurement_format=MEASUREMENT_FORMAT,
+        )
+        agilent_rules = MetadataRules(
+            values=values,
+            sample_pattern=AGILENT_SAMPLE_PATTERN,
+            measurement_pattern=AGILENT_PATTERN,
+            sample_format=SAMPLE_FORMAT,
+            measurement_format=MEASUREMENT_FORMAT,
+        )
+        # Check that the typical formats used for names all give the same end result
+        bruker1 = MeasurementMetadata.from_measurement_title("glo nho nb 052-01-1", bruker_rules)  # In common use e.g. by the Studer group
+        bruker2 = MeasurementMetadata.from_measurement_title("glo nho nb 052 01 1", bruker_rules)  # Format used by the department themselves on Bruker spectrometers
+        bruker3 = MeasurementMetadata.from_measurement_title("glo nho nb-052-01-1", bruker_rules)  # For good measure
+        agilent = MeasurementMetadata.from_measurement_title("nhonb052-01-1_130526_299k_1h_1.fid", agilent_rules)
+        expectation = "052-01-1"
+        assert bruker1.sample_id == expectation
+        assert bruker2.sample_id == expectation
+        assert bruker3.sample_id == expectation
+        assert agilent.sample_id ==  expectation
+        # Check that the normalization is correctly controlled by the option
+        bruker_rules.normalize_sample_id = False
+        bruker_non_normalized = MeasurementMetadata.from_measurement_title("glo nho nb 052 01 1", bruker_rules)
+        assert bruker_non_normalized.sample_id != bruker2.sample_id
