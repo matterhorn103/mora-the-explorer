@@ -6,8 +6,8 @@ repeat_switch = false
 repeat_delay = 5
 
 [options.naming]
-sample_format = "{user}-{sample_id}"
-measurement_format = "{user}-{sample_id}_{instrument}_{completion_time:%d%m%y}_{temperature}k_{experiment}_{measurement_no}"
+sample_format = "{user}-{user2}-{sample_id}"
+measurement_format = "{user}-{user2}-{sample_id}_{instrument}_{completion_time:%d%m%y}_{temperature}k_{experiment}_{measurement_no}"
 
 [appearance]
 start_button_colour = "#b88cce"

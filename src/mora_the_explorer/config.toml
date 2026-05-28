@@ -20,9 +20,9 @@ repeat_switch = false
 repeat_delay = 5
 
 [options.naming]
-sample_format = "{user}-{sample_id}"
-measurement_format.bruker = "{user}-{sample_id}_{instrument}_{submission_time:%d%m%y}_{temperature}k_{experiment}_{measurement_no}"
-measurement_format.agilent = "{user}-{sample_id}_{instrument}_{completion_time:%d%m%y}_{temperature}k_{experiment}_{measurement_no}"
+sample_format = "{user}-{user2}-{sample_id}"
+measurement_format.bruker = "{user}-{user2}-{sample_id}_{instrument}_{submission_time:%d%m%y}_{temperature}k_{experiment}_{measurement_no}"
+measurement_format.agilent = "{user}-{user2}-{sample_id}_{instrument}_{completion_time:%d%m%y}_{temperature}k_{experiment}_{measurement_no}"
 
 
 [appearance]
