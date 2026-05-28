@@ -87,19 +87,19 @@ jobs:
           name: ${{ matrix.artifact_name }}
           path: ${{ matrix.artifact_name }}
 
-  release:
-    needs: build
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - uses: actions/download-artifact@v8
-        with:
-          merge-multiple: true
-          path: artifacts/
-
-      - uses: softprops/action-gh-release@v3
-        with:
-          files: artifacts/*
+#  release:
+#    needs: build
+#    if: github.event_name != 'pull_request'
+#    runs-on: ubuntu-latest
+#    permissions:
+#      contents: write
+#
+#    steps:
+#      - uses: actions/download-artifact@v8
+#        with:
+#          merge-multiple: true
+#          path: artifacts/
+#
+#      - uses: softprops/action-gh-release@v3
+#        with:
+#          files: artifacts/*
