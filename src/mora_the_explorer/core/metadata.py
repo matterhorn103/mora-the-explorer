@@ -18,6 +18,7 @@ class MatchValues:
     """Holds the values that should be inserted into the regex patterns when required."""
 
     user: str
+    user2: str
     user_name: str
     group: str
     group_name: str
@@ -179,6 +180,7 @@ METADATA_DTYPES = {
     "title": str,
     "sample_id": str,
     "user": str,
+    "user2": str,
     "user_name": str,
     "group": str,
     "group_name": str,
@@ -203,6 +205,7 @@ class MeasurementMetadata:
     title: str | None = None
     sample_id: str | None = None
     user: str | None = None
+    user2: str | None = None
     user_name: str | None = None
     group: str | None = None
     group_name: str | None = None

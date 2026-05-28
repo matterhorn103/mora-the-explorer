@@ -13,12 +13,15 @@ SUBSTITUTIONS = MatchValues(
     group="stu",
     group_name="studer",
     user="mjm",
+    user2=r"[a-zA-Z]+",  # Only alphabetical
     user_name="milner",  # Doesn't matter what this is since we won't require it anyway
-    sample_id=r".*",  # Different wildcard to the usual
+    sample_id=r"\d.*",  # Must start with at least one digit
 )
 
-BRUKER_PATTERN = r"<group!>\_*<user_name>?\_*<user!>\_*<sample_id!>"
-AGILENT_PATTERN = r"<user!><sample_id!>_(\d{6})_<temperature>k_<experiment>_<measurement_no>\.fid"
+BRUKER_PATTERN = r"<group!>\_*<user_name>?\_*<user!>\_*<user2!>?\_*<sample_id!>"
+AGILENT_PATTERN = (
+    r"<user!><user2!>?<sample_id!>_(\d{6})_<temperature>k_<experiment>_<measurement_no>\.fid"
+)
 SAMPLE_FORMAT = "{user}-{sample_id}"
 MEASUREMENT_FORMAT = "{user}-{sample_id}_{instrument}_{completion_time:%d%m%y}_{temperature}k_{experiment}_{measurement_no}"
 
@@ -31,7 +34,7 @@ BRUKER_RULES = MetadataRules(
 )
 AGILENT_RULES = MetadataRules(
     values=SUBSTITUTIONS,
-    sample_pattern=r"<user!><sample_id>",
+    sample_pattern=r"<user!><sample_id!>",
     measurement_pattern=AGILENT_PATTERN,
     sample_format=SAMPLE_FORMAT,
     measurement_format=MEASUREMENT_FORMAT,
@@ -42,14 +45,14 @@ class TestRules:
     def test_bruker_pattern_processing(self):
         processed = BRUKER_RULES.process_pattern(BRUKER_PATTERN)
         print(processed)
-        theoretical = r"(?P<group>stu)(?:[\s_-]*)(?P<user_name>\S+)?(?:[\s_-]*)(?P<user>mjm)(?:[\s_-]*)(?P<sample_id>.*)"
+        theoretical = r"(?P<group>stu)(?:[\s_-]*)(?P<user_name>\S+)?(?:[\s_-]*)(?P<user>mjm)(?:[\s_-]*)(?P<user2>[a-zA-Z]+)?(?:[\s_-]*)(?P<sample_id>\d.*)"
         print(theoretical)
         assert processed == theoretical
 
     def test_agilent_pattern_processing(self):
         processed = AGILENT_RULES.process_pattern(AGILENT_PATTERN)
         print(processed)
-        theoretical = r"(?P<user>mjm)(?P<sample_id>.*)_(\d{6})_(?P<temperature>\S+)k_(?P<experiment>\S+)_(?P<measurement_no>\S+)\.fid"
+        theoretical = r"(?P<user>mjm)(?P<user2>[a-zA-Z]+)?(?P<sample_id>\d.*)_(\d{6})_(?P<temperature>\S+)k_(?P<experiment>\S+)_(?P<measurement_no>\S+)\.fid"
         print(theoretical)
         assert processed == theoretical
 
@@ -175,14 +178,50 @@ class TestMetadata:
                 group="",
                 group_name="",
                 user="akw",
+                user2="",
                 user_name="",
-                sample_id="",
+                sample_id=".*",
             ),
-            r"<user!><sample_id>",
-            r"<user!><sample_id>",
+            r"<user!><sample_id!>",
+            r"<user!><sample_id!>",
             SAMPLE_FORMAT,
             MEASUREMENT_FORMAT,
         )
         for title in titles:
             metadata = MeasurementMetadata.from_measurement_title(title, rules)
             assert metadata.user == "akw"
+
+    def test_user2_extraction(self):
+        # Bruker first
+        title = "stu mjm al 14-1"
+        metadata = MeasurementMetadata.from_measurement_title(title, BRUKER_RULES)
+        assert metadata == MeasurementMetadata(
+            group="stu",
+            user="mjm",
+            user2="al",
+            sample_id="14-1",
+            title=title,
+        )
+        # Check for a likely "mistake" whereby the second user is treated as part of the sample ID
+        title = "stu mjm al-14-1"
+        metadata = MeasurementMetadata.from_measurement_title(title, BRUKER_RULES)
+        assert metadata == MeasurementMetadata(
+            group="stu",
+            user="mjm",
+            user2="al",
+            sample_id="14-1",
+            title=title,
+        )
+        # Now Agilent, where there is (annoyingly) no separation between the two user initialisms
+        title = "mjmal14-1_151023_299k_1h_1.fid"
+        metadata = MeasurementMetadata.from_measurement_title(title, AGILENT_RULES)
+        print(metadata)
+        assert metadata == MeasurementMetadata(
+            user="mjm",
+            user2="al",
+            sample_id="14-1",
+            temperature=299,
+            experiment="1h",
+            measurement_no=1,
+            title=title,
+        )
