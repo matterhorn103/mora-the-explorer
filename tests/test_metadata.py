@@ -19,9 +19,9 @@ BRUKER_PATTERN = r"<group!>\_*<user_name>?\_*<user!>\_*<user2!>?\_*<sample_id!>"
 AGILENT_PATTERN = (
     r"<user!><user2!>?<sample_id!>_(\d{6})_<temperature>k_<experiment>_<measurement_no>\.fid"
 )
-AGILENT_SAMPLE_PATTERN = r"<user!><sample_id!>"
-SAMPLE_FORMAT = "{user}-{sample_id}"
-MEASUREMENT_FORMAT = "{user}-{sample_id}_{instrument}_{completion_time:%d%m%y}_{temperature}k_{experiment}_{measurement_no}"
+AGILENT_SAMPLE_PATTERN = r"<user!><user2!>?<sample_id!>"
+SAMPLE_FORMAT = "{user}-{user2}-{sample_id}"
+MEASUREMENT_FORMAT = "{user}-{user2}-{sample_id}_{instrument}_{completion_time:%d%m%y}_{temperature}k_{experiment}_{measurement_no}"
 
 BRUKER_RULES = MetadataRules(
     values=SUBSTITUTIONS,
@@ -216,6 +216,26 @@ class TestMetadata:
             measurement_no=1,
             title=title,
         )
+    
+    def test_user2_name_gen(self):
+        # Basically identical to the other name gen test, just add a user2 field
+        metadata = MeasurementMetadata(
+            completion_time=datetime.datetime(2026, 3, 23),
+            sample_id="17-4",
+            user="akw",
+            user2="jp",
+            user_name=None,
+            group="gil",
+            group_name="gilmour",
+            experiment="1h",
+            instrument="neo400a",
+            frequency=300.26,
+            solvent="CDCl3",
+            temperature=299,
+            measurement_no=260,
+        )
+        name = metadata.generate_folder_name(MEASUREMENT_FORMAT)
+        assert name == "akw-jp-17-4_neo400a_230326_299k_1h_260"
 
     def test_sample_id_normalization(self):
         values = MatchValues(user="nho", group="glo")

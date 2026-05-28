@@ -292,7 +292,7 @@ class MeasurementMetadata:
         else:
             return [f.name for f in fields(self)]
 
-    def values(self, skip_missing: bool = False, default_str: str = "unknown") -> dict[str, str]:
+    def values(self, skip_missing: bool = False, default_str: str = "") -> dict[str, str]:
         """Get a dict of the metadata fields and their values, optionally restricting
         it to only those for which values have been set.
 
@@ -333,7 +333,7 @@ class MeasurementMetadata:
         with open(file, "wb") as f:
             tomli_w.dump(d, f)
 
-    def generate_folder_name(self, template: str, missing: str = "unknown") -> str:
+    def generate_folder_name(self, template: str, missing: str = "") -> str:
         """Get a formatted folder name according to the provided template and
         the available metadata.
 
@@ -347,7 +347,9 @@ class MeasurementMetadata:
         be included using `{completion_time:%y%m%d}`
 
         If a requested metadata field is missing (i.e. the value of the variable
-        is `None`), `missing` is used in its place.
+        is `None`), `missing` is used in its place. With the default value of an
+        empty string, this may result in awkward names like `mjm--500-1`, so
+        doubled separators ("--", "__") are replaced by a single one.
 
         Any spaces are normalized by replacement with underscores.
         Additionally, all non-ASCII, non-alphanumerical characters are normalized
@@ -359,6 +361,8 @@ class MeasurementMetadata:
         normalized = str(substituted).lower()
         # Replace spaces with underscores
         normalized = normalized.replace(" ", "_")
+        # Replace runs of separators caused by missing values
+        normalized = normalized.replace("--", "-").replace("__", "_")
         # Replace non-ASCII, non-alphanumerical characters
         allowed_symbols = ["-", "_"]
         special = set(
