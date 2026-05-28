@@ -1,6 +1,5 @@
 [options]
 user = "mjm"
-user_name = ""
 group = "stu"
 spec = "av300"
 repeat_switch = true

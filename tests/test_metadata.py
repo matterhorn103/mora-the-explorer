@@ -13,9 +13,6 @@ SUBSTITUTIONS = MatchValues(
     group="stu",
     group_name="studer",
     user="mjm",
-    user2=r"[a-zA-Z]+",  # Only alphabetical
-    user_name="milner",  # Doesn't matter what this is since we won't require it anyway
-    sample_id=r"\d.*",  # Must start with at least one digit
 )
 
 BRUKER_PATTERN = r"<group!>\_*<user_name>?\_*<user!>\_*<user2!>?\_*<sample_id!>"
@@ -174,14 +171,7 @@ class TestMetadata:
             "akw17-4",
         ]
         rules = MetadataRules(
-            MatchValues(
-                group="",
-                group_name="",
-                user="akw",
-                user2="",
-                user_name="",
-                sample_id=".*",
-            ),
+            MatchValues(user="akw"),
             r"<user!><sample_id!>",
             r"<user!><sample_id!>",
             SAMPLE_FORMAT,
@@ -189,7 +179,7 @@ class TestMetadata:
         )
         for title in titles:
             metadata = MeasurementMetadata.from_measurement_title(title, rules)
-            assert metadata.user == "akw"
+            assert metadata.user == "akw"  # type: ignore
 
     def test_user2_extraction(self):
         # Bruker first

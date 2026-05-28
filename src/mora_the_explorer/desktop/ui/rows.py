@@ -448,12 +448,12 @@ class FolderNamePreview(RowComponent):
         # Don't bother with this so long as we don't offer the ability to include the path
         #self.metadata.path = self.explorer.get_check_paths(datetime.date.today())[0] / self.metadata.folder_name
         
-        preview = self.mdata.generate_folder_name(self.explorer.generate_rules(), drop_missing=False)
+        preview = self.mdata.generate_folder_name(self.explorer.generate_rules().measurement_pattern)
         if (
             (self.config.options.sort is SpectraSorting.SAMPLE_AND_SPEC or self.config.options.sort is SpectraSorting.SAMPLE)
             or (self.config.options.sort is SpectraSorting.ORIGINAL and self.mdata.manufacturer is Manufacturer.AGILENT)
         ):
-            sample = self.mdata.generate_folder_name(self.explorer.generate_rules(), drop_missing=False, sample=True)
+            sample = self.mdata.generate_folder_name(self.explorer.generate_rules().sample_pattern)
             preview = sample + " / " + preview
         self.preview.setText(preview)
 

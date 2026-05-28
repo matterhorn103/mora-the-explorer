@@ -15,14 +15,26 @@ from .spec import Manufacturer
 
 @dataclass
 class MatchValues:
-    """Holds the values that should be inserted into the regex patterns when required."""
+    r"""Holds the values that should be inserted into the regex patterns when required.
 
-    user: str
-    user2: str
-    user_name: str
-    group: str
-    group_name: str
-    sample_id: str
+    Typically the values will want to be user-specified search values and will
+    therefore be literal strings. However, as the strings are inserted verbatim
+    into regex patterns, regex subpatterns can also be used.
+
+    The default values are wildcard subpatterns, and are appropriate for use in Münster,
+    where all user and group identifiers are ASCII letters only and the sample ID
+    always starts with a digit (because it begins with the reaction number). Note that
+    these default wildcard patterns will only be inserted when the `<var!>` syntax is used;
+    for `<var>` a simpler wildcard (`r"\S+"`, matching anything that isn't whitespace)
+    is inserted.
+    """
+
+    user: str = r"[a-zA-Z]+"
+    user2: str = r"[a-zA-Z]+"
+    user_name: str = r"[a-zA-Z]+"
+    group: str = r"[a-zA-Z]+"
+    group_name: str = r"[a-zA-Z]+"
+    sample_id: str = r"\d.*"
 
 
 class MetadataRules:
@@ -318,17 +330,13 @@ class MeasurementMetadata:
     def generate_folder_name(
         self,
         template: str,
-        default: str = "unknown",
+        missing: str = "unknown",
     ) -> str:
         """Get a formatted folder name according to the provided template and
         the available metadata.
 
-        The name is generated using `rules.sample_format` or
-        `rules.measurement_format` as the template as appropriate according to
-        the value of `sample`.
-
-        Variables in curly brackets (e.g. `{user}`) are replaced by the value of
-        the respective metadata field.
+        Variables in curly brackets (e.g. `{user}`) in `template` are replaced
+        by the value of the respective metadata field.
 
         The replacement is done by the `str.format()` method, meaning that any
         format specification from Python's "format specification mini-language"
@@ -337,14 +345,14 @@ class MeasurementMetadata:
         be included using `{completion_time:%y%m%d}`
 
         If a requested metadata field is missing (i.e. the value of the variable
-        is `None`), `default` is used in its place.
+        is `None`), `missing` is used in its place.
 
         Any spaces are normalized by replacement with underscores.
         Additionally, all non-ASCII, non-alphanumerical characters are normalized
         by replacing them with the Unicode code point prefixed with an `"x"`.
         """
         # Substitute variables
-        substituted = template.format_map(self.values(skip_missing=False, default_str=default))
+        substituted = template.format_map(self.values(skip_missing=False, default_str=missing))
         # Normalize
         normalized = str(substituted).lower()
         # Replace spaces with underscores

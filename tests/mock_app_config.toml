@@ -1,6 +1,5 @@
 [options]
 user = "mmu"
-user_name = ""
 group = "gil"
 spec = "av300"
 repeat_switch = false
@@ -21,7 +20,6 @@ update = "mora_the_explorer"
 save = "~/Documents/nmr"
 
 [admin]
-user_name_is_admin_only = true
 pattern_separator = '[\s_-]'
 version = "42"
 email = "milner@uni-muenster.de"

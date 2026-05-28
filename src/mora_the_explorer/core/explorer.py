@@ -101,11 +101,9 @@ class Explorer:
             group_name = self.config.groups.all[options.group]
         substitutions = MatchValues(
             user=options.user,
-            user2=r"[a-zA-Z]+",
-            user_name=options.user_name,
             group=options.group,
             group_name=group_name,
-            sample_id=r"\d.*",  # TODO use the actual value once it can be set in the GUI
+            # sample_id=r"\d.*",  # TODO use the actual value once it can be set in the GUI
         )
 
         # Sample and measurement folder name formats may optionally be customized

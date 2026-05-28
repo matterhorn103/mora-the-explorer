@@ -1,19 +1,19 @@
-from dataclasses import asdict
 import logging
 import platform
-from packaging.version import Version
+from dataclasses import asdict
 from urllib.parse import quote
 
-from PySide6.QtCore import Qt, QSize, QUrl, Signal, Slot
+from packaging.version import Version
+from PySide6.QtCore import QSize, Qt, QUrl, Signal, Slot
 from PySide6.QtGui import QDesktopServices, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
-    QMainWindow,
-    QWidget,
     QGridLayout,
     QLabel,
-    QPushButton,
-    QProgressBar,
+    QMainWindow,
     QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QWidget,
 )
 
 from ...core.config import Config
@@ -88,16 +88,6 @@ class MainWindow(QMainWindow):
         self.add_row(self.user_entry)
         self.user_entry.changed.connect(self._on_user_changed)
 
-        # User name entry
-        self.name_entry = rows.FreeEntryField("User name:", None)
-        self.name_entry.set_text(config.options.user_name)
-        self.add_row(self.name_entry)
-        self.name_entry.changed.connect(self._on_name_changed)
-        # If config says this should only be active in admin mode, and we aren't
-        # in admin mode, then hide it
-        if config.admin.user_name_is_admin_only and not admin_mode:
-            self.name_entry.hide()
-
         # Group entry
         if not admin_mode:
             # Group entry from an allowed selection, for normal usage
@@ -118,7 +108,7 @@ class MainWindow(QMainWindow):
             self.add_row(self.group_name_entry)
             self.group_name_entry.changed.connect(self._on_group_name_changed)
         self.group_entry.changed.connect(self._on_group_changed)
-        
+
         # Server path
         self.server_entry = rows.DirSelector("Server:", False)
         self.server_entry.set_path(config.paths.server())
@@ -141,13 +131,20 @@ class MainWindow(QMainWindow):
         # Match pattern customization via free-form entry boxes, for admin use
         if admin_mode:
             from PySide6.QtGui import QFontDatabase
+
             self.sample_pattern_entry = rows.FreeEntryField("Sample pattern:", None)
             self.measurement_pattern_entry = rows.FreeEntryField("Measurement pattern:", None)
             # Patterns are regex
             self.sample_pattern_entry.set_text(config.specs[config.options.spec].sample_pattern)
-            self.measurement_pattern_entry.set_text(config.specs[config.options.spec].measurement_pattern)
-            self.sample_pattern_entry.entry_field.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
-            self.measurement_pattern_entry.entry_field.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
+            self.measurement_pattern_entry.set_text(
+                config.specs[config.options.spec].measurement_pattern
+            )
+            self.sample_pattern_entry.entry_field.setFont(
+                QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
+            )
+            self.measurement_pattern_entry.entry_field.setFont(
+                QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
+            )
             self.add_row(self.sample_pattern_entry)
             self.add_row(self.measurement_pattern_entry)
             self.sample_pattern_entry.changed.connect(self._on_pattern_changed)
@@ -307,7 +304,7 @@ class MainWindow(QMainWindow):
         # Get system info
         os_info = platform.uname()
         # Get path to log
-        log_location = str(logging.getLogger().handlers[0].baseFilename)
+        log_location = str(logging.getLogger().handlers[0].baseFilename) # type: ignore
         email_info = "\n".join(
             [
                 f"Version: {self.version}",
@@ -323,12 +320,7 @@ class MainWindow(QMainWindow):
     @Slot()
     def _on_user_changed(self):
         self.config.options.user = self.user_entry.text()
-        #self.folder_name_preview.regenerate_preview()
-        self.save_button.setEnabled(True)
-
-    @Slot()
-    def _on_name_changed(self):
-        self.config.options.user_name = self.name_entry.text()
+        # self.folder_name_preview.regenerate_preview()
         self.save_button.setEnabled(True)
 
     @Slot()
@@ -342,27 +334,31 @@ class MainWindow(QMainWindow):
         else:
             self.config.options.group = self.group_entry.selected()
             self.refresh_visible_specs()
-        #self.folder_name_preview.regenerate_preview()
+        # self.folder_name_preview.regenerate_preview()
         self.save_button.setEnabled(True)
 
     @Slot()
     def _on_group_name_changed(self):
         self.config.options.group_name = self.group_name_entry.text()
-        #self.folder_name_preview.regenerate_preview()
+        # self.folder_name_preview.regenerate_preview()
         self.save_button.setEnabled(True)
-    
+
     @Slot()
     def _on_pattern_changed(self):
         # Changes the spectrometer configuration object itself, but that's OK,
         # since we don't save the changes to file
-        self.config.specs[self.config.options.spec].sample_pattern = self.sample_pattern_entry.text()
-        self.config.specs[self.config.options.spec].measurement_pattern = self.measurement_pattern_entry.text()
+        self.config.specs[
+            self.config.options.spec
+        ].sample_pattern = self.sample_pattern_entry.text()
+        self.config.specs[
+            self.config.options.spec
+        ].measurement_pattern = self.measurement_pattern_entry.text()
 
     @Slot()
     def _on_server_path_changed(self):
         self.config.paths.set_server(self.server_entry.path())
         # Don't bother with this so long as we don't offer the ability to include the path
-        #self.folder_name_preview.regenerate_preview()
+        # self.folder_name_preview.regenerate_preview()
         self.save_button.setEnabled(True)
 
     @Slot()
@@ -374,7 +370,7 @@ class MainWindow(QMainWindow):
     def _on_spec_changed(self):
         self.config.options.spec = self.spec_selector.selected()
         self.adapt_to_spec()
-        #self.folder_name_preview.regenerate_preview()
+        # self.folder_name_preview.regenerate_preview()
         self.save_button.setEnabled(True)
 
     @Slot()
