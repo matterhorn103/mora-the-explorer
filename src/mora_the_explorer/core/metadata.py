@@ -1,11 +1,11 @@
 """Metadata handling."""
 
-from dataclasses import asdict, dataclass, fields
 import datetime
 import logging
-from pathlib import Path
 import re
 import tomllib
+from dataclasses import asdict, dataclass, fields
+from pathlib import Path
 from typing import Self
 
 import tomli_w
@@ -15,13 +15,26 @@ from .spec import Manufacturer
 
 @dataclass
 class MatchValues:
-    """Holds the values that should be inserted into the regex patterns when required."""
+    r"""Holds the values that should be inserted into the regex patterns when required.
 
-    user: str
-    user_name: str
-    group: str
-    group_name: str
-    sample_id: str
+    Typically the values will want to be user-specified search values and will
+    therefore be literal strings. However, as the strings are inserted verbatim
+    into regex patterns, regex subpatterns can also be used.
+
+    The default values are wildcard subpatterns, and are appropriate for use in Münster,
+    where all user and group identifiers are ASCII letters only and the sample ID
+    always starts with a digit (because it begins with the reaction number). Note that
+    these default wildcard patterns will only be inserted when the `<var!>` syntax is used;
+    for `<var>` a simpler wildcard (`r"\S+"`, matching anything that isn't whitespace)
+    is inserted.
+    """
+
+    user: str = r"[a-zA-Z]+"
+    user2: str = r"[a-zA-Z]+"
+    user_name: str = r"[a-zA-Z]+"
+    group: str = r"[a-zA-Z]+"
+    group_name: str = r"[a-zA-Z]+"
+    sample_id: str = r"\d.*"
 
 
 class MetadataRules:
@@ -36,6 +49,7 @@ class MetadataRules:
         sample_format: str,
         measurement_format: str,
         pattern_sep: str = r"[\s_-]",
+        normalize_sample_id: bool = True,
     ):
         r"""Create a new rules specification.
 
@@ -46,7 +60,7 @@ class MetadataRules:
 
         `sample_pattern` and `measurement_pattern` are regex patterns indicating
         the expected components of the sample and measurement titles respectively.
-        It is a normal regex in all ways, and uses normal regex syntax, with the
+        They are normal regex in all ways, and use normal regex syntax, with the
         exception of two extensions:
 
         1. Any occurrence of a backslash-escaped underscore `\_` will be replaced
@@ -61,13 +75,17 @@ class MetadataRules:
 
         `sample_pattern` is only relevant for Agilent spectrometers, that save the
         spectra organized by sample; rules for Bruker spectrometers should use `None`.
-        
+
         `pattern_sep` is typically a character class. The default value matches
         whitespace, underscores, and hyphens.
 
-        The capture groups indicate that some value for a metadata variable is
-        expected at that position and so should be extracted and stored in a
-        `MeasurementMetadata` object. Through the use of `!`, the value of the
+        The variable names in angle brackets indicate that some value for a
+        metadata variable is expected at that position and so should be extracted
+        and stored in a `MeasurementMetadata` object.
+        In the ordinary case, a simple wildcard is used (`\S+` i.e. anything other
+        than whitespace characters), so `<var>` becomes `(?P<var>\S+)`.
+
+        Through the additional use of `!`, the value of the
         corresponding attribute of `substitutions` can be substituted in.
         Usually the substitued value will be a literal string, and the effect is
         of making that value a hard requirement for a match using the pattern.
@@ -77,20 +95,26 @@ class MetadataRules:
         in the patterns as follows:
 
         `<var>` – some value for the variable is expected here and should be extracted;
-        becomes `(?P<var>[^\_]+)`
+        becomes `(?P<var>\S+)`
 
         `<var!>` – the corresponding value for the variable is required to match; if `var = "abc"`, becomes `(?P<var>abc)`
-        
-        `<var>?` indicates that the variable may or may not be present; becomes `(?P<var>[^\_]+)?`
-        
+
+        `<var>?` indicates that the variable may or may not be present; becomes `(?P<var>\S+)?`
+
         `<var!>?` indicates that the variable may or may not be present, but if it is, it must match; becomes e.g. `(?P<var>abc)?`
 
         If substitution should occur (i.e. `!` is used) then the variable should
         be the name of one of the attributes of `MatchValues`; otherwise,
         the `!` is ignored.
 
-        Substituted values are normalized to lowercase using `str.casefold()`.
-        
+        As the string in `MatchRules` is inserted directly into the pattern, it
+        can also be used to specify alternative subpatterns that the respective
+        capture groups should match.
+        For example, if `values.user = r'[^_]+'`, any occurrences of `<user!>`
+        would become `(:P<user>[^_]+)`.
+        This provides a convenient mechanism to use different wildcards for each
+        of the key variables.
+
         For Bruker spectra the pattern is matched to the title as recorded in
         `./pdata/1/title`, while for Agilent spectra they are used to analyse the
         names of the sample folder and the contained measurement folders.
@@ -101,22 +125,28 @@ class MetadataRules:
         the destination location. Values of metadata fields are inserted where
         they are indicated in the strings enclosed in curly brackets.
         See `MeasurementMetadata.generate_folder_name()` for more details.
+
+        If `normalize_sample_id` is `True`, it is an indication that all
+        underscores and spaces in the sample ID should be replaced by hyphens.
         """
 
+        self.normalize_sample_id = normalize_sample_id
         self.src_sep = pattern_sep
         self.sample_format = sample_format
         self.measurement_format = measurement_format
-        
+
         # Normalize the substitution values to lowercase now
-        self.substitutions = MatchValues(
-            **{k: v.casefold() for k, v in asdict(values).items()}
-        )
+        # self.substitutions = MatchValues(
+        #    **{k: v.casefold() for k, v in asdict(values).items()}
+        # )
+        # Don't normalize any more because it would ruin regex patterns!
+        self.substitutions = values
         if sample_pattern:
             self._sample_pattern = re.compile(self.process_pattern(sample_pattern))
         else:
-            self._sample_pattern = sample_pattern
+            self._sample_pattern = None
         self._measurement_pattern = re.compile(self.process_pattern(measurement_pattern))
-    
+
     @property
     def sample_pattern(self) -> re.Pattern:
         """Get the processed regex that should be used to match the sample title."""
@@ -132,33 +162,28 @@ class MetadataRules:
         provided `pattern_sep` and `substitutions`."""
 
         # A regex pattern that should match `\_` and capture any suffixed repeating characters
-        escaped_sep_matching_pattern = r'\\_([*+?]*)'
+        escaped_sep_matching_pattern = r"\\_([*+?]*)"
         # Replace any separators with the separator pattern in a non-capture group
         pattern = re.sub(
             escaped_sep_matching_pattern,
-            lambda match: f'(?:{self.src_sep}{match.group(1)})',  # Use a callable lambda to avoid pattern_sep being interpreted (it should be reproduced literally)
+            lambda match: f"(?:{self.src_sep}{match.group(1)})",  # Use a callable lambda to avoid pattern_sep being interpreted (it should be reproduced literally)
             pattern,
         )
 
         # Replace any variables
         # First those that should just be captured, regardless of value
-        wildcard = r'\S+'  # i.e. anything other than whitespace characters
+        wildcard = r"\S+"  # i.e. anything other than whitespace characters
         pattern = re.sub(
-            r'<(\w+)>', # A variable name in angle brackets
+            r"<(\w+)>",  # A variable name in angle brackets
             lambda match: f"(?P<{match.group(1)}>{wildcard})",
             pattern,
         )
         # Then those that should be matched literally
         pattern = re.sub(
-            r'<(\w+)!>', # As above but with an exclamation mark
+            r"<(\w+)!>",  # As above but with an exclamation mark
             lambda match: f"(?P<{match.group(1)}>{getattr(self.substitutions, match.group(1))})",
             pattern,
         )
-        # `sample_id` is allowed to include separators, so it has a different,
-        # more general wildcard that matches any characters
-        sample_id_wildcard = r".*"
-        # If it's being matched wild, replace the sample ID so that it uses the correct wildcard
-        pattern = pattern.replace(f"<sample_id>{wildcard}", f"<sample_id>{sample_id_wildcard}")
 
         return pattern
 
@@ -172,6 +197,7 @@ METADATA_DTYPES = {
     "title": str,
     "sample_id": str,
     "user": str,
+    "user2": str,
     "user_name": str,
     "group": str,
     "group_name": str,
@@ -182,6 +208,7 @@ METADATA_DTYPES = {
     "temperature": int,
     "measurement_no": int,
 }
+
 
 @dataclass
 class MeasurementMetadata:
@@ -195,6 +222,7 @@ class MeasurementMetadata:
     title: str | None = None
     sample_id: str | None = None
     user: str | None = None
+    user2: str | None = None
     user_name: str | None = None
     group: str | None = None
     group_name: str | None = None
@@ -208,7 +236,7 @@ class MeasurementMetadata:
     @classmethod
     def from_toml(cls, file: Path, ignore_invalid: bool = False) -> Self:
         """Read the metadata from a TOML file.
-        
+
         If `ignore_invalid` is `True`, any fields in the file that are not (currently)
         valid attributes of the dataclass are just ignored; otherwise, their presence
         results in a `TypeError`.
@@ -242,7 +270,11 @@ class MeasurementMetadata:
         # matched variables, will be the same as the expected values)
         extracted = match.groupdict()
         # Convert to the correct types
-        extracted = {k: METADATA_DTYPES[k](v) if v is not None else None for k, v in extracted.items()}
+        extracted = {
+            k: METADATA_DTYPES[k](v) if v is not None else None for k, v in extracted.items()
+        }
+        if rules.normalize_sample_id and "sample_id" in extracted:
+            extracted["sample_id"] = extracted["sample_id"].replace(" ", "-").replace("_", "-")
         result = MeasurementMetadata(**extracted)
         # Add the original title too
         result.title = title
@@ -251,7 +283,7 @@ class MeasurementMetadata:
     def fields(self, skip_missing: bool = False) -> list[str]:
         """Get a list of the possible metadata fields, optionally restricting it
         to only those for which values have been set.
-        
+
         Note that this method intentionally differs in behaviour from that of
         `dataclasses.fields(MeasurementMetadata)`.
         """
@@ -259,16 +291,15 @@ class MeasurementMetadata:
             return [k for k, v in asdict(self).items() if v is not None]
         else:
             return [f.name for f in fields(self)]
-    
-    def values(self, skip_missing: bool = False, default_str: str = "unknown") -> dict[str, str]:
+
+    def values(self, skip_missing: bool = False, default_str: str = "") -> dict[str, str]:
         """Get a dict of the metadata fields and their values, optionally restricting
         it to only those for which values have been set.
 
         If `skip_missing` is `False`:
         - any missing string values are replaced with `default_str`.
         - missing `datetime` objects are replaced with `2001-01-01`.
-        - missing `int` and `float` values are replaced with `0` and `0.0`
-        """
+        - missing `int` and `float` values are replaced with `0` and `0.0`"""
         if skip_missing:
             return {k: v for k, v in asdict(self).items() if v is not None}
         else:
@@ -289,7 +320,7 @@ class MeasurementMetadata:
                 else:
                     output[k] = default_str
             return output
-    
+
     def write_toml(self, file: Path):
         """Write the metadata as TOML to `file`."""
 
@@ -302,20 +333,12 @@ class MeasurementMetadata:
         with open(file, "wb") as f:
             tomli_w.dump(d, f)
 
-    def generate_folder_name(
-        self,
-        template: str,
-        default: str = "unknown",
-    ) -> str:
+    def generate_folder_name(self, template: str, missing: str = "") -> str:
         """Get a formatted folder name according to the provided template and
         the available metadata.
 
-        The name is generated using `rules.sample_format` or
-        `rules.measurement_format` as the template as appropriate according to
-        the value of `sample`.
-        
-        Variables in curly brackets (e.g. `{user}`) are replaced by the value of
-        the respective metadata field.
+        Variables in curly brackets (e.g. `{user}`) in `template` are replaced
+        by the value of the respective metadata field.
 
         The replacement is done by the `str.format()` method, meaning that any
         format specification from Python's "format specification mini-language"
@@ -324,25 +347,35 @@ class MeasurementMetadata:
         be included using `{completion_time:%y%m%d}`
 
         If a requested metadata field is missing (i.e. the value of the variable
-        is `None`), `default` is used in its place.
-        
+        is `None`), `missing` is used in its place. With the default value of an
+        empty string, this may result in awkward names like `mjm--500-1`, so
+        doubled separators ("--", "__") are replaced by a single one.
+
         Any spaces are normalized by replacement with underscores.
         Additionally, all non-ASCII, non-alphanumerical characters are normalized
         by replacing them with the Unicode code point prefixed with an `"x"`.
         """
         # Substitute variables
-        substituted = template.format_map(self.values(skip_missing=False, default_str=default))
+        substituted = template.format_map(self.values(skip_missing=False, default_str=missing))
         # Normalize
         normalized = str(substituted).lower()
         # Replace spaces with underscores
         normalized = normalized.replace(" ", "_")
+        # Replace runs of separators caused by missing values
+        normalized = normalized.replace("--", "-").replace("__", "_")
         # Replace non-ASCII, non-alphanumerical characters
         allowed_symbols = ["-", "_"]
         special = set(
-            [x for x in normalized if not x.isascii() or (not x.isalnum() and x not in allowed_symbols)]
+            [
+                x
+                for x in normalized
+                if not x.isascii() or (not x.isalnum() and x not in allowed_symbols)
+            ]
         )
         for x in special:
-            logging.info(f"Char {x} not permitted in folder names, replaced with {str(hex(ord(x)))}")
+            logging.info(
+                f"Char {x} not permitted in folder names, replaced with {str(hex(ord(x)))}"
+            )
             normalized = normalized.replace(x, str(hex(ord(x))))
         return normalized
 
@@ -409,7 +442,7 @@ def get_metadata_bruker(dir: Path, rules: MetadataRules) -> MeasurementMetadata 
             # We could break once all fields are filled, but the temperature comes
             # at the very bottom of the file, so might as well just save the cost
             # per loop of checking the condition
-            #if metadata.frequency and metadata.experiment and metadata.temperature and metadata.completion_time:
+            # if metadata.frequency and metadata.experiment and metadata.temperature and metadata.completion_time:
             #    # Found everything we need, we can stop iterating
             #    break
             if line.startswith("$$") and "@" in line:
@@ -437,9 +470,9 @@ def get_metadata_bruker(dir: Path, rules: MetadataRules) -> MeasurementMetadata 
                 if par == "TE":
                     processed_val = int(float(val))
                 else:
-                    processed_val = pars[par]["dtype"](val.strip('<>'))
+                    processed_val = pars[par]["dtype"](val.strip("<>"))
                 setattr(metadata, pars[par]["field"], processed_val)
-    
+
     # The only thing that's impossible to get is the submission time, but in Münster
     # we know that (the date, at least) from the folder that it's saved in/the date
     # that is searched for, so we can add that in the calling context
@@ -473,7 +506,10 @@ def get_metadata_agilent(dir: Path, rules: MetadataRules) -> MeasurementMetadata
             "solvent": {"field": "solvent", "dtype": str},
             "kbspec": {"field": "instrument", "dtype": str},
             "tempk_s": {"field": "temperature", "dtype": int},
-            "time_submitted": {"field": "submission_time", "dtype": datetime.datetime.fromisoformat},
+            "time_submitted": {
+                "field": "submission_time",
+                "dtype": datetime.datetime.fromisoformat,
+            },
             "time_complete": {"field": "completion_time", "dtype": datetime.datetime.fromisoformat},
         }
         # Turns out we can't rely on the lines being in sets of three, so have
@@ -482,11 +518,13 @@ def get_metadata_agilent(dir: Path, rules: MetadataRules) -> MeasurementMetadata
             # We could break once all fields are filled, but the timestamps come
             # pretty near the bottom of the file, so might as well just save the cost
             # per loop of checking the condition
-            #if metadata.frequency and metadata.instrument and metadata.solvent and metadata.submission_time and metadata.completion_time:
+            # if metadata.frequency and metadata.instrument and metadata.solvent and metadata.submission_time and metadata.completion_time:
             #    # Found everything we need, we can stop iterating
             #    break
             try:
-                par = line.split()[0]  # Note that for 2 of 3 lines this won't actually be a parameter name
+                par = line.split()[
+                    0
+                ]  # Note that for 2 of 3 lines this won't actually be a parameter name
             except IndexError:
                 continue
             if par in pars:
@@ -499,8 +537,8 @@ def get_metadata_agilent(dir: Path, rules: MetadataRules) -> MeasurementMetadata
 
 
 def get_metadata(
-    dir: Path, rules: MetadataRules, manufacturer: Manufacturer
-) -> MeasurementMetadata:
+    dir: Path, rules: MetadataRules, manufacturer: Manufacturer,
+) -> MeasurementMetadata | None:
     match manufacturer:
         case Manufacturer.BRUKER:
             return get_metadata_bruker(dir, rules)

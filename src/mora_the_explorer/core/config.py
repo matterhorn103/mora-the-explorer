@@ -1,16 +1,16 @@
-from dataclasses import dataclass
 import dataclasses
 import io
 import json
 import logging
-from pathlib import Path
 import platform
 import tomllib
-import tomli_w
+from dataclasses import dataclass
+from pathlib import Path
+
 import platformdirs
+import tomli_w
 
 from .spec import Manufacturer, Spectrometer
-
 
 #: The OS-appropriate place for the config file.
 #:
@@ -32,14 +32,16 @@ USER_CONFIG_PATH = (
 
 # Dataclasses that hold the configuration in a structured fashion
 
+
 @dataclass
 class NamingOptions:
     """The templates to use for the folder names.
-    
+
     Each entry can be a single string that applies to all manufacturers, or a
     dict/table of strings for each manufacturer, with the manufacturer names as
     the keys.
     """
+
     sample_format: str | dict[str, str]
     measurement_format: str | dict[str, str]
 
@@ -47,7 +49,6 @@ class NamingOptions:
 @dataclass
 class UserOptions:
     user: str
-    user_name: str
     group: str
     spec: str
     repeat_switch: bool
@@ -83,7 +84,6 @@ class Admin:
     version: str
     email: str
     changelog: str
-    user_name_is_admin_only: bool | None = None
 
 
 @dataclass
@@ -182,7 +182,9 @@ class Config:
             self.user_config = self.load_config_toml(user_config_file)
             # If the config is for versions pre-2.0, discard it (too many incompatibilities)
             if "initials" in self.user_config["options"]:
-                logging.info(f"User configuration in {user_config_file} not compatible with Mora >2.0")
+                logging.info(
+                    f"User configuration in {user_config_file} not compatible with Mora >2.0"
+                )
                 self.user_config = {}
             else:
                 logging.info(f"User configuration loaded from: {user_config_file}")

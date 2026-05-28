@@ -1,14 +1,13 @@
 [options]
 user = "mmu"
-user_name = ""
 group = "gil"
 spec = "av300"
 repeat_switch = false
 repeat_delay = 5
 
 [options.naming]
-sample_format = "{user}-{sample_id}"
-measurement_format = "{user}-{sample_id}_{instrument}_{completion_time:%d%m%y}_{temperature}k_{experiment}_{measurement_no}"
+sample_format = "{user}-{user2}-{sample_id}"
+measurement_format = "{user}-{user2}-{sample_id}_{instrument}_{completion_time:%d%m%y}_{temperature}k_{experiment}_{measurement_no}"
 
 [appearance]
 start_button_colour = "#b88cce"
@@ -21,7 +20,6 @@ update = "mora_the_explorer"
 save = "~/Documents/nmr"
 
 [admin]
-user_name_is_admin_only = true
 pattern_separator = '[\s_-]'
 version = "42"
 email = "milner@uni-muenster.de"
@@ -39,7 +37,7 @@ biochemie = "biochemie"
 pharmazie = "pharmazie"
 
 [spectrometers.dpx300]
-measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
+measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<user2!>?\_*<sample_id!>'
 check_paths = [
     "dpx300/{date:%y}-dpx300_{date:%Y}/{date:%b%d-%Y}",
 ]
@@ -50,7 +48,7 @@ single_check_only = false
 admin_only = true
 
 [spectrometers.av300]
-measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
+measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<user2!>?\_*<sample_id!>'
 check_paths = [
     "av300/{date:%b%d-%Y}",
 ]
@@ -67,7 +65,7 @@ restrict_to = [
 ]
 
 [spectrometers.neo400]
-measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<sample_id>'
+measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<user2!>?\_*<sample_id!>'
 check_paths = [
     "neo400/neo400a_{date:%b%d-%Y}",
     "neo400/neo400b_{date:%b%d-%Y}",
@@ -88,8 +86,8 @@ date_entry = "dd MMM yyyy"
 single_check_only = false
 
 [spectrometers.v600]
-sample_pattern = '<user!><sample_id>'
-measurement_pattern = '<user!><sample_id>_(\d{6})_<temperature>k_<experiment>_<measurement_no>\.fid'
+sample_pattern = '<user!><user2!>?<sample_id!>'
+measurement_pattern = '<user!><user2!>?<sample_id!>_(\d{6})_<temperature>k_<experiment>_<measurement_no>\.fid'
 check_paths = [
     "v600/{group_name}/{date:%Y}",
 ]

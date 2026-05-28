@@ -1,11 +1,11 @@
 import datetime
-from pathlib import Path
 import platform
 import sys
+from pathlib import Path
 
+from . import MatchValues, MetadataRules, Reporter, SpectraSorting, check_nmr, get_check_paths
 from .config import Config
 from .spec import Spectrometer
-from . import get_check_paths, check_nmr, MetadataRules, Reporter, MatchValues, SpectraSorting
 
 
 class PrintingReporter(Reporter):
@@ -101,10 +101,9 @@ class Explorer:
             group_name = self.config.groups.all[options.group]
         substitutions = MatchValues(
             user=options.user,
-            user_name=options.user_name,
             group=options.group,
             group_name=group_name,
-            sample_id="",  # TODO use the actual value once it exists
+            # sample_id=r"\d.*",  # TODO use the actual value once it can be set in the GUI
         )
 
         # Sample and measurement folder name formats may optionally be customized
@@ -113,7 +112,7 @@ class Explorer:
             sample_format = options.naming.sample_format[str(spec_info.manufacturer)]
         else:
             sample_format = options.naming.sample_format
-        
+
         if isinstance(options.naming.measurement_format, dict):
             measurement_format = options.naming.measurement_format[str(spec_info.manufacturer)]
         else:
@@ -128,10 +127,10 @@ class Explorer:
             pattern_sep=self.config.admin.pattern_separator,
         )
         return rules
-    
+
     def get_check_paths(self, date: datetime.date) -> list[Path]:
         """Generate the paths to check based on the current configuration."""
-        
+
         spec: Spectrometer = self.config.specs[self.config.options.spec]
         # If there's any spectrometer that ought to be included, sub the actual
         # definitions in for the strings if it hasn't already been done
@@ -159,7 +158,6 @@ class Explorer:
         )
 
         return check_paths
-
 
     def single_check(self, date: datetime.date, reporter: Reporter | None = None) -> Reporter:
         """Conduct a check of a single date.
