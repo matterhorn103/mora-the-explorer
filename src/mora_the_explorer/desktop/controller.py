@@ -144,19 +144,11 @@ class Controller(QObject):
     def __init__(self, config: Config, admin_mode: bool = False):
         """Create a new `Controller` along with a new associated `MainWindow` instance."""
         super().__init__()
-        self.version_header = "\n".join([
-            "Mora the Explorer",
-            "Matt Milner",
-            config.admin.version,
-            "License: GPLv3",
-            f'<a href="mailto:{config.admin.email}">Report a bug</a>',
-            config.admin.changelog,
-        ])
         self.version = Version(config.admin.version)
 
         # Create instance of `MainWindow` (front-end)
         logging.info("Initializing user interface…")
-        self.main_window = MainWindow(config, self.version_header, admin_mode)
+        self.main_window = MainWindow(config, admin_mode)
         # Connect the key signals
         self.main_window.started.connect(self.check_requested)
         self.main_window.cancelled.connect(self.cancel_scheduled_check)
@@ -305,7 +297,7 @@ class Controller(QObject):
         self.main_window.close()
         self.main_window = None  # So that the Qt reference is dropped and it's destroyed
         # Build new window in opposite mode
-        self.main_window = MainWindow(current_config, self.version_header, not currently_admin)
+        self.main_window = MainWindow(current_config, not currently_admin)
         # Reconnect the key signals
         self.main_window.started.connect(self.check_requested)
         self.main_window.cancelled.connect(self.cancel_scheduled_check)

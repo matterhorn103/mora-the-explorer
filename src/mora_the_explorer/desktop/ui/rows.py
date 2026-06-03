@@ -484,7 +484,7 @@ class SpectrometerSelector(RowComponent):
         self.buttons = QButtonGroup()
 
         # Container groups two items: a title and a stack of the buttons
-        self.title = QLabel("Search:")
+        self.title = QLabel("Instrument:")
         self.button_stack = QVBoxLayout()
 
         for i, spec in enumerate(self.specs):
@@ -595,7 +595,7 @@ class DateSelector(RowComponent):
         super().__init__()
 
         # Groups two items: a title, and a row of mixed widgets
-        self.title = QLabel("When?")
+        self.title = QLabel("Date:")
         self.date_row = QHBoxLayout()
 
         # Date row layout contains an interactive sentence consisting of
