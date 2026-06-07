@@ -141,6 +141,8 @@ class MainWindow(QMainWindow):
         self.save_button = QPushButton("Save options as defaults for next time")
         # Remains disabled until the config is changed
         self.save_button.setEnabled(False)
+        # Also hide it until it's relevant
+        self.save_button.hide()
         self.save_button.clicked.connect(self._on_save_button_clicked)
 
         # Date selection
@@ -288,6 +290,11 @@ class MainWindow(QMainWindow):
             self.sample_pattern_entry.set_text(spec_info.sample_pattern)
             self.measurement_pattern_entry.set_text(spec_info.measurement_pattern)
 
+    def suggest_save(self):
+        """Give the user the option to save their changes to the configuration."""
+        self.save_button.show()
+        self.save_button.setEnabled(True)
+
     def notify_spectra(self):
         """Inform the user that spectra were found."""
         notification_text = "Spectra have been found!"
@@ -367,7 +374,7 @@ class MainWindow(QMainWindow):
     def _on_user_changed(self):
         self.config.options.user = self.user_entry.text()
         # self.folder_name_preview.regenerate_preview()
-        self.save_button.setEnabled(True)
+        self.suggest_save()
 
     @Slot()
     def _on_group_changed(self):
@@ -381,13 +388,13 @@ class MainWindow(QMainWindow):
             self.config.options.group = self.group_entry.selected()
             self.refresh_visible_specs()
         # self.folder_name_preview.regenerate_preview()
-        self.save_button.setEnabled(True)
+        self.suggest_save()
 
     @Slot()
     def _on_group_name_changed(self):
         self.config.options.group_name = self.group_name_entry.text()
         # self.folder_name_preview.regenerate_preview()
-        self.save_button.setEnabled(True)
+        self.suggest_save()
 
     @Slot()
     def _on_pattern_changed(self):
@@ -405,25 +412,25 @@ class MainWindow(QMainWindow):
         self.config.paths.set_server(self.server_entry.path())
         # Don't bother with this so long as we don't offer the ability to include the path
         # self.folder_name_preview.regenerate_preview()
-        self.save_button.setEnabled(True)
+        self.suggest_save()
 
     @Slot()
     def _on_dest_path_changed(self):
         self.config.paths.save = str(self.dest_entry.path())
-        self.save_button.setEnabled(True)
+        self.suggest_save()
 
     @Slot()
     def _on_spec_changed(self):
         self.config.options.spec = self.spec_selector.selected()
         self.adapt_to_spec()
         # self.folder_name_preview.regenerate_preview()
-        self.save_button.setEnabled(True)
+        self.suggest_save()
 
     @Slot()
     def _on_repeat_changed(self):
         self.config.options.repeat_switch = self.repeat_options.repeat()
         self.config.options.repeat_delay = self.repeat_options.interval()
-        self.save_button.setEnabled(True)
+        self.suggest_save()
 
     @Slot()
     def _on_save_button_clicked(self):
