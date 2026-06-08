@@ -6,7 +6,6 @@ authors = [
     { name = "Matthew Milner", email = "matterhorn103@proton.me" }
 ]
 dependencies = [
-    "darkdetect>=0.8.0",
     "platformdirs>=4.9.6",
     "pyside6-essentials>=6.11.0",
     "tomli-w>=1.2.0",
