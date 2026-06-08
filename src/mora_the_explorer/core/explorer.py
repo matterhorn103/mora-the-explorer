@@ -95,10 +95,9 @@ class Explorer:
         # Put together the conditions required for a match to be found
         # The group name might have been set explicitly, but normally we get it
         # from the groups table
-        if hasattr(options, "group_name"):
-            group_name = options.group_name
-        else:
-            group_name = self.config.groups.all[options.group]
+        group_name = (
+            options.group_name if options.group_name else self.config.groups.all[options.group]
+        )
         substitutions = MatchValues(
             user=options.user,
             group=options.group,

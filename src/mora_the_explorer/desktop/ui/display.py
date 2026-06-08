@@ -9,14 +9,14 @@ class Display(QScrollArea):
         super().__init__()
 
         self.setWidgetResizable(True)
-        self.layout = QVBoxLayout()
+        self._layout = QVBoxLayout()
         self.display = QWidget()
-        self.display.setLayout(self.layout)
+        self.display.setLayout(self._layout)
         self.setWidget(self.display)
 
         # Make each label only take up a single line of space rather than spreading
         # across the box, so that they stack nicely
-        self.display.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
+        self.display.setSizePolicy(QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed))
 
         # Connect scrollbar so that it scrolls down whenever the list gets longer
         self.scrollbar = self.verticalScrollBar()
@@ -33,8 +33,8 @@ class Display(QScrollArea):
     def add_entry(self, entry: str):
         """Add a line of text to the display."""
         entry_label = QLabel(entry)
-        entry_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        self.layout.addWidget(entry_label, alignment=Qt.AlignTop)
+        entry_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self._layout.addWidget(entry_label, alignment=Qt.AlignmentFlag.AlignTop)
 
     def scroll_down(self):
         self.scrollbar.setSliderPosition(self.scrollbar.maximum())

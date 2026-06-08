@@ -27,7 +27,6 @@ class TestExplorer:
         assert sorted(reporter.copied()) == ["mjm-500-1_av300_151023_300k_proton_200"]
         assert reporter.messages()[0] == "Spectrum found: mjm-500-1_av300_151023_300k_proton_200"
 
-
     def test_bruker_400er_checks_300er(self):
         # Check that checking the neo400 also checks the av300
         explorer = mock_explorer()
@@ -49,12 +48,12 @@ class TestExplorer:
         # Note that only these two sets of spectra have a populated `procpar` file
         # as required for the metadata extraction, and only the proton spectra have it
         assert sorted(reporter.copied()) == [
-            "mjm-500-1_v600_151023_299k_13c_1", #"mjm-500-1-cdcl3-13c",
-            "mjm-500-1_v600_151023_299k_1h_1", #"mjm-500-1-cdcl3-1h",
-            "mjm-500-1_v600_151023_299k_gcosy_1", #"mjm-500-1-cdcl3-gcosy",
-            "mjm-501-1_v600_151023_299k_13c_1", #"mjm-501-1-dmso-13c",
-            "mjm-501-1_v600_151023_299k_1h_1", #"mjm-501-1-dmso-1h",
-            "mjm-501-1_v600_151023_299k_gcosy_1", #"mjm-501-1-dmso-gcosy",
+            "mjm-500-1_v600_151023_299k_13c_1",  # "mjm-500-1-cdcl3-13c",
+            "mjm-500-1_v600_151023_299k_1h_1",  # "mjm-500-1-cdcl3-1h",
+            "mjm-500-1_v600_151023_299k_gcosy_1",  # "mjm-500-1-cdcl3-gcosy",
+            "mjm-501-1_v600_151023_299k_13c_1",  # "mjm-501-1-dmso-13c",
+            "mjm-501-1_v600_151023_299k_1h_1",  # "mjm-501-1-dmso-1h",
+            "mjm-501-1_v600_151023_299k_gcosy_1",  # "mjm-501-1-dmso-gcosy",
         ]
 
     def test_agilent_inconsistent_match_bug(self):
@@ -65,9 +64,6 @@ class TestExplorer:
         explorer.config.options.spec = "v600"
         explorer.config.options.user = "akw"
         explorer.config.options.group = "gil"
-        explorer.config.options.naming.solvent = False
-        explorer.config.options.naming.frequency = False
-        explorer.config.options.naming.experiment = True
         reporter = explorer.single_check(date(2026, 4, 10))
         assert sorted(reporter.copied()) == [
             "akw-004-4_s600_300326_299k_13c_1",
@@ -94,7 +90,7 @@ class TestExplorer:
             "akw-17-4_s600_270326_299k_ghmbcad_1",
             "akw-17-4_s600_270326_299k_ghsqcad_1",
         ]
-    
+
     def test_bruker_missing_title(self):
         # Make sure there's not an issue if there is no measurement title
         explorer = mock_explorer()

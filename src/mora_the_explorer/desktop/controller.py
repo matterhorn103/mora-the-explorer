@@ -139,24 +139,16 @@ class Controller(QObject):
     start_check = Signal(bool, datetime.date, QtReporter)
 
     timer: QTimer
-    explorer: QtExplorer
+    explorer: QtExplorer | None
 
     def __init__(self, config: Config, admin_mode: bool = False):
         """Create a new `Controller` along with a new associated `MainWindow` instance."""
         super().__init__()
-        self.version_header = "\n".join([
-            "Mora the Explorer",
-            "Matt Milner",
-            config.admin.version,
-            "License: GPLv3",
-            f'<a href="mailto:{config.admin.email}">Report a bug</a>',
-            config.admin.changelog,
-        ])
         self.version = Version(config.admin.version)
 
         # Create instance of `MainWindow` (front-end)
         logging.info("Initializing user interface…")
-        self.main_window = MainWindow(config, self.version_header, admin_mode)
+        self.main_window = MainWindow(config, admin_mode)
         # Connect the key signals
         self.main_window.started.connect(self.check_requested)
         self.main_window.cancelled.connect(self.cancel_scheduled_check)
@@ -169,15 +161,19 @@ class Controller(QObject):
         update_path = Path(config.paths.server()) / config.paths.update
         self.update_check(update_path)
 
+        # To begin with there's no active explorer
+        self.explorer = None
         # Create a separate background thread to run checks in (necessary to avoid
         # the GUI freezing during a check)
         self.explorer_thread = QThread()
         # We need to make sure that it gets quit at the same time as the app
-        QApplication.instance().aboutToQuit.connect(self.cleanup)
+        instance = QApplication.instance()
+        if instance:
+            instance.aboutToQuit.connect(self.cleanup)
 
     def update_check(self, update_path: Path):
         """Check for updates at the specified location.
-        
+
         Assumes that the directory at `update_path` contains a copy of the source code
         of Mora the Explorer, under the subdirectory name `src`. The `config.toml`
         file within the source code is then checked and compare to the local one
@@ -199,12 +195,12 @@ class Controller(QObject):
         remote_version = Version(remote_config["admin"]["version"])
         if self.version < remote_version:
             changelog = (
-            "What's new in version " + remote_version + ":\n"
-            + remote_config["admin"]["changelog"]
+                "What's new in version "
+                + str(remote_version)
+                + ":\n"
+                + remote_config["admin"]["changelog"]
             )
-            self.main_window.notify_update(
-                self.version, remote_version, changelog, update_path
-            )
+            self.main_window.notify_update(self.version, remote_version, changelog, update_path)
 
     def new_reporter(self) -> QtReporter:
         """Get a new QtReporter with its signals connected to the appropriate slots in the UI."""
@@ -229,6 +225,9 @@ class Controller(QObject):
 
     @Slot()
     def check_requested(self):
+        # Make sure a destination path has been specified
+        if not self.main_window.config.paths.save:
+            self.main_window.dest_entry.pick_path("Choose where to save spectra!")
         self.main_window.status_bar.set_status("Initializing…")
         self.main_window.status_bar.show_status()
 
@@ -255,6 +254,9 @@ class Controller(QObject):
 
     @Slot()
     def check_ended(self):
+        # This method should only ever be called when there's an existing Explorer
+        assert self.explorer is not None
+
         # Send a notification if there was an error or if new spectra were found
         if self.reporter.errors():
             combined_error_message = "\n".join(self.reporter.errors())
@@ -303,9 +305,9 @@ class Controller(QObject):
         currently_admin = self.main_window.admin_mode
         # Close old window
         self.main_window.close()
-        self.main_window = None  # So that the Qt reference is dropped and it's destroyed
+        self.main_window.deleteLater()  # So that the Qt reference is dropped and it's destroyed
         # Build new window in opposite mode
-        self.main_window = MainWindow(current_config, self.version_header, not currently_admin)
+        self.main_window = MainWindow(current_config, not currently_admin)
         # Reconnect the key signals
         self.main_window.started.connect(self.check_requested)
         self.main_window.cancelled.connect(self.cancel_scheduled_check)

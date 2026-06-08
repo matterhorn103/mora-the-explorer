@@ -3,7 +3,7 @@
 import datetime
 from pathlib import Path
 
-from PySide6.QtCore import QObject, Qt, QUrl, Signal, Slot
+from PySide6.QtCore import QObject, Qt, QUrl, Signal, Slot, QDate
 from PySide6.QtGui import QDesktopServices, QShortcut, QKeySequence
 from PySide6.QtWidgets import (
     QPushButton,
@@ -45,6 +45,18 @@ class RowComponent(QObject):
         raise NotImplementedError
 
 
+class SectionHeading(RowComponent):
+    """A heading to introduce a group of related settings."""
+
+    def __init__(self, text: str):
+        super().__init__()
+
+        self.label = QLabel("<h4>" + text + "</h4>")
+
+    def add_to_grid(self, grid: QGridLayout, row: int):
+        grid.addWidget(self.label, row, 0, 1, 2)
+
+
 class DirSelector(RowComponent):
     """A component for selecting a directory."""
 
@@ -54,7 +66,7 @@ class DirSelector(RowComponent):
         super().__init__()
 
         # Store the path as a Path object
-        self._path: Path = None
+        self._path: Path | None
 
         # Groups two items - a title string and a path field, and two buttons
         self.title = QLabel(title)
@@ -78,10 +90,10 @@ class DirSelector(RowComponent):
         pick_icon = self.pick_button.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon)
         self.pick_button.setIcon(pick_icon)
         self.pick_button.setFixedSize(24, 24)
-        #self.pick_button.setIconSize(24)
+        # self.pick_button.setIconSize(24)
 
         # Right align the title
-        self.title.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.title.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
         # Set the method that is called when the buttons are pressed
         self.pick_button.clicked.connect(self.pick_path)
@@ -104,23 +116,36 @@ class DirSelector(RowComponent):
         grid.addWidget(self.title, row, 0)
         grid.addLayout(self.path_layout, row, 1)
 
-    def path(self) -> Path:
+    def path(self) -> Path | None:
         """Get the current path in the entry field."""
         return self._path
 
     def set_path(self, path: str | Path):
         """Set the path in the entry field."""
-        self._path = Path(path)
-        self.entry_field.setText(str(path))
+        # Note that `Path("")` returns `Path(".")`, so if an empty string is passed
+        # set the stored path to `None` and the text to blank
+        if not path:
+            self._path = None
+            self.entry_field.setText(None)
+        else:
+            # Make sure to expand `~` and `~user` as they'd probably confuse people
+            self._path = Path(path).expanduser()
+            self.entry_field.setText(str(self._path))
 
     @Slot()
-    def pick_path(self):
+    def pick_path(self, caption: str = "Select Folder"):
         """Open a file dialog for the user to select a directory on the system.
 
         The file dialog is shown centred over the `parent` window.
         """
+        if self._path:
+            initial_location = str(self._path.expanduser().parent)
+        else:
+            initial_location = str(Path.home())
         choice = QFileDialog.getExistingDirectory(
-            self.pick_button, "Select Folder", str(self.path().expanduser().parent),
+            self.pick_button,
+            caption,
+            initial_location,
         )
         if choice:
             self.set_path(choice)
@@ -129,7 +154,10 @@ class DirSelector(RowComponent):
     def go_to(self):
         """Opens the path in the system file explorer."""
 
-        target = self.path().expanduser()
+        path = self.path()
+        if not path:
+            return
+        target = path.expanduser()
         if target.exists():
             QDesktopServices.openUrl(QUrl.fromLocalFile(target))
 
@@ -151,14 +179,14 @@ class FreeEntryField(RowComponent):
         if comment is not None:
             self.comment = QLabel(comment)
             # Centre the comment in both directions
-            self.comment.setAlignment(Qt.AlignCenter)
+            self.comment.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.comment.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
             self.field_layout.addWidget(self.comment)
         else:
             self.comment = None
 
         # Right align the title (but centre vertically)
-        self.title.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.title.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
         # Connect a change in the field to the instance's signal
         # Use textEdited so that setting it programmatically doesn't trigger it,
@@ -173,7 +201,7 @@ class FreeEntryField(RowComponent):
         """Get the current text in the entry field."""
         return self.entry_field.text()
 
-    def set_text(self, text: str):
+    def set_text(self, text: str | None):
         """Set the text in the entry field."""
         self.entry_field.setText(text)
 
@@ -240,7 +268,7 @@ class OverflowSelector(RowComponent):
         self.dropdown.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
 
         # Right align the title (but centre vertically)
-        self.title.setAlignment(Qt.AlignRight | Qt.AlignTop)
+        self.title.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
 
         # Add radio buttons to the main options section
         for i, label in enumerate(main):
@@ -301,6 +329,7 @@ class OverflowSelector(RowComponent):
 # The classes above are abstract really, whereas the below are specific to their
 # context and have more stuff hard-coded
 
+
 class FolderNameOptions(RowComponent):
     """The component for choices relating to folder name customization."""
 
@@ -316,9 +345,9 @@ class FolderNameOptions(RowComponent):
         # self.comment = QLabel("…in folder name")
 
         # Right align the title (but top align vertically)
-        self.title.setAlignment(Qt.AlignRight | Qt.AlignTop)
+        self.title.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
         # Centre the comment (but top align vertically)
-        # self.comment.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        # self.comment.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
 
         # The set of options and the labels that should go next to the checkboxes
         # `Config` contains a flag for each option with an `inc_` prefix e.g. inc_user
@@ -357,11 +386,11 @@ class FolderNameOptions(RowComponent):
     def add_to_grid(self, grid: QGridLayout, row: int):
         grid.addWidget(self.title, row, 0)
         # Up to six options fit within the central column
-        #if len(self.options) <= 6:
+        # if len(self.options) <= 6:
         grid.addLayout(self.box_grid, row, 1)
         # More than that and we need to expand into the third column
-        #else:
-        #grid.addLayout(self.box_grid, row, 1, 1, 2)
+        # else:
+        # grid.addLayout(self.box_grid, row, 1, 1, 2)
         # grid.addWidget(self.comment, row, 2)
 
     def checked(self) -> dict[str, bool]:
@@ -404,7 +433,7 @@ class FolderNamePreview(RowComponent):
             path="",
             folder_name="170",
             manufacturer=Manufacturer.BRUKER,
-            submission_time=datetime.date.today(),
+            submission_time=datetime.datetime.now(),
             user="",
             group="",
             experiment="proton",
@@ -418,10 +447,10 @@ class FolderNamePreview(RowComponent):
         self.preview = QLabel()
 
         # Right align the title (but top align vertically)
-        self.title.setAlignment(Qt.AlignRight | Qt.AlignTop)
+        self.title.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
 
         # Centre-align the preview within the column
-        self.preview.setAlignment(Qt.AlignCenter | Qt.AlignTop)
+        self.preview.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
 
         self.regenerate_preview()
 
@@ -442,19 +471,15 @@ class FolderNamePreview(RowComponent):
             self.mdata.instrument = "av300"
             self.mdata.experiment = "proton"
         else:
-            self.mdata.folder_name = f"{self.config.options.user}{self.mdata.sample_id}_{self.mdata.submission_time.strftime('%d%m%y')}_299k_1h_1.fid"
+            self.mdata.folder_name = f"{self.config.options.user}{self.mdata.sample_id}_{self.mdata.submission_time.strftime('%d%m%y')}_299k_1h_1.fid"  # ty: ignore[unresolved-attribute]
             self.mdata.instrument = "v500"
             self.mdata.experiment = "1h"
         # Don't bother with this so long as we don't offer the ability to include the path
-        #self.metadata.path = self.explorer.get_check_paths(datetime.date.today())[0] / self.metadata.folder_name
-        
-        preview = self.mdata.generate_folder_name(self.explorer.generate_rules().measurement_pattern)
-        if (
-            (self.config.options.sort is SpectraSorting.SAMPLE_AND_SPEC or self.config.options.sort is SpectraSorting.SAMPLE)
-            or (self.config.options.sort is SpectraSorting.ORIGINAL and self.mdata.manufacturer is Manufacturer.AGILENT)
-        ):
-            sample = self.mdata.generate_folder_name(self.explorer.generate_rules().sample_pattern)
-            preview = sample + " / " + preview
+        # self.metadata.path = self.explorer.get_check_paths(datetime.date.today())[0] / self.metadata.folder_name
+
+        preview = self.mdata.generate_folder_name(self.explorer.generate_rules().measurement_format)
+        sample = self.mdata.generate_folder_name(self.explorer.generate_rules().sample_format)
+        preview = sample + " / " + preview
         self.preview.setText(preview)
 
 
@@ -473,7 +498,7 @@ class SpectrometerSelector(RowComponent):
         self.buttons = QButtonGroup()
 
         # Container groups two items: a title and a stack of the buttons
-        self.title = QLabel("Search:")
+        self.title = QLabel("Instrument:")
         self.button_stack = QVBoxLayout()
 
         for i, spec in enumerate(self.specs):
@@ -485,7 +510,7 @@ class SpectrometerSelector(RowComponent):
             self.button_stack.addWidget(button)
 
         # Right align the title (but top align vertically)
-        self.title.setAlignment(Qt.AlignRight | Qt.AlignTop)
+        self.title.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
 
         self.buttons.buttonClicked.connect(self.changed)
 
@@ -537,7 +562,7 @@ class RepeatSelector(RowComponent):
         self.repeat_row.addWidget(self.mins_label)
 
         # Right align the title (but centre vertically)
-        self.title.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.title.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
         # A delay of 0 or a negative value would be meaningless
         self.interval_box.setMinimum(1)
@@ -584,7 +609,7 @@ class DateSelector(RowComponent):
         super().__init__()
 
         # Groups two items: a title, and a row of mixed widgets
-        self.title = QLabel("When?")
+        self.title = QLabel("Date:")
         self.date_row = QHBoxLayout()
 
         # Date row layout contains an interactive sentence consisting of
@@ -601,9 +626,9 @@ class DateSelector(RowComponent):
         self.date_button_group.addButton(self.since_button)
 
         # Date editor with initial value set to today's date
-        self.date_selector = QDateEdit(datetime.date.today())
+        self.date_selector = QDateEdit(QDate.currentDate())
         self.date_selector.setDisplayFormat("dd MMM yyyy")
-        #self.date_selector.setMinimumWidth(200)
+        # self.date_selector.setMinimumWidth(200)
         self.date_selector.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         # A button to reset the date to the current day
@@ -630,7 +655,7 @@ class DateSelector(RowComponent):
         self.reset_button.clicked.connect(self.reset_date)
 
         # Right align the title (but centre vertically)
-        self.title.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.title.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
         self.date_button_group.buttonClicked.connect(self.changed)
         self.date_button_group.buttonClicked.connect(self._adjust_for_mode)
@@ -644,10 +669,12 @@ class DateSelector(RowComponent):
         if self.mode() == "current":
             return datetime.date.today()
         else:
-            return self.date_selector.date().toPython()
+            return datetime.date.fromisoformat(
+                self.date_selector.date().toString(format=Qt.DateFormat.ISODate)
+            )
 
     def set_date(self, date: datetime.date):
-        self.date_selector.setDate(date)
+        self.date_selector.setDate(QDate.fromString(date.isoformat(), format=Qt.DateFormat.ISODate))
 
     @Slot()
     def reset_date(self):
@@ -665,7 +692,7 @@ class DateSelector(RowComponent):
             return "single"
         else:  # mode == "multi"
             return "multi"
-        
+
     @Slot()
     def _adjust_for_mode(self):
         mode = self.mode()

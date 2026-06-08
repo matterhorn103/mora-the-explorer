@@ -124,7 +124,7 @@ def main():
         logging.basicConfig(
             stream=sys.stdout,
             format="%(asctime)s %(message)s",
-            encoding="utf-8",
+            # encoding="utf-8", # Not necessary with a stream
             level=logging.INFO,
         )
     else:
@@ -142,6 +142,7 @@ def main():
     if args.command == "launch":
         logging.info("Launching GUI from command line")
         from .desktop import App
+
         if args.config:
             app = App(app_config, args.config)
         else:
