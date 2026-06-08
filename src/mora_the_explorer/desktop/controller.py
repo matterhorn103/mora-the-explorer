@@ -225,6 +225,9 @@ class Controller(QObject):
 
     @Slot()
     def check_requested(self):
+        # Make sure a destination path has been specified
+        if not self.main_window.config.paths.save:
+            self.main_window.dest_entry.pick_path("Choose where to save spectra!")
         self.main_window.status_bar.set_status("Initializing…")
         self.main_window.status_bar.show_status()
 

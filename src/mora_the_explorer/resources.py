@@ -6,7 +6,7 @@
 from PySide6 import QtCore
 
 qt_resource_data = b"\
-\x00\x00\x1b\x9d\
+\x00\x00\x1b\xc0\
 #\
  This file confi\
 gures mora_the_e\
@@ -114,342 +114,344 @@ plorer\x22  # Where\
  to check for ap\
 p updates, relat\
 ive to the serve\
-r\x0asave = \x22~/nmr\x22\
-  # The location\
- spectra should \
-be copied to\x0a\x0a\x0a[\
-admin]\x0apattern_s\
-eparator = '[\x5cs_\
--]' # Note the s\
-ingle quotes! (=\
- literal string)\
-\x0aversion = \x222.0.\
-0b6\x22\x0aemail = \x22mi\
-lner@uni-muenste\
-r.de\x22\x0achangelog \
-= \x22\x22\x22\x0a- Update f\
-or move to new s\
-erver\x0a- Big rewr\
-ite, codebase is\
- now much more s\
-tructured and ma\
-intainable\x0a- The\
- search can be s\
-et to always che\
-ck the current d\
-ate which change\
-s accordingly\x0a- \
-Spectra always s\
-orted into subfo\
-lders by sample \
-(like Agilent sp\
-ectra)\x0a- Paths a\
-re selected usin\
-g the system fil\
-e explorer\x0a- Abi\
-lity to specify \
-the server addre\
-ss from the GUI \
-(useful on macOS\
- and Linux)\x0a- So\
-lvent, instrumen\
-t, experiment, t\
-emperature metad\
-ata extracted on\
- all spectromete\
-rs\x0a- Metadata ar\
-e saved to the m\
-easurement folde\
-r in mora.toml\x0a-\
- CLI and Python \
-API work entirel\
-y independently \
-of a GUI\x0a\x22\x22\x22\x0a\x0a\x0a[\
-groups]\x0a# Availa\
-ble groups, list\
-ed in the style \
-`group = group_n\
-ame`\x0a# `group` i\
-s the standard i\
-nitialism used f\
-or each group's \
-experiments and \
-data\x0a# institute\
--wide and is use\
-d in the search \
-for Bruker spect\
-ra (as it must b\
-e included in\x0a# \
-the measurement \
-title)\x0a# `group`\
- is the full nam\
-e, used for fold\
-ers of the group\
- e.g. for the 50\
-0-600er\x0afer = \x22f\
-ernandez\x22\x0agar = \
-\x22garcia\x22\x0agil = \x22\
-gilmour\x22\x0aglo = \x22\
-glorius\x22\x0ahei = \x22\
-hein\x22\x0anae = \x22nae\
-sborg\x22\x0arav = \x22ra\
-voo\x22\x0astu = \x22stud\
-er\x22\x0a\x0a[groups.oth\
-er]\x0a# Groups tha\
-t should be put \
-in a separate ov\
-erflow list call\
-ed \x22Other\x22 in th\
-e app\x0aac = \x22ac\x22\x0a\
-biochemie = \x22bio\
-chemie\x22\x0aextern =\
- \x22extern\x22\x0aipc = \
-\x22ipc\x22\x0akb = \x22kb\x22\x0a\
-meet = \x22meet\x22\x0anu\
-k = \x22nuk\x22\x0aocf = \
-\x22ocf\x22\x0apharmazie \
-= \x22pharmazie\x22\x0a\x0a\x0a\
-[spectrometers]\x0a\
-# Provide the fo\
-llowing informat\
-ion for each spe\
-ctrometer catego\
-ry:\x0a#   manufact\
-urer: the manufa\
-cturer of the sp\
-ectrometer(s)\x0a# \
-  display_name: \
-the text shown n\
-ext to the butto\
-n in the user in\
-terface\x0a#       \
-(note that some \
-characters need \
-escaping, e.g. w\
-rite && for &)\x0a#\
-   measurement_p\
-attern: the expe\
-cted fields in t\
-he measurement t\
-itle\x0a#   date_en\
-try: whether the\
- user selects th\
-e full date \x22dd \
-MMM yyyy\x22 or jus\
-t year \x22yyyy\x22\x0a# \
-  check_paths: t\
-he paths that sh\
+r\x0asave = \x22\x22  # T\
+he location spec\
+tra should be co\
+pied to - if emp\
+ty, the user is \
+asked on launch\x0a\
+\x0a\x0a[admin]\x0apatter\
+n_separator = '[\
+\x5cs_-]' # Note th\
+e single quotes!\
+ (= literal stri\
+ng)\x0aversion = \x222\
+.0.0b6\x22\x0aemail = \
+\x22milner@uni-muen\
+ster.de\x22\x0achangel\
+og = \x22\x22\x22\x0a- Updat\
+e for move to ne\
+w server\x0a- Big r\
+ewrite, codebase\
+ is now much mor\
+e structured and\
+ maintainable\x0a- \
+The search can b\
+e set to always \
+check the curren\
+t date which cha\
+nges accordingly\
+\x0a- Spectra alway\
+s sorted into su\
+bfolders by samp\
+le (like Agilent\
+ spectra)\x0a- Path\
+s are selected u\
+sing the system \
+file explorer\x0a- \
+Ability to speci\
+fy the server ad\
+dress from the G\
+UI (useful on ma\
+cOS and Linux)\x0a-\
+ Solvent, instru\
+ment, experiment\
+, temperature me\
+tadata extracted\
+ on all spectrom\
+eters\x0a- Metadata\
+ are saved to th\
+e measurement fo\
+lder in mora.tom\
+l\x0a- CLI and Pyth\
+on API work enti\
+rely independent\
+ly of a GUI\x0a\x22\x22\x22\x0a\
+\x0a\x0a[groups]\x0a# Ava\
+ilable groups, l\
+isted in the sty\
+le `group = grou\
+p_name`\x0a# `group\
+` is the standar\
+d initialism use\
+d for each group\
+'s experiments a\
+nd data\x0a# instit\
+ute-wide and is \
+used in the sear\
+ch for Bruker sp\
+ectra (as it mus\
+t be included in\
+\x0a# the measureme\
+nt title)\x0a# `gro\
+up` is the full \
+name, used for f\
+olders of the gr\
+oup e.g. for the\
+ 500-600er\x0afer =\
+ \x22fernandez\x22\x0agar\
+ = \x22garcia\x22\x0agil \
+= \x22gilmour\x22\x0aglo \
+= \x22glorius\x22\x0ahei \
+= \x22hein\x22\x0anae = \x22\
+naesborg\x22\x0arav = \
+\x22ravoo\x22\x0astu = \x22s\
+tuder\x22\x0a\x0a[groups.\
+other]\x0a# Groups \
+that should be p\
+ut in a separate\
+ overflow list c\
+alled \x22Other\x22 in\
+ the app\x0aac = \x22a\
+c\x22\x0abiochemie = \x22\
+biochemie\x22\x0aexter\
+n = \x22extern\x22\x0aipc\
+ = \x22ipc\x22\x0akb = \x22k\
+b\x22\x0ameet = \x22meet\x22\
+\x0anuk = \x22nuk\x22\x0aocf\
+ = \x22ocf\x22\x0apharmaz\
+ie = \x22pharmazie\x22\
+\x0a\x0a\x0a[spectrometer\
+s]\x0a# Provide the\
+ following infor\
+mation for each \
+spectrometer cat\
+egory:\x0a#   manuf\
+acturer: the man\
+ufacturer of the\
+ spectrometer(s)\
+\x0a#   display_nam\
+e: the text show\
+n next to the bu\
+tton in the user\
+ interface\x0a#    \
+   (note that so\
+me characters ne\
+ed escaping, e.g\
+. write && for &\
+)\x0a#   measuremen\
+t_pattern: the e\
+xpected fields i\
+n the measuremen\
+t title\x0a#   date\
+_entry: whether \
+the user selects\
+ the full date \x22\
+dd MMM yyyy\x22 or \
+just year \x22yyyy\x22\
+\x0a#   check_paths\
+: the paths that\
+ should be searc\
+hed for new spec\
+tra\x0a#   archives\
+: if spectra fro\
+m previous years\
+ can't be found \
+under check_path\
+s, the\x0a#       a\
+rchive folders a\
+re checked in ad\
+dition\x0a#   inclu\
+de: other spectr\
+ometers which sh\
 ould be searched\
- for new spectra\
-\x0a#   archives: i\
-f spectra from p\
-revious years ca\
-n't be found und\
-er check_paths, \
-the\x0a#       arch\
-ive folders are \
-checked in addit\
-ion\x0a#   include:\
- other spectrome\
-ters which shoul\
-d be searched at\
- the same time\x0a#\
-   restrict_to: \
-the list of grou\
-ps that should b\
-e able to see th\
-e spectrometer -\
- if\x0a#       this\
- key is not used\
-, the spectromet\
-er will be visib\
-le to all\x0a#   ad\
-min_only: whethe\
-r the spectromet\
-er should only b\
-e chooseable in \
-admin mode\x0a#   a\
-llow_solvent: wh\
-ether to enable \
-the folder namin\
-g option to incl\
-ude the solvent\x0a\
-#   single_check\
-_only: whether u\
-sers may use mul\
-tiday and repeat\
- checks for this\
- spec\x0a#\x0a# Variab\
-les can be inter\
-polated into the\
- entries in `che\
-ck_paths` and `a\
-rchives`\x0a# by wr\
-apping them in c\
-urly brackets. T\
-he following var\
-iables can be us\
-ed:\x0a# - group   \
-      (the chose\
-n group's ID)\x0a# \
-- group_name    \
-(the chosen grou\
-p's name)\x0a# - da\
-te\x0a#\x0a# For `date\
-`, it may be des\
-irable to format\
- it using e.g. `\
-{date:%Y}` to ge\
-t `2026`\x0a# For t\
-he format codes \
-see https://docs\
-.python.org/3/li\
-brary/datetime.h\
-tml#strftime-str\
-ptime-behavior\x0a\x0a\
-# Note that in T\
-OML, single quot\
-es can be used f\
-or a literal str\
-ing to avoid\x0a# h\
-aving to use bac\
-kslash escapes, \
-which is very us\
-eful for regex p\
-atterns\x0a\x0a[spectr\
-ometers.archiv]\x0a\
-manufacturer = \x22\
-bruker\x22\x0adisplay_\
-name = \x22Pre-2020\
- archive (Bruker\
-)\x22\x0ameasurement_p\
-attern = '<group\
-!>\x5c_*<user_name>\
-?\x5c_*<user!>\x5c_*<u\
-ser2!>?\x5c_*<sampl\
-e_id!>' # Note t\
-he single quotes\
-! (= literal str\
-ing)\x0adate_entry \
-= \x22dd MMM yyyy\x22\x0a\
-check_paths = [\x0a\
-    \x22archiv/dpx3\
-00/{date:%y}-dpx\
+ at the same tim\
+e\x0a#   restrict_t\
+o: the list of g\
+roups that shoul\
+d be able to see\
+ the spectromete\
+r - if\x0a#       t\
+his key is not u\
+sed, the spectro\
+meter will be vi\
+sible to all\x0a#  \
+ admin_only: whe\
+ther the spectro\
+meter should onl\
+y be chooseable \
+in admin mode\x0a# \
+  allow_solvent:\
+ whether to enab\
+le the folder na\
+ming option to i\
+nclude the solve\
+nt\x0a#   single_ch\
+eck_only: whethe\
+r users may use \
+multiday and rep\
+eat checks for t\
+his spec\x0a#\x0a# Var\
+iables can be in\
+terpolated into \
+the entries in `\
+check_paths` and\
+ `archives`\x0a# by\
+ wrapping them i\
+n curly brackets\
+. The following \
+variables can be\
+ used:\x0a# - group\
+         (the ch\
+osen group's ID)\
+\x0a# - group_name \
+   (the chosen g\
+roup's name)\x0a# -\
+ date\x0a#\x0a# For `d\
+ate`, it may be \
+desirable to for\
+mat it using e.g\
+. `{date:%Y}` to\
+ get `2026`\x0a# Fo\
+r the format cod\
+es see https://d\
+ocs.python.org/3\
+/library/datetim\
+e.html#strftime-\
+strptime-behavio\
+r\x0a\x0a# Note that i\
+n TOML, single q\
+uotes can be use\
+d for a literal \
+string to avoid\x0a\
+# having to use \
+backslash escape\
+s, which is very\
+ useful for rege\
+x patterns\x0a\x0a[spe\
+ctrometers.archi\
+v]\x0amanufacturer \
+= \x22bruker\x22\x0adispl\
+ay_name = \x22Pre-2\
+020 archive (Bru\
+ker)\x22\x0ameasuremen\
+t_pattern = '<gr\
+oup!>\x5c_*<user_na\
+me>?\x5c_*<user!>\x5c_\
+*<user2!>?\x5c_*<sa\
+mple_id!>' # Not\
+e the single quo\
+tes! (= literal \
+string)\x0adate_ent\
+ry = \x22dd MMM yyy\
+y\x22\x0acheck_paths =\
+ [\x0a    \x22archiv/d\
+px300/{date:%y}-\
+dpx300_{date:%Y}\
+/{date:%b%d-%Y}\x22\
+,\x0a    \x22archiv/av\
+300/{date:%y}-av\
 300_{date:%Y}/{d\
 ate:%b%d-%Y}\x22,\x0a \
-   \x22archiv/av300\
-/{date:%y}-av300\
+   \x22archiv/av400\
+/{date:%y}-av400\
 _{date:%Y}/{date\
 :%b%d-%Y}\x22,\x0a    \
-\x22archiv/av400/{d\
-ate:%y}-av400_{d\
-ate:%Y}/{date:%b\
-%d-%Y}\x22,\x0a    \x22ar\
-chiv/neo400a/{da\
-te:%y}-neo400a_{\
-date:%Y}/neo400a\
-_{date:%b%d-%Y}\x22\
-,\x0a    \x22archiv/ne\
-o400b/{date:%y}-\
-neo400b_{date:%Y\
-}/neo400b_{date:\
-%b%d-%Y}\x22,\x0a    \x22\
-archiv/neo400c/{\
-date:%y}-neo400c\
-_{date:%Y}/neo40\
-0c_{date:%b%d-%Y\
-}\x22,\x0a]\x0aadmin_only\
- = true\x0asingle_c\
+\x22archiv/neo400a/\
+{date:%y}-neo400\
+a_{date:%Y}/neo4\
+00a_{date:%b%d-%\
+Y}\x22,\x0a    \x22archiv\
+/neo400b/{date:%\
+y}-neo400b_{date\
+:%Y}/neo400b_{da\
+te:%b%d-%Y}\x22,\x0a  \
+  \x22archiv/neo400\
+c/{date:%y}-neo4\
+00c_{date:%Y}/ne\
+o400c_{date:%b%d\
+-%Y}\x22,\x0a]\x0aadmin_o\
+nly = true\x0asingl\
+e_check_only = f\
+alse\x0a\x0a[spectrome\
+ters.av300]\x0amanu\
+facturer = \x22bruk\
+er\x22\x0adisplay_name\
+ = \x22Studer group\
+ NMR only (300 M\
+Hz)\x22\x0ameasurement\
+_pattern = '<gro\
+up!>\x5c_*<user_nam\
+e>?\x5c_*<user!>\x5c_*\
+<user2!>?\x5c_*<sam\
+ple_id!>'\x0adate_e\
+ntry = \x22dd MMM y\
+yyy\x22\x0acheck_paths\
+ = [\x0a    \x22av300/\
+av1/{date:%b%d-%\
+Y}\x22,\x0a]\x0aarchives \
+= [\x0a    \x22av300/a\
+v1/{date:%y}-av3\
+00_{date:%Y}/{da\
+te:%b%d-%Y}\x22,\x0a]\x0a\
+restrict_to = [\x0a\
+    \x22stu\x22,\x0a    \x22\
+nae\x22,\x0a]\x0asingle_c\
 heck_only = fals\
 e\x0a\x0a[spectrometer\
-s.av300]\x0amanufac\
-turer = \x22bruker\x22\
-\x0adisplay_name = \
-\x22Studer group NM\
-R only (300 MHz)\
-\x22\x0ameasurement_pa\
-ttern = '<group!\
->\x5c_*<user_name>?\
-\x5c_*<user!>\x5c_*<us\
-er2!>?\x5c_*<sample\
-_id!>'\x0adate_entr\
-y = \x22dd MMM yyyy\
-\x22\x0acheck_paths = \
-[\x0a    \x22av300/av1\
-/{date:%b%d-%Y}\x22\
-,\x0a]\x0aarchives = [\
-\x0a    \x22av300/av1/\
-{date:%y}-av300_\
-{date:%Y}/{date:\
-%b%d-%Y}\x22,\x0a]\x0ares\
-trict_to = [\x0a   \
- \x22stu\x22,\x0a    \x22nae\
-\x22,\x0a]\x0asingle_chec\
-k_only = false\x0a\x0a\
-[spectrometers.n\
-eo400]\x0amanufactu\
-rer = \x22bruker\x22\x0ad\
-isplay_name = \x22R\
-outine NMR (300 \
-&& 400 MHz)\x22\x0amea\
-surement_pattern\
- = '<group!>\x5c_*<\
-user_name>?\x5c_*<u\
-ser!>\x5c_*<user2!>\
-?\x5c_*<sample_id!>\
-'\x0adate_entry = \x22\
-dd MMM yyyy\x22\x0ache\
-ck_paths = [\x0a   \
- \x22neo400/av1/neo\
-400a_{date:%b%d-\
-%Y}\x22,\x0a    \x22neo40\
-0/av1/neo400b_{d\
-ate:%b%d-%Y}\x22,\x0a \
-   \x22neo400/av1/n\
-eo400c_{date:%b%\
-d-%Y}\x22,\x0a]\x0aarchiv\
-es = [\x0a    \x22neo4\
+s.neo400]\x0amanufa\
+cturer = \x22bruker\
+\x22\x0adisplay_name =\
+ \x22Routine NMR (3\
+00 && 400 MHz)\x22\x0a\
+measurement_patt\
+ern = '<group!>\x5c\
+_*<user_name>?\x5c_\
+*<user!>\x5c_*<user\
+2!>?\x5c_*<sample_i\
+d!>'\x0adate_entry \
+= \x22dd MMM yyyy\x22\x0a\
+check_paths = [\x0a\
+    \x22neo400/av1/\
+neo400a_{date:%b\
+%d-%Y}\x22,\x0a    \x22ne\
+o400/av1/neo400b\
+_{date:%b%d-%Y}\x22\
+,\x0a    \x22neo400/av\
+1/neo400c_{date:\
+%b%d-%Y}\x22,\x0a]\x0aarc\
+hives = [\x0a    \x22n\
+eo400/av1/{date:\
+%y}-neo400a_{dat\
+e:%Y}/{date:%b%d\
+-%Y}\x22,\x0a    \x22neo4\
 00/av1/{date:%y}\
--neo400a_{date:%\
+-neo400b_{date:%\
 Y}/{date:%b%d-%Y\
 }\x22,\x0a    \x22neo400/\
 av1/{date:%y}-ne\
-o400b_{date:%Y}/\
+o400c_{date:%Y}/\
 {date:%b%d-%Y}\x22,\
-\x0a    \x22neo400/av1\
-/{date:%y}-neo40\
-0c_{date:%Y}/{da\
-te:%b%d-%Y}\x22,\x0a]\x0a\
-include = [ \x22av3\
-00\x22 ]\x0asingle_che\
-ck_only = false\x0a\
-\x0a[spectrometers.\
-hf]\x0amanufacturer\
- = \x22agilent\x22\x0adis\
-play_name = \x22Hig\
-h-field spectrom\
-eters (500 && 60\
-0 MHz)\x22\x0asample_p\
-attern = '<user!\
-><user2!>?<sampl\
-e_id!>'\x0ameasurem\
-ent_pattern = '<\
-user!><user2!>?<\
-sample_id!>_(\x5cd{\
-6})_<temperature\
->k_<experiment>_\
-<measurement_no>\
-\x5c.fid'\x0adate_entr\
-y = \x22yyyy\x22\x0acheck\
-_paths = [\x0a    \x22\
-500-600er/{group\
-_name}/{date:%Y}\
-\x22,\x0a]\x0aarchives = \
-[\x0a    \x22archiv/50\
-0-600er/{group_n\
-ame}/{date:%Y}\x22,\
-\x0a]\x0asingle_check_\
-only = true\x0a\
+\x0a]\x0ainclude = [ \x22\
+av300\x22 ]\x0asingle_\
+check_only = fal\
+se\x0a\x0a[spectromete\
+rs.hf]\x0amanufactu\
+rer = \x22agilent\x22\x0a\
+display_name = \x22\
+High-field spect\
+rometers (500 &&\
+ 600 MHz)\x22\x0asampl\
+e_pattern = '<us\
+er!><user2!>?<sa\
+mple_id!>'\x0ameasu\
+rement_pattern =\
+ '<user!><user2!\
+>?<sample_id!>_(\
+\x5cd{6})_<temperat\
+ure>k_<experimen\
+t>_<measurement_\
+no>\x5c.fid'\x0adate_e\
+ntry = \x22yyyy\x22\x0ach\
+eck_paths = [\x0a  \
+  \x22500-600er/{gr\
+oup_name}/{date:\
+%Y}\x22,\x0a]\x0aarchives\
+ = [\x0a    \x22archiv\
+/500-600er/{grou\
+p_name}/{date:%Y\
+}\x22,\x0a]\x0asingle_che\
+ck_only = true\x0a\
 "
 
 qt_resource_name = b"\
@@ -463,16 +465,13 @@ qt_resource_struct = b"\
 \x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x01\
 \x00\x00\x00\x00\x00\x00\x00\x00\
 \x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\
-\x00\x00\x01\x9epy\x9d\x01\
+\x00\x00\x01\x9e\xa9X\xa21\
 "
-
 
 def qInitResources():
     QtCore.qRegisterResourceData(0x03, qt_resource_struct, qt_resource_name, qt_resource_data)
 
-
 def qCleanupResources():
     QtCore.qUnregisterResourceData(0x03, qt_resource_struct, qt_resource_name, qt_resource_data)
-
 
 qInitResources()

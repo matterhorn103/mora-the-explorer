@@ -51,7 +51,7 @@ class SectionHeading(RowComponent):
     def __init__(self, text: str):
         super().__init__()
 
-        self.label = QLabel(text)
+        self.label = QLabel("<h4>" + text + "</h4>")
 
     def add_to_grid(self, grid: QGridLayout, row: int):
         grid.addWidget(self.label, row, 0, 1, 2)
@@ -66,7 +66,7 @@ class DirSelector(RowComponent):
         super().__init__()
 
         # Store the path as a Path object
-        self._path: Path
+        self._path: Path | None
 
         # Groups two items - a title string and a path field, and two buttons
         self.title = QLabel(title)
@@ -116,25 +116,36 @@ class DirSelector(RowComponent):
         grid.addWidget(self.title, row, 0)
         grid.addLayout(self.path_layout, row, 1)
 
-    def path(self) -> Path:
+    def path(self) -> Path | None:
         """Get the current path in the entry field."""
         return self._path
 
     def set_path(self, path: str | Path):
         """Set the path in the entry field."""
-        self._path = Path(path)
-        self.entry_field.setText(str(path))
+        # Note that `Path("")` returns `Path(".")`, so if an empty string is passed
+        # set the stored path to `None` and the text to blank
+        if not path:
+            self._path = None
+            self.entry_field.setText(None)
+        else:
+            # Make sure to expand `~` and `~user` as they'd probably confuse people
+            self._path = Path(path).expanduser()
+            self.entry_field.setText(str(self._path))
 
     @Slot()
-    def pick_path(self):
+    def pick_path(self, caption: str = "Select Folder"):
         """Open a file dialog for the user to select a directory on the system.
 
         The file dialog is shown centred over the `parent` window.
         """
+        if self._path:
+            initial_location = str(self._path.expanduser().parent)
+        else:
+            initial_location = str(Path.home())
         choice = QFileDialog.getExistingDirectory(
             self.pick_button,
-            "Select Folder",
-            str(self.path().expanduser().parent),
+            caption,
+            initial_location,
         )
         if choice:
             self.set_path(choice)
@@ -143,7 +154,10 @@ class DirSelector(RowComponent):
     def go_to(self):
         """Opens the path in the system file explorer."""
 
-        target = self.path().expanduser()
+        path = self.path()
+        if not path:
+            return
+        target = path.expanduser()
         if target.exists():
             QDesktopServices.openUrl(QUrl.fromLocalFile(target))
 

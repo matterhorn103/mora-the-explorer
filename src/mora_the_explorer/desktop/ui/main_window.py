@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QMessageBox,
     QProgressBar,
-    QPushButton,
+    QPushButton, QFrame,
 )
 
 from ...core.config import Config
@@ -73,7 +73,7 @@ class MainWindow(QMainWindow):
 
         # User initials entry
         # self.user_entry = rows.FreeEntryField("User:", "(initials)")
-        self.user_entry = rows.FreeEntryField("Initials:", None)
+        self.user_entry = rows.FreeEntryField("User:", None)
         self.user_entry.set_text(config.options.user)
         self.user_entry.changed.connect(self._on_user_changed)
 
@@ -96,7 +96,7 @@ class MainWindow(QMainWindow):
         self.group_entry.changed.connect(self._on_group_changed)
 
         # Server path
-        self.server_entry = rows.DirSelector("Server:", False)
+        self.server_entry = rows.DirSelector("NMR server:", False)
         self.server_entry.set_path(config.paths.server())
         self.server_entry.changed.connect(self._on_server_path_changed)
 
@@ -212,15 +212,15 @@ class MainWindow(QMainWindow):
         self.add_row(self.server_entry)
         self.add_row(self.dest_entry)
 
-        self.add_heading("User Details")
+        self.add_heading("Search Scope")
+        self.add_row(self.spec_selector)
+        self.add_row(self.date_selector)
+
+        self.add_heading("Query")
         self.add_row(self.group_entry)
         if admin_mode:
             self.add_row(self.group_name_entry)
         self.add_row(self.user_entry)
-
-        self.add_heading("Search Query")
-        self.add_row(self.spec_selector)
-        self.add_row(self.date_selector)
 
         if admin_mode:
             self.add_heading("Matching Patterns")
@@ -233,7 +233,7 @@ class MainWindow(QMainWindow):
         self.add_spacer()
         self.grid.addWidget(self.save_button, self.next_row(), 0, 1, 2)
 
-        self.add_spacer()
+        #self.add_spacer()
         # self.add_heading("Status")
         self.grid.addWidget(self.status_bar, self.next_row(), 0, 1, 2)
         self.grid.addWidget(self.prog_bar, self.next_row(), 0, 1, 2)
@@ -256,7 +256,7 @@ class MainWindow(QMainWindow):
         self.grid.addItem(QSpacerItem(0, 20), self._row_count, 0, 1, 2)
         self._row_count += 1
 
-    def add_heading(self, text: str, spacer: bool = True):
+    def add_heading(self, text: str, spacer: bool = True, line: bool = False):
         """Add a section heading with the specified text.
 
         Also adds a preceding spacer row unless told not to.
@@ -264,6 +264,10 @@ class MainWindow(QMainWindow):
         if spacer:
             self.add_spacer()
         self.add_row(rows.SectionHeading(text))
+        if line:
+            l = QFrame()
+            l.setFrameShape(QFrame.Shape.HLine)
+            self.grid.addWidget(l, self.next_row(), 0, 1, 2)
 
     def refresh_visible_specs(self):
         """Make sure the available spectrometers reflect what's allowed for the current group."""
@@ -411,15 +415,21 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _on_server_path_changed(self):
-        self.config.paths.set_server(self.server_entry.path())
-        # Don't bother with this so long as we don't offer the ability to include the path
-        # self.folder_name_preview.regenerate_preview()
-        self.suggest_save()
+        new_path = self.server_entry.path()
+        if not new_path:
+            self.notify_error("A server location must be provided!")
+        else:
+            self.config.paths.set_server(new_path)
+            self.suggest_save()
 
     @Slot()
     def _on_dest_path_changed(self):
-        self.config.paths.save = str(self.dest_entry.path())
-        self.suggest_save()
+        new_path = self.dest_entry.path()
+        if not new_path:
+            self.notify_error("A save location must be provided!")
+        else:
+            self.config.paths.save = str(new_path)
+            self.suggest_save()
 
     @Slot()
     def _on_spec_changed(self):
