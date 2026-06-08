@@ -54,6 +54,7 @@ class UserOptions:
     repeat_switch: bool
     repeat_delay: int
     naming: NamingOptions
+    group_name: str | None = None
 
 
 @dataclass
@@ -142,7 +143,7 @@ class Config:
 
     def __init__(
         self,
-        app_config_file: Path | bytes | str = None,
+        app_config_file: Path | bytes | str,
         user_config_file: Path = USER_CONFIG_PATH,
     ):
         # Load app config from config.toml
@@ -252,11 +253,15 @@ class Config:
         """
         if path is None:
             path = self.user_config_file
+        # The `asdict()` calls mean that only the attributes defined as proper
+        # fields are included; anything added later as a normal attribute is not
         current_config = {
             "options": dataclasses.asdict(self.options),
             "appearance": dataclasses.asdict(self.appearance),
             "paths": dataclasses.asdict(self.paths),
         }
+        # Some things should never be saved to the user config - remove them now
+        current_config["options"].pop("group_name", None)
         # Make a new dict, with the originally loaded config as its basis, updated
         # with values from the current merged config
         to_save: dict[str, dict] = self.user_config | current_config

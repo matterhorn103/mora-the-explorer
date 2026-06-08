@@ -139,7 +139,7 @@ class Controller(QObject):
     start_check = Signal(bool, datetime.date, QtReporter)
 
     timer: QTimer
-    explorer: QtExplorer
+    explorer: QtExplorer | None
 
     def __init__(self, config: Config, admin_mode: bool = False):
         """Create a new `Controller` along with a new associated `MainWindow` instance."""
@@ -161,11 +161,15 @@ class Controller(QObject):
         update_path = Path(config.paths.server()) / config.paths.update
         self.update_check(update_path)
 
+        # To begin with there's no active explorer
+        self.explorer = None
         # Create a separate background thread to run checks in (necessary to avoid
         # the GUI freezing during a check)
         self.explorer_thread = QThread()
         # We need to make sure that it gets quit at the same time as the app
-        QApplication.instance().aboutToQuit.connect(self.cleanup)
+        instance = QApplication.instance()
+        if instance:
+            instance.aboutToQuit.connect(self.cleanup)
 
     def update_check(self, update_path: Path):
         """Check for updates at the specified location.
@@ -192,7 +196,7 @@ class Controller(QObject):
         if self.version < remote_version:
             changelog = (
                 "What's new in version "
-                + remote_version
+                + str(remote_version)
                 + ":\n"
                 + remote_config["admin"]["changelog"]
             )
@@ -247,6 +251,9 @@ class Controller(QObject):
 
     @Slot()
     def check_ended(self):
+        # This method should only ever be called when there's an existing Explorer
+        assert self.explorer is not None
+
         # Send a notification if there was an error or if new spectra were found
         if self.reporter.errors():
             combined_error_message = "\n".join(self.reporter.errors())
@@ -295,7 +302,7 @@ class Controller(QObject):
         currently_admin = self.main_window.admin_mode
         # Close old window
         self.main_window.close()
-        self.main_window = None  # So that the Qt reference is dropped and it's destroyed
+        self.main_window.deleteLater()  # So that the Qt reference is dropped and it's destroyed
         # Build new window in opposite mode
         self.main_window = MainWindow(current_config, not currently_admin)
         # Reconnect the key signals

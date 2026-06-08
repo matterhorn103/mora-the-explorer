@@ -35,7 +35,7 @@ def get_check_paths(
         to_add = []
         # Replace the variable fields enclosed in {} curly brackets
         for group, group_name in groups.items():
-            to_add.append(path.format(group=group, group_name=group_name, date=date))
+            to_add.append(Path(path.format(group=group, group_name=group_name, date=date)))
         check_path_list.extend(to_add)
 
     # Turn into Path objects
@@ -45,6 +45,9 @@ def get_check_paths(
 
     # Include other spectrometers if indicated
     for included_spec in spec_info.include:
+        # While originally the list might have contained strings, any strings should
+        # have been replaced by the actual `Spectrometer` objects prior to this point
+        assert not isinstance(included_spec, str)
         included_spec_paths = get_check_paths(
             included_spec,
             server_path,

@@ -124,7 +124,7 @@ def main():
         logging.basicConfig(
             stream=sys.stdout,
             format="%(asctime)s %(message)s",
-            encoding="utf-8",
+            # encoding="utf-8", # Not necessary with a stream
             level=logging.INFO,
         )
     else:

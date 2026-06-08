@@ -12,15 +12,15 @@ class StatusBar(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.layout = QGridLayout()
-        self.layout.setSpacing(0)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(self.layout)
+        self._layout = QGridLayout()
+        self._layout.setSpacing(0)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self._layout)
 
         # Button to begin check
         self.start_button = QPushButton("Start check now")
         self.start_button.setStyleSheet("background-color : #b88cce")
-        self.layout.addWidget(self.start_button, 0, 0)
+        self._layout.addWidget(self.start_button, 0, 0)
         # Make sure the whole status bar stays the same size as the button
         # even when the button isn't visible
         start_button_size_policy = self.start_button.sizePolicy()
@@ -29,8 +29,8 @@ class StatusBar(QWidget):
 
         # Information for when check is in progress
         self.label = QLabel("Checking…")
-        self.label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-        self.layout.addWidget(self.label, 0, 0)
+        self.label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+        self._layout.addWidget(self.label, 0, 0)
 
         self.spinner = WaitingSpinner(
             self.label,
@@ -50,7 +50,7 @@ class StatusBar(QWidget):
         # Button to cancel pending repeat check
         self.cancel_button = QPushButton("Cancel repeat check")
         self.cancel_button.setStyleSheet("background-color : #cc0010; color : white")
-        self.layout.addWidget(self.cancel_button, 0, 0)
+        self._layout.addWidget(self.cancel_button, 0, 0)
 
         self.show_start()
 

@@ -1,12 +1,14 @@
 """Metadata handling."""
 
+from collections.abc import Callable
+
 import datetime
 import logging
 import re
 import tomllib
 from dataclasses import asdict, dataclass, fields
 from pathlib import Path
-from typing import Self
+from typing import Self, TypedDict
 
 import tomli_w
 
@@ -74,7 +76,8 @@ class MetadataRules:
         `measurement_pattern` properties.
 
         `sample_pattern` is only relevant for Agilent spectrometers, that save the
-        spectra organized by sample; rules for Bruker spectrometers should use `None`.
+        spectra organized by sample; rules for Bruker spectrometers should use `None`,
+        which is converted to a `.*` wildcard.
 
         `pattern_sep` is typically a character class. The default value matches
         whitespace, underscores, and hyphens.
@@ -144,7 +147,7 @@ class MetadataRules:
         if sample_pattern:
             self._sample_pattern = re.compile(self.process_pattern(sample_pattern))
         else:
-            self._sample_pattern = None
+            self._sample_pattern = re.compile(r".*")
         self._measurement_pattern = re.compile(self.process_pattern(measurement_pattern))
 
     @property
@@ -234,7 +237,7 @@ class MeasurementMetadata:
     measurement_no: int | None = None
 
     @classmethod
-    def from_toml(cls, file: Path, ignore_invalid: bool = False) -> Self:
+    def from_toml(cls, file: Path, ignore_invalid: bool = False) -> "MeasurementMetadata":
         """Read the metadata from a TOML file.
 
         If `ignore_invalid` is `True`, any fields in the file that are not (currently)
@@ -254,7 +257,9 @@ class MeasurementMetadata:
         return metadata
 
     @classmethod
-    def from_measurement_title(cls, title: str, rules: MetadataRules) -> Self | None:
+    def from_measurement_title(
+        cls, title: str, rules: MetadataRules
+    ) -> "MeasurementMetadata | None":
         """Create a metadata object with the values extracted from `title` according
         to the pattern in `rules`. Returns `None` if the pattern is not matched."""
         # An empty string contains no metadata, obviously, so return early
@@ -262,20 +267,26 @@ class MeasurementMetadata:
             return None
         # Get the expected pattern for the title
         pattern: re.Pattern = rules.measurement_pattern
-        match = pattern.fullmatch(title)
+        match: re.Match[str] | None = pattern.fullmatch(title)
         # If the title didn't match the pattern, pass that information on
         if match is None:
             return None
         # Get the values of all the named capture groups (which, for literally
         # matched variables, will be the same as the expected values)
         extracted = match.groupdict()
+        converted = {}
         # Convert to the correct types
-        extracted = {
-            k: METADATA_DTYPES[k](v) if v is not None else None for k, v in extracted.items()
-        }
-        if rules.normalize_sample_id and "sample_id" in extracted:
-            extracted["sample_id"] = extracted["sample_id"].replace(" ", "-").replace("_", "-")
-        result = MeasurementMetadata(**extracted)
+        for k, v in extracted.items():
+            dtype: Callable = METADATA_DTYPES[k]
+            if v is None:
+                continue
+            elif dtype is datetime.datetime:
+                converted[k] = datetime.datetime.fromisoformat(v)
+            else:
+                converted[k] = dtype(v)
+        if rules.normalize_sample_id and "sample_id" in converted:
+            converted["sample_id"] = converted["sample_id"].replace(" ", "-").replace("_", "-")
+        result = MeasurementMetadata(**converted)
         # Add the original title too
         result.title = title
         return result
@@ -292,7 +303,9 @@ class MeasurementMetadata:
         else:
             return [f.name for f in fields(self)]
 
-    def values(self, skip_missing: bool = False, default_str: str = "") -> dict[str, str]:
+    def values(
+        self, skip_missing: bool = False, default_str: str = ""
+    ) -> dict[str, str | int | float | datetime.datetime]:
         """Get a dict of the metadata fields and their values, optionally restricting
         it to only those for which values have been set.
 
@@ -380,6 +393,11 @@ class MeasurementMetadata:
         return normalized
 
 
+class ParInfo(TypedDict):
+    field: str
+    dtype: Callable
+
+
 def get_metadata_bruker(dir: Path, rules: MetadataRules) -> MeasurementMetadata | None:
     # Extract title and experiment details from title file in spectrum folder
     title_file = dir / "pdata/1/title"
@@ -431,7 +449,7 @@ def get_metadata_bruker(dir: Path, rules: MetadataRules) -> MeasurementMetadata 
         # Some parameter lines have the format "##$PAR= (0..n)" which indicates
         # that the following line or lines contain a list of `n` space-separated
         # values
-        pars = {
+        pars: dict[str, ParInfo] = {
             "EXP": {"field": "experiment", "dtype": str},
             "SOLVENT": {"field": "solvent", "dtype": str},
             "SFO1": {"field": "frequency", "dtype": float},
@@ -500,7 +518,7 @@ def get_metadata_agilent(dir: Path, rules: MetadataRules) -> MeasurementMetadata
         # and the second line has the value as the second item
         # Specify those which we want to extract and how, with the name of the
         # parameter in the procpar file as the keys
-        pars = {
+        pars: dict[str, ParInfo] = {
             "kbpslabel": {"field": "experiment", "dtype": str},
             "sfrq": {"field": "frequency", "dtype": float},
             "solvent": {"field": "solvent", "dtype": str},

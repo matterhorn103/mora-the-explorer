@@ -1,3 +1,4 @@
+from typing import cast
 import logging
 from pathlib import Path
 import platform
@@ -5,7 +6,7 @@ import platform
 import darkdetect
 
 from PySide6.QtCore import Qt, QFile, QIODevice
-from PySide6.QtGui import QPalette, QColor, QIcon
+from PySide6.QtGui import QPalette, QColor, QIcon, QColorConstants
 from PySide6.QtWidgets import QApplication
 
 from .. import LOG_FILE, get_rsrc_dir
@@ -19,7 +20,7 @@ def load_resource(path: str) -> bytes:
     if not f.open(QIODevice.OpenModeFlag.ReadOnly):
         raise RuntimeError(f"Could not open resource: {path}")
     try:
-        data: bytes = f.readAll().data()
+        data = cast(bytes, f.readAll().data())
     finally:
         f.close()
     return data
@@ -70,19 +71,19 @@ class App:
         """
 
         dark_palette = QPalette()
-        dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
-        dark_palette.setColor(QPalette.WindowText, Qt.white)
-        dark_palette.setColor(QPalette.Base, QColor(25, 25, 25))
-        dark_palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
-        dark_palette.setColor(QPalette.ToolTipBase, Qt.black)
-        dark_palette.setColor(QPalette.ToolTipText, Qt.white)
-        dark_palette.setColor(QPalette.Text, Qt.white)
-        dark_palette.setColor(QPalette.Button, QColor(53, 53, 53))
-        dark_palette.setColor(QPalette.ButtonText, Qt.white)
-        dark_palette.setColor(QPalette.BrightText, Qt.red)
-        dark_palette.setColor(QPalette.Link, QColor(42, 130, 218))
-        dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
-        dark_palette.setColor(QPalette.HighlightedText, Qt.black)
+        dark_palette.setColor(QPalette.ColorRole.Window, QColor(53, 53, 53))
+        dark_palette.setColor(QPalette.ColorRole.WindowText, QColorConstants.White)
+        dark_palette.setColor(QPalette.ColorRole.Base, QColor(25, 25, 25))
+        dark_palette.setColor(QPalette.ColorRole.AlternateBase, QColor(53, 53, 53))
+        dark_palette.setColor(QPalette.ColorRole.ToolTipBase, QColorConstants.Black)
+        dark_palette.setColor(QPalette.ColorRole.ToolTipText, QColorConstants.White)
+        dark_palette.setColor(QPalette.ColorRole.Text, QColorConstants.White)
+        dark_palette.setColor(QPalette.ColorRole.Button, QColor(53, 53, 53))
+        dark_palette.setColor(QPalette.ColorRole.ButtonText, QColorConstants.White)
+        dark_palette.setColor(QPalette.ColorRole.BrightText, QColorConstants.Red)
+        dark_palette.setColor(QPalette.ColorRole.Link, QColor(42, 130, 218))
+        dark_palette.setColor(QPalette.ColorRole.Highlight, QColor(42, 130, 218))
+        dark_palette.setColor(QPalette.ColorRole.HighlightedText, QColorConstants.Black)
         self.app.setStyle("Fusion")
         self.app.setPalette(dark_palette)
 

@@ -64,9 +64,6 @@ class TestExplorer:
         explorer.config.options.spec = "v600"
         explorer.config.options.user = "akw"
         explorer.config.options.group = "gil"
-        explorer.config.options.naming.solvent = False
-        explorer.config.options.naming.frequency = False
-        explorer.config.options.naming.experiment = True
         reporter = explorer.single_check(date(2026, 4, 10))
         assert sorted(reporter.copied()) == [
             "akw-004-4_s600_300326_299k_13c_1",

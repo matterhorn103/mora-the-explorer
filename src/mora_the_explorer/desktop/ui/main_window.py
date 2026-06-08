@@ -1,3 +1,4 @@
+from mora_the_explorer.desktop.ui.rows import FreeEntryField
 import logging
 import platform
 from dataclasses import asdict
@@ -32,7 +33,7 @@ def create_version_label(version: Version, email: str) -> QLabel:
     # Turn into html
     version_info = f'<p style="line-height: 1.1;">{"<br>".join(lines)}</p>'
     version_label = QLabel(version_info)
-    version_label.setAlignment(Qt.AlignHCenter)
+    version_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
     return version_label
 
 
@@ -162,7 +163,7 @@ class MainWindow(QMainWindow):
 
         # Progress bar for check
         self.prog_bar = QProgressBar()
-        self.prog_bar.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+        self.prog_bar.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter)
         if platform.system() == "Windows" and platform.release() == "11":
             # Looks bad (with initial Qt Win11 theme at least) so disable text
             self.prog_bar.setTextVisible(False)
@@ -339,10 +340,12 @@ class MainWindow(QMainWindow):
         update_dialog.setInformativeText(
             f"Your version is {current}\nThe version on the server is {available}\n{changelog}"
         )
-        update_dialog.setStandardButtons(QMessageBox.Ignore | QMessageBox.Open)
-        update_dialog.setDefaultButton(QMessageBox.Ignore)
+        update_dialog.setStandardButtons(
+            QMessageBox.StandardButton.Ignore | QMessageBox.StandardButton.Open
+        )
+        update_dialog.setDefaultButton(QMessageBox.StandardButton.Ignore)
         choice = update_dialog.exec()
-        if choice == QMessageBox.Open:
+        if choice == QMessageBox.StandardButton.Open:
             if path.exists() is True:
                 # Extra quotes necessary because cmd.exe can't handle spaces in path names otherwise
                 url = QUrl.fromLocalFile(path)
@@ -377,7 +380,7 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _on_group_changed(self):
-        if self.admin_mode:
+        if isinstance(self.group_entry, FreeEntryField):
             group = self.group_entry.text()
             self.config.options.group = group
             # If the group is a known one, fill the group name box automatically

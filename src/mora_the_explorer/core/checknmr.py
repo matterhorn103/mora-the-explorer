@@ -1,5 +1,7 @@
 """UI-independent backend logic for checking the server and copying new spectra."""
 
+from collections.abc import Sequence
+
 from abc import ABC, abstractmethod
 from enum import IntEnum
 import filecmp
@@ -346,7 +348,7 @@ def filter_and_expand_sample_dirs(
     return measurement_dirs
 
 
-def confirm_check_paths(check_paths: list[PathLike]) -> list[Path]:
+def confirm_check_paths(check_paths: Sequence[PathLike]) -> list[Path]:
     """Confirm the server can be reached and filter the paths to those at which
     directories actually exist.
 
@@ -385,12 +387,12 @@ def confirm_check_paths(check_paths: list[PathLike]) -> list[Path]:
 
 
 def check_nmr(
-    src: list[PathLike],
+    src: Sequence[PathLike],
     dest: PathLike,
     rules: MetadataRules,
     manufacturer: Manufacturer,
     reporter: Reporter,
-    date: datetime.date | None = None,
+    date: datetime.date,
     sort: SpectraSorting = SpectraSorting.SAMPLE_AND_SPEC,
 ):
     """Main checking function for Mora the Explorer."""

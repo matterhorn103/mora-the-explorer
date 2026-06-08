@@ -8,13 +8,17 @@ class Manufacturer(Enum):
     AGILENT = 2
 
     @classmethod
-    def from_str(cls, s: str) -> Self:
+    def from_str(cls, s: str) -> "Manufacturer":
         if s.lower() == "bruker":
             return Manufacturer.BRUKER
         elif s.lower() == "agilent":
             return Manufacturer.AGILENT
         else:
             raise ValueError("Only Bruker and Agilent are recognized manufacturers!")
+
+    @classmethod
+    def _missing_(cls, value):
+        cls.from_str(value)
 
     def __str__(self) -> str:
         match self:

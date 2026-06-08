@@ -267,13 +267,16 @@ class TestMetadata:
             "nhonb052-01-1_130526_299k_1h_1.fid", agilent_rules
         )
         expectation = "052-01-1"
-        assert bruker1.sample_id == expectation
-        assert bruker2.sample_id == expectation
-        assert bruker3.sample_id == expectation
-        assert agilent.sample_id == expectation
+        assert bruker1 is not None and bruker1.sample_id == expectation
+        assert bruker2 is not None and bruker2.sample_id == expectation
+        assert bruker3 is not None and bruker3.sample_id == expectation
+        assert agilent is not None and agilent.sample_id == expectation
         # Check that the normalization is correctly controlled by the option
         bruker_rules.normalize_sample_id = False
         bruker_non_normalized = MeasurementMetadata.from_measurement_title(
             "glo nho nb 052 01 1", bruker_rules
         )
-        assert bruker_non_normalized.sample_id != bruker2.sample_id
+        assert (
+            bruker_non_normalized is not None
+            and bruker_non_normalized.sample_id != bruker2.sample_id
+        )
