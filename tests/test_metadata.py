@@ -216,7 +216,7 @@ class TestMetadata:
             measurement_no=1,
             title=title,
         )
-    
+
     def test_user2_name_gen(self):
         # Basically identical to the other name gen test, just add a user2 field
         metadata = MeasurementMetadata(
@@ -254,16 +254,26 @@ class TestMetadata:
             measurement_format=MEASUREMENT_FORMAT,
         )
         # Check that the typical formats used for names all give the same end result
-        bruker1 = MeasurementMetadata.from_measurement_title("glo nho nb 052-01-1", bruker_rules)  # In common use e.g. by the Studer group
-        bruker2 = MeasurementMetadata.from_measurement_title("glo nho nb 052 01 1", bruker_rules)  # Format used by the department themselves on Bruker spectrometers
-        bruker3 = MeasurementMetadata.from_measurement_title("glo nho nb-052-01-1", bruker_rules)  # For good measure
-        agilent = MeasurementMetadata.from_measurement_title("nhonb052-01-1_130526_299k_1h_1.fid", agilent_rules)
+        bruker1 = MeasurementMetadata.from_measurement_title(
+            "glo nho nb 052-01-1", bruker_rules
+        )  # In common use e.g. by the Studer group
+        bruker2 = MeasurementMetadata.from_measurement_title(
+            "glo nho nb 052 01 1", bruker_rules
+        )  # Format used by the department themselves on Bruker spectrometers
+        bruker3 = MeasurementMetadata.from_measurement_title(
+            "glo nho nb-052-01-1", bruker_rules
+        )  # For good measure
+        agilent = MeasurementMetadata.from_measurement_title(
+            "nhonb052-01-1_130526_299k_1h_1.fid", agilent_rules
+        )
         expectation = "052-01-1"
         assert bruker1.sample_id == expectation
         assert bruker2.sample_id == expectation
         assert bruker3.sample_id == expectation
-        assert agilent.sample_id ==  expectation
+        assert agilent.sample_id == expectation
         # Check that the normalization is correctly controlled by the option
         bruker_rules.normalize_sample_id = False
-        bruker_non_normalized = MeasurementMetadata.from_measurement_title("glo nho nb 052 01 1", bruker_rules)
+        bruker_non_normalized = MeasurementMetadata.from_measurement_title(
+            "glo nho nb 052 01 1", bruker_rules
+        )
         assert bruker_non_normalized.sample_id != bruker2.sample_id

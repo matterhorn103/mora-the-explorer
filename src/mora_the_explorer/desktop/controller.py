@@ -169,7 +169,7 @@ class Controller(QObject):
 
     def update_check(self, update_path: Path):
         """Check for updates at the specified location.
-        
+
         Assumes that the directory at `update_path` contains a copy of the source code
         of Mora the Explorer, under the subdirectory name `src`. The `config.toml`
         file within the source code is then checked and compare to the local one
@@ -191,12 +191,12 @@ class Controller(QObject):
         remote_version = Version(remote_config["admin"]["version"])
         if self.version < remote_version:
             changelog = (
-            "What's new in version " + remote_version + ":\n"
-            + remote_config["admin"]["changelog"]
+                "What's new in version "
+                + remote_version
+                + ":\n"
+                + remote_config["admin"]["changelog"]
             )
-            self.main_window.notify_update(
-                self.version, remote_version, changelog, update_path
-            )
+            self.main_window.notify_update(self.version, remote_version, changelog, update_path)
 
     def new_reporter(self) -> QtReporter:
         """Get a new QtReporter with its signals connected to the appropriate slots in the UI."""

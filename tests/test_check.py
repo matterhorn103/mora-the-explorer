@@ -4,6 +4,7 @@ from pathlib import Path
 from mora_the_explorer.core import get_check_paths
 from .test_config import mock_config
 
+
 class TestPaths:
     def test_agilent_path_gen(self):
         config = mock_config()

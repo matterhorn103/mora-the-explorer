@@ -15,7 +15,7 @@ class Manufacturer(Enum):
             return Manufacturer.AGILENT
         else:
             raise ValueError("Only Bruker and Agilent are recognized manufacturers!")
-    
+
     def __str__(self) -> str:
         match self:
             case Manufacturer.BRUKER:
@@ -44,7 +44,7 @@ class Spectrometer:
     admin_only: whether the spectrometer should only be chooseable in admin mode
     allow_solvent: whether to enable the folder naming option to include the solvent
     single_check_only: whether users may use multiday and repeat checks for this spec
-    
+
     Possible variable fields in `check_paths` and `archives` are:
     - <user>          (the user's ID)
     - <user_name>     (the user's name)

@@ -142,6 +142,7 @@ def main():
     if args.command == "launch":
         logging.info("Launching GUI from command line")
         from .desktop import App
+
         if args.config:
             app = App(app_config, args.config)
         else:

@@ -71,7 +71,7 @@ class MainWindow(QMainWindow):
         self.version_info.linkActivated.connect(self._on_bug_report_link_clicked)
 
         # User initials entry
-        #self.user_entry = rows.FreeEntryField("User:", "(initials)")
+        # self.user_entry = rows.FreeEntryField("User:", "(initials)")
         self.user_entry = rows.FreeEntryField("Initials:", None)
         self.user_entry.set_text(config.options.user)
         self.user_entry.changed.connect(self._on_user_changed)
@@ -93,7 +93,6 @@ class MainWindow(QMainWindow):
             self.group_name_entry.set_text(config.groups.all.get(config.options.group, ""))
             self.group_name_entry.changed.connect(self._on_group_name_changed)
         self.group_entry.changed.connect(self._on_group_changed)
-
 
         # Server path
         self.server_entry = rows.DirSelector("Server:", False)
@@ -207,7 +206,7 @@ class MainWindow(QMainWindow):
 
         # Add the components in the desired order with the desired spacers
         self.grid.addWidget(self.version_info, self.next_row(), 0, 1, 2)
-        
+
         self.add_heading("Locations")
         self.add_row(self.server_entry)
         self.add_row(self.dest_entry)
@@ -226,7 +225,7 @@ class MainWindow(QMainWindow):
             self.add_heading("Matching Patterns")
             self.add_row(self.sample_pattern_entry)
             self.add_row(self.measurement_pattern_entry)
-        
+
         self.add_heading("Scheduling")
         self.add_row(self.repeat_options)
 
@@ -234,7 +233,7 @@ class MainWindow(QMainWindow):
         self.grid.addWidget(self.save_button, self.next_row(), 0, 1, 2)
 
         self.add_spacer()
-        #self.add_heading("Status")
+        # self.add_heading("Status")
         self.grid.addWidget(self.status_bar, self.next_row(), 0, 1, 2)
         self.grid.addWidget(self.prog_bar, self.next_row(), 0, 1, 2)
         self.grid.addWidget(self.display, self.next_row(), 0, 1, 2)
@@ -258,7 +257,7 @@ class MainWindow(QMainWindow):
 
     def add_heading(self, text: str, spacer: bool = True):
         """Add a section heading with the specified text.
-        
+
         Also adds a preceding spacer row unless told not to.
         """
         if spacer:
@@ -357,7 +356,7 @@ class MainWindow(QMainWindow):
         # Get system info
         os_info = platform.uname()
         # Get path to log
-        log_location = str(logging.getLogger().handlers[0].baseFilename) # type: ignore
+        log_location = str(logging.getLogger().handlers[0].baseFilename)  # type: ignore
         email_info = "\n".join(
             [
                 f"Version: {self.config.admin.version}",

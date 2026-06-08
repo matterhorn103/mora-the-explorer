@@ -20,7 +20,7 @@ from .metadata import (
 
 class SpectraSorting(IntEnum):
     """The way in which spectra should be sorted when copied to the destination.
-    
+
     Sorting by measurement means all measurement folders are copied individually
     and stored in the same folder. This is effectively no extra sorting, and is
     the Bruker style.
@@ -37,6 +37,7 @@ class SpectraSorting(IntEnum):
     Original sorting means that Bruker spectra are sorted by measurement and
     Agilent spectra by sample.
     """
+
     ORIGINAL = 0
     MEASUREMENT = 1
     SAMPLE_AND_SPEC = 2
@@ -144,7 +145,9 @@ def cmp_spectra(src: Path, target: Path, src_metadata: MeasurementMetadata) -> t
         metadata_incomplete = False
     else:
         try:
-            target_metadata: MeasurementMetadata = MeasurementMetadata.from_toml(target_metadata_file)
+            target_metadata: MeasurementMetadata = MeasurementMetadata.from_toml(
+                target_metadata_file
+            )
         except TypeError:
             # Probably caused by the metadata being old and containing a field that is no longer valid
             try:
@@ -169,7 +172,9 @@ def cmp_spectra(src: Path, target: Path, src_metadata: MeasurementMetadata) -> t
                 if target_val == src_val:
                     continue
                 else:
-                    logging.info(f"Metadata field {f} differs: {src_val} in src, {target_val} in target")
+                    logging.info(
+                        f"Metadata field {f} differs: {src_val} in src, {target_val} in target"
+                    )
                     metadata_match = False
         # If it's a superset, check if they're actually truly identical or if there's stuff missing
         # (unless we already know there is)
@@ -196,7 +201,9 @@ def cmp_spectra(src: Path, target: Path, src_metadata: MeasurementMetadata) -> t
     return same, incomplete
 
 
-def copy_folder(src: Path, target: Path, src_metadata: MeasurementMetadata, reporter: Reporter) -> Path | None:
+def copy_folder(
+    src: Path, target: Path, src_metadata: MeasurementMetadata, reporter: Reporter
+) -> Path | None:
     """Copy a spectra folder over to the target if it isn't already there.
 
     Returns the destination that was saved to, if any.
@@ -244,7 +251,7 @@ def copy_folder(src: Path, target: Path, src_metadata: MeasurementMetadata, repo
     if not fid.exists():
         logging.info(f"No fid found for {src.name}!")
         reporter.add_error(f"No fid found for {src.name}!")
-    
+
     # Even a proton spectrum is 200-250 KiB, so assume anything smaller than one
     # kilobyte is malformed
     if fid.stat().st_size < 1028:
@@ -292,7 +299,7 @@ def filter_and_expand_sample_dirs(
 ) -> list[Path]:
     """Expand a list of directories containing sample directories into a list
     of measurement directories that match the provided rules.
-    
+
     The Bruker spectrometers don't group spectra by sample, so this just returns
     all the measurement directories in all `check_paths`.
 
@@ -315,30 +322,34 @@ def filter_and_expand_sample_dirs(
         pattern: re.Pattern = rules.sample_pattern
         for check_path in check_paths:
             sample_folders = [
-                x for x in check_path.iterdir()
-                if x.is_dir()
-                and pattern.fullmatch(x.name)
+                x for x in check_path.iterdir() if x.is_dir() and pattern.fullmatch(x.name)
             ]
             for sample_folder in sample_folders:
-                measurement_dirs.extend([
-                    x for x in sample_folder.iterdir()
-                    if x.is_dir()
-                    #and x.suffix == ".fid"  # Not needed since we'll be checking for exact regex matches!
-                ])
+                measurement_dirs.extend(
+                    [
+                        x
+                        for x in sample_folder.iterdir()
+                        if x.is_dir()
+                        # and x.suffix == ".fid"  # Not needed since we'll be checking for exact regex matches!
+                    ]
+                )
     else:
         for check_path in check_paths:
-            measurement_dirs.extend([
-                x for x in check_path.iterdir()
-                if x.is_dir()
-                #and not x.name.startswith(".")  # Ignore hidden directories - but not needed since we'll be checking for exact regex matches!
-            ])
+            measurement_dirs.extend(
+                [
+                    x
+                    for x in check_path.iterdir()
+                    if x.is_dir()
+                    # and not x.name.startswith(".")  # Ignore hidden directories - but not needed since we'll be checking for exact regex matches!
+                ]
+            )
     return measurement_dirs
 
 
 def confirm_check_paths(check_paths: list[PathLike]) -> list[Path]:
     """Confirm the server can be reached and filter the paths to those at which
     directories actually exist.
-    
+
     Converts all `PathLike`s to `Path` objects.
 
     For directories that do exist, the existence of additional overflow directories
@@ -369,7 +380,7 @@ def confirm_check_paths(check_paths: list[PathLike]) -> list[Path]:
         logging.info("The following paths could be reached and will be checked for new spectra:")
         for p in valid_paths:
             logging.info(str(p))
-    
+
     return valid_paths
 
 
@@ -426,65 +437,69 @@ def check_nmr(
     logging.info("The following spectra were checked for potential matches:")
     # Loop over all the measurements
     for measurement_dir in measurement_dirs:
-            logging.info(measurement_dir)
+        logging.info(measurement_dir)
 
-            # Resolve the metadata fully
-            try:
-                metadata = get_metadata(measurement_dir, rules, manufacturer)
-            except FileNotFoundError:
-                reporter.add_error(f"No metadata could be found for {measurement_dir}!")
-                logging.info("No metadata found")
-                reporter.increment_progress()
-                continue
+        # Resolve the metadata fully
+        try:
+            metadata = get_metadata(measurement_dir, rules, manufacturer)
+        except FileNotFoundError:
+            reporter.add_error(f"No metadata could be found for {measurement_dir}!")
+            logging.info("No metadata found")
+            reporter.increment_progress()
+            continue
 
-            # Might have failed to match, in which case we move on to the next spectrum
-            if not metadata:
-                # Update progress bar
-                reporter.increment_progress()
-                continue
-            else:
-                logging.info("Spectrum matches search query!")
-            
-            logging.debug(f"Measurement title: {metadata.title}")
+        # Might have failed to match, in which case we move on to the next spectrum
+        if not metadata:
+            # Update progress bar
+            reporter.increment_progress()
+            continue
+        else:
+            logging.info("Spectrum matches search query!")
 
-            # Some things are not typically resolved by the get_metadata function
-            # (at least not at this point in time)
-            # but can be supplied because we know them already
-            metadata.manufacturer = manufacturer
-            if metadata.submission_time is None:
-                metadata.submission_time = datetime.datetime(date.year, date.month, date.day)
-            if manufacturer is Manufacturer.BRUKER:
-                if metadata.measurement_no is None:
-                    metadata.measurement_no = int(measurement_dir.name)
+        logging.debug(f"Measurement title: {metadata.title}")
 
-            # Generate the appropriate names and target path
-            measurement_name = metadata.generate_folder_name(rules.measurement_format)
-            if sort is SpectraSorting.ORIGINAL:
-                # Use the native Bruker or Agilent style
-                sort = SpectraSorting.MEASUREMENT if manufacturer is Manufacturer.BRUKER else SpectraSorting.SAMPLE
-            if sort is SpectraSorting.MEASUREMENT:
-                # Just save spectra in a completely flat fashion
-                target = dest_path / measurement_name
-            else:  # Covers sorting by sample and by sample+spectrometer
-                sample_name = metadata.generate_folder_name(rules.sample_format)
-                # Save in nested folders
-                target = dest_path / sample_name / measurement_name
+        # Some things are not typically resolved by the get_metadata function
+        # (at least not at this point in time)
+        # but can be supplied because we know them already
+        metadata.manufacturer = manufacturer
+        if metadata.submission_time is None:
+            metadata.submission_time = datetime.datetime(date.year, date.month, date.day)
+        if manufacturer is Manufacturer.BRUKER:
+            if metadata.measurement_no is None:
+                metadata.measurement_no = int(measurement_dir.name)
 
-            # Copy, add output messages to main output list
-            reporter.set_status("Comparing metadata…")
-            final_dest = copy_folder(measurement_dir, target, metadata, reporter)
+        # Generate the appropriate names and target path
+        measurement_name = metadata.generate_folder_name(rules.measurement_format)
+        if sort is SpectraSorting.ORIGINAL:
+            # Use the native Bruker or Agilent style
+            sort = (
+                SpectraSorting.MEASUREMENT
+                if manufacturer is Manufacturer.BRUKER
+                else SpectraSorting.SAMPLE
+            )
+        if sort is SpectraSorting.MEASUREMENT:
+            # Just save spectra in a completely flat fashion
+            target = dest_path / measurement_name
+        else:  # Covers sorting by sample and by sample+spectrometer
+            sample_name = metadata.generate_folder_name(rules.sample_format)
+            # Save in nested folders
+            target = dest_path / sample_name / measurement_name
 
-            # If we copied, add a file with the metadata
-            if final_dest:
-                metadata.write_toml(final_dest / "mora.toml")
+        # Copy, add output messages to main output list
+        reporter.set_status("Comparing metadata…")
+        final_dest = copy_folder(measurement_dir, target, metadata, reporter)
 
-            # Update progress bar to make sure there's a noticeable movement after
-            # copying a spectrum, otherwise it looks frozen
-            reporter.set_max_progress(reporter.max_progress() + 5)
-            reporter.increment_progress(5)
+        # If we copied, add a file with the metadata
+        if final_dest:
+            metadata.write_toml(final_dest / "mora.toml")
 
-            # Go back to checking
-            reporter.set_status("Checking…")
+        # Update progress bar to make sure there's a noticeable movement after
+        # copying a spectrum, otherwise it looks frozen
+        reporter.set_max_progress(reporter.max_progress() + 5)
+        reporter.increment_progress(5)
+
+        # Go back to checking
+        reporter.set_status("Checking…")
 
     now = datetime.datetime.now().strftime("%H:%M:%S")
     completed_statement = f"Check of {date} completed at {now}"

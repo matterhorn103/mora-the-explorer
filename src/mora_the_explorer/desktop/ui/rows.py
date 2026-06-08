@@ -43,7 +43,7 @@ class RowComponent(QObject):
         This method should be overridden by subclasses.
         """
         raise NotImplementedError
-    
+
 
 class SectionHeading(RowComponent):
     """A heading to introduce a group of related settings."""
@@ -55,6 +55,7 @@ class SectionHeading(RowComponent):
 
     def add_to_grid(self, grid: QGridLayout, row: int):
         grid.addWidget(self.label, row, 0, 1, 2)
+
 
 class DirSelector(RowComponent):
     """A component for selecting a directory."""
@@ -89,7 +90,7 @@ class DirSelector(RowComponent):
         pick_icon = self.pick_button.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon)
         self.pick_button.setIcon(pick_icon)
         self.pick_button.setFixedSize(24, 24)
-        #self.pick_button.setIconSize(24)
+        # self.pick_button.setIconSize(24)
 
         # Right align the title
         self.title.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
@@ -131,7 +132,9 @@ class DirSelector(RowComponent):
         The file dialog is shown centred over the `parent` window.
         """
         choice = QFileDialog.getExistingDirectory(
-            self.pick_button, "Select Folder", str(self.path().expanduser().parent),
+            self.pick_button,
+            "Select Folder",
+            str(self.path().expanduser().parent),
         )
         if choice:
             self.set_path(choice)
@@ -312,6 +315,7 @@ class OverflowSelector(RowComponent):
 # The classes above are abstract really, whereas the below are specific to their
 # context and have more stuff hard-coded
 
+
 class FolderNameOptions(RowComponent):
     """The component for choices relating to folder name customization."""
 
@@ -368,11 +372,11 @@ class FolderNameOptions(RowComponent):
     def add_to_grid(self, grid: QGridLayout, row: int):
         grid.addWidget(self.title, row, 0)
         # Up to six options fit within the central column
-        #if len(self.options) <= 6:
+        # if len(self.options) <= 6:
         grid.addLayout(self.box_grid, row, 1)
         # More than that and we need to expand into the third column
-        #else:
-        #grid.addLayout(self.box_grid, row, 1, 1, 2)
+        # else:
+        # grid.addLayout(self.box_grid, row, 1, 1, 2)
         # grid.addWidget(self.comment, row, 2)
 
     def checked(self) -> dict[str, bool]:
@@ -457,12 +461,17 @@ class FolderNamePreview(RowComponent):
             self.mdata.instrument = "v500"
             self.mdata.experiment = "1h"
         # Don't bother with this so long as we don't offer the ability to include the path
-        #self.metadata.path = self.explorer.get_check_paths(datetime.date.today())[0] / self.metadata.folder_name
-        
-        preview = self.mdata.generate_folder_name(self.explorer.generate_rules().measurement_pattern)
+        # self.metadata.path = self.explorer.get_check_paths(datetime.date.today())[0] / self.metadata.folder_name
+
+        preview = self.mdata.generate_folder_name(
+            self.explorer.generate_rules().measurement_pattern
+        )
         if (
-            (self.config.options.sort is SpectraSorting.SAMPLE_AND_SPEC or self.config.options.sort is SpectraSorting.SAMPLE)
-            or (self.config.options.sort is SpectraSorting.ORIGINAL and self.mdata.manufacturer is Manufacturer.AGILENT)
+            self.config.options.sort is SpectraSorting.SAMPLE_AND_SPEC
+            or self.config.options.sort is SpectraSorting.SAMPLE
+        ) or (
+            self.config.options.sort is SpectraSorting.ORIGINAL
+            and self.mdata.manufacturer is Manufacturer.AGILENT
         ):
             sample = self.mdata.generate_folder_name(self.explorer.generate_rules().sample_pattern)
             preview = sample + " / " + preview
@@ -614,7 +623,7 @@ class DateSelector(RowComponent):
         # Date editor with initial value set to today's date
         self.date_selector = QDateEdit(datetime.date.today())
         self.date_selector.setDisplayFormat("dd MMM yyyy")
-        #self.date_selector.setMinimumWidth(200)
+        # self.date_selector.setMinimumWidth(200)
         self.date_selector.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         # A button to reset the date to the current day
@@ -676,7 +685,7 @@ class DateSelector(RowComponent):
             return "single"
         else:  # mode == "multi"
             return "multi"
-        
+
     @Slot()
     def _adjust_for_mode(self):
         mode = self.mode()

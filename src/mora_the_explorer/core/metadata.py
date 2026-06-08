@@ -537,7 +537,9 @@ def get_metadata_agilent(dir: Path, rules: MetadataRules) -> MeasurementMetadata
 
 
 def get_metadata(
-    dir: Path, rules: MetadataRules, manufacturer: Manufacturer,
+    dir: Path,
+    rules: MetadataRules,
+    manufacturer: Manufacturer,
 ) -> MeasurementMetadata | None:
     match manufacturer:
         case Manufacturer.BRUKER:
