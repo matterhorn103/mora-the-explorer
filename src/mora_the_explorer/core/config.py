@@ -54,7 +54,7 @@ class UserOptions:
     repeat_switch: bool
     repeat_delay: int
     naming: NamingOptions
-    group_name: str | None = None
+    temp: dict[str, str] = dataclasses.field(default_factory=dict)
 
 
 @dataclass
@@ -260,8 +260,8 @@ class Config:
             "appearance": dataclasses.asdict(self.appearance),
             "paths": dataclasses.asdict(self.paths),
         }
-        # Some things should never be saved to the user config - remove them now
-        current_config["options"].pop("group_name", None)
+        # Temporarily set configuration should never be saved to the user config
+        current_config["options"].pop("temp", None)
         # Make a new dict, with the originally loaded config as its basis, updated
         # with values from the current merged config
         to_save: dict[str, dict] = self.user_config | current_config

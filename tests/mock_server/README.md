@@ -59,7 +59,7 @@ However, there are two folders for 2023-10-16 due to there being two spectra wit
 
 ## Unique FIDs
 
-Each fid file includes an integer from **1 to 93** to make them each unique across the whole mock server (even when the metadata for two spectra are otherwise identical).
+Each fid file includes an integer from **1 to 94** to make them each unique across the whole mock server (even when the metadata for two spectra are otherwise identical).
 
 ## Spectra
 
@@ -100,6 +100,7 @@ Since then the following have been added:
 - av300/Oct14-2023/.placeholder  // A file as opposed to a folder
 - av300/Oct17-2023/10  // A measurement with a title file but no title
 - av300/Oct15-2023/32 = stu dna 1370-1 (19F, CD2Cl2)  // To give a set of three measurements for the same sample
+- av300/Oct15-2023/150 = stu dna 1375-1 (1H, CD2Cl2)  // To have measurements on the same day and spec from the same user but with different sample IDs
 
 ### Agilent
 

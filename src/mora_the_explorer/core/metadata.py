@@ -164,15 +164,6 @@ class MetadataRules:
         """Process any use of the custom extensions in the regex pattern based on the
         provided `pattern_sep` and `substitutions`."""
 
-        # A regex pattern that should match `\_` and capture any suffixed repeating characters
-        escaped_sep_matching_pattern = r"\\_([*+?]*)"
-        # Replace any separators with the separator pattern in a non-capture group
-        pattern = re.sub(
-            escaped_sep_matching_pattern,
-            lambda match: f"(?:{self.src_sep}{match.group(1)})",  # Use a callable lambda to avoid pattern_sep being interpreted (it should be reproduced literally)
-            pattern,
-        )
-
         # Replace any variables
         # First those that should just be captured, regardless of value
         wildcard = r"\S+"  # i.e. anything other than whitespace characters
@@ -185,6 +176,17 @@ class MetadataRules:
         pattern = re.sub(
             r"<(\w+)!>",  # As above but with an exclamation mark
             lambda match: f"(?P<{match.group(1)}>{getattr(self.substitutions, match.group(1))})",
+            pattern,
+        )
+
+        # A regex pattern that should match `\_` and capture any suffixed repeating characters
+        escaped_sep_matching_pattern = r"\\_([*+?]*)"
+        # Replace any separators with the separator pattern in a non-capture group
+        # Replacing the special `\_` syntax second, after the variables, allows use
+        # of `\_` in the substituted values of the variables too
+        pattern = re.sub(
+            escaped_sep_matching_pattern,
+            lambda match: f"(?:{self.src_sep}{match.group(1)})",  # Use a callable lambda to avoid pattern_sep being interpreted (it should be reproduced literally)
             pattern,
         )
 
