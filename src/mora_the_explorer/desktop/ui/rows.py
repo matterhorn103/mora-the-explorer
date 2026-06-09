@@ -96,7 +96,9 @@ class DirSelector(RowComponent):
         self.title.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
         # Set the method that is called when the buttons are pressed
-        self.pick_button.clicked.connect(self.pick_path)
+        # The lambda is necessary to make sure that Qt doesn't pass the `checked` bool
+        # to the function, as it doesn't match the signature of the `pick_path()` method
+        self.pick_button.clicked.connect(lambda *args: self.pick_path())
         self.go_button.clicked.connect(self.go_to)
 
         # If no go button was requested, we still generate it (to make logic simpler),
