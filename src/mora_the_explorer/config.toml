@@ -43,7 +43,7 @@ save = ""  # The location spectra should be copied to - if empty, the user is as
 
 [admin]
 pattern_separator = '[\s_-]' # Note the single quotes! (= literal string)
-version = "2.0.0b6"
+version = "2.0.0b7"
 email = "milner@uni-muenster.de"
 changelog = """
 - Update for move to new server
