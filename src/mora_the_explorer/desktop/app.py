@@ -2,9 +2,8 @@ from PySide6.QtGui import QIcon
 from typing import cast
 import logging
 from pathlib import Path
-import platform
 
-from PySide6.QtCore import Qt, QFile, QIODevice
+from PySide6.QtCore import QFile, QIODevice
 from PySide6.QtWidgets import QApplication
 
 from .. import LOG_FILE, get_rsrc_dir

@@ -27,7 +27,6 @@ from ...core.config import Config
 from ...core.explorer import Explorer
 from ...core.metadata import MeasurementMetadata
 from ...core.spec import Manufacturer, Spectrometer
-from ...core.checknmr import SpectraSorting
 
 
 class RowComponent(QObject):

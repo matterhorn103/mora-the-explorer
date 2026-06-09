@@ -21,7 +21,7 @@ import sys
 
 import platformdirs
 
-from .core import Config, USER_CONFIG_PATH, Explorer
+from .core import Config as Config, Explorer as Explorer, USER_CONFIG_PATH as USER_CONFIG_PATH
 
 
 #: Logs should be saved to:

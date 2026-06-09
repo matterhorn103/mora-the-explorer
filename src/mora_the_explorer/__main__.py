@@ -178,13 +178,13 @@ def main():
     if args.spec:
         config.options.spec = args.spec
     if args.inc_user:
-        config.options.inc_user = True
+        config.options.inc_user = True  # ty: ignore
     if args.no_user:
-        config.options.inc_user = False
+        config.options.inc_user = False  # ty: ignore
     if args.inc_solvent:
-        config.options.inc_solvent = True
+        config.options.inc_solvent = True  # ty: ignore
     if args.no_solvent:
-        config.options.inc_solvent = False
+        config.options.inc_solvent = False  # ty: ignore
 
     explorer = Explorer(config)
 

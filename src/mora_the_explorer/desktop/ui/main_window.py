@@ -2,7 +2,6 @@ from mora_the_explorer.core.spec import Manufacturer
 from mora_the_explorer.desktop.ui.rows import FreeEntryField
 import logging
 import platform
-from dataclasses import asdict
 from urllib.parse import quote
 
 from packaging.version import Version
@@ -281,9 +280,9 @@ class MainWindow(QMainWindow):
             self.add_spacer()
         self.add_row(rows.SectionHeading(text))
         if line:
-            l = QFrame()
-            l.setFrameShape(QFrame.Shape.HLine)
-            self.grid.addWidget(l, self.next_row(), 0, 1, 2)
+            hline = QFrame()
+            hline.setFrameShape(QFrame.Shape.HLine)
+            self.grid.addWidget(hline, self.next_row(), 0, 1, 2)
 
     def refresh_visible_specs(self):
         """Make sure the available spectrometers reflect what's allowed for the current group."""

@@ -1,14 +1,67 @@
-name: Test and Build
+name: CI
 
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   pull_request:
     branches:
       - main
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: ".python-version"
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.11.7"
+
+      - name: Install the project
+        run: uv sync --locked --dev
+
+      - name: Lint
+        run: uv run ruff check
+
+      - name: Formatting check
+        run: uv run ruff format --diff
+
+      - name: Static analysis
+        run: uv run ty check
+
+  test:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+          - os: windows-latest
+          - os: macos-latest
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: ".python-version"
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.11.7"
+
+      - name: Install the project
+        run: uv sync --locked --dev
+
+      - name: Run tests
+        run: uv run pytest -vv
+
   build:
     strategy:
       matrix:
@@ -28,10 +81,13 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version-file: ".python-version"
-    
+
       - uses: astral-sh/setup-uv@v7
         with:
           version: "0.11.7"
+
+      - name: Install the project
+        run: uv sync --locked --dev
 
       - name: Install Linux system deps
         if: runner.os == 'Linux'
@@ -53,15 +109,6 @@ jobs:
             '^libxcb.*-dev'
           # Nuitka dependencies
           sudo apt install -y ccache clang patchelf
-
-      - name: Install the project
-        run: uv sync --locked --dev
-
-      - name: Recompile the resource file
-        run: uv run pyside6-rcc src/mora_the_explorer/resources.qrc -o src/mora_the_explorer/resources.py
-
-      - name: Run tests
-        run: uv run pytest
 
       - name: Build pyinstaller bundle
         run: |
