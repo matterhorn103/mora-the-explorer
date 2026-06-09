@@ -95,14 +95,15 @@ class Explorer:
         # Put together the conditions required for a match to be found
         # The group name might have been set explicitly, but normally we get it
         # from the groups table
-        group_name = (
-            options.group_name if options.group_name else self.config.groups.all[options.group]
-        )
+        group_name = options.temp.get("group_name")
+        group_name = group_name if group_name else self.config.groups.all[options.group]
         substitutions = MatchValues(
             user=options.user,
             group=options.group,
             group_name=group_name,
-            # sample_id=r"\d.*",  # TODO use the actual value once it can be set in the GUI
+            sample_id=options.temp.get(
+                "sample_id", r"\d.*"
+            ),  # Fallback is anything that starts with a digit
         )
 
         # Sample and measurement folder name formats may optionally be customized

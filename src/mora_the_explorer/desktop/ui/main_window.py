@@ -1,3 +1,4 @@
+from mora_the_explorer.core.spec import Manufacturer
 from mora_the_explorer.desktop.ui.rows import FreeEntryField
 import logging
 import platform
@@ -15,7 +16,8 @@ from PySide6.QtWidgets import (
     QLabel,
     QMessageBox,
     QProgressBar,
-    QPushButton, QFrame,
+    QPushButton,
+    QFrame,
 )
 
 from ...core.config import Config
@@ -71,12 +73,6 @@ class MainWindow(QMainWindow):
         self.version_info = create_version_label(self.version, config.admin.email)
         self.version_info.linkActivated.connect(self._on_bug_report_link_clicked)
 
-        # User initials entry
-        # self.user_entry = rows.FreeEntryField("User:", "(initials)")
-        self.user_entry = rows.FreeEntryField("User:", None)
-        self.user_entry.set_text(config.options.user)
-        self.user_entry.changed.connect(self._on_user_changed)
-
         # Group entry
         if not admin_mode:
             # Group entry from an allowed selection, for normal usage
@@ -95,6 +91,20 @@ class MainWindow(QMainWindow):
             self.group_name_entry.changed.connect(self._on_group_name_changed)
         self.group_entry.changed.connect(self._on_group_changed)
 
+        # User initials entry
+        self.user_entry = rows.FreeEntryField("User:", "(initials)")
+        self.user_entry.set_text(config.options.user)
+        self.user_entry.changed.connect(self._on_user_changed)
+
+        # Sample ID entry
+        # For admin use - only show in admin mode, but create regardless
+        self.sample_id_entry = rows.FreeEntryField("Sample ID:", "(pre-normalization)")
+        # Won't be set yet, so set to a sensible default (anything that starts with a digit)
+        default_sample_id = r"\d.*"
+        config.options.temp["sample_id"] = default_sample_id
+        self.sample_id_entry.set_text(default_sample_id)
+        self.sample_id_entry.changed.connect(self._on_sample_id_changed)
+
         # Server path
         self.server_entry = rows.DirSelector("NMR server:", False)
         self.server_entry.set_path(config.paths.server())
@@ -112,24 +122,23 @@ class MainWindow(QMainWindow):
         self.spec_selector.changed.connect(self._on_spec_changed)
 
         # Match pattern customization via free-form entry boxes, for admin use
-        if admin_mode:
-            from PySide6.QtGui import QFontDatabase
+        from PySide6.QtGui import QFontDatabase
 
-            self.sample_pattern_entry = rows.FreeEntryField("Sample:", None)
-            self.measurement_pattern_entry = rows.FreeEntryField("Measurement:", None)
-            # Patterns are regex
-            self.sample_pattern_entry.set_text(config.specs[config.options.spec].sample_pattern)
-            self.measurement_pattern_entry.set_text(
-                config.specs[config.options.spec].measurement_pattern
-            )
-            self.sample_pattern_entry.entry_field.setFont(
-                QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
-            )
-            self.measurement_pattern_entry.entry_field.setFont(
-                QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
-            )
-            self.sample_pattern_entry.changed.connect(self._on_pattern_changed)
-            self.measurement_pattern_entry.changed.connect(self._on_pattern_changed)
+        self.sample_pattern_entry = rows.FreeEntryField("Sample:", None)
+        self.measurement_pattern_entry = rows.FreeEntryField("Measurement:", None)
+        # Patterns are regex
+        self.sample_pattern_entry.set_text(config.specs[config.options.spec].sample_pattern)
+        self.measurement_pattern_entry.set_text(
+            config.specs[config.options.spec].measurement_pattern
+        )
+        self.sample_pattern_entry.entry_field.setFont(
+            QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
+        )
+        self.measurement_pattern_entry.entry_field.setFont(
+            QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
+        )
+        self.sample_pattern_entry.changed.connect(self._on_pattern_changed)
+        self.measurement_pattern_entry.changed.connect(self._on_pattern_changed)
 
         # Repeat options
         self.repeat_options = rows.RepeatSelector()
@@ -204,8 +213,13 @@ class MainWindow(QMainWindow):
         # If using Qt's `self.grid.addWidget()`, the row number should always be
         # obtained dynamically using `self.next_row()`, as that also increments the
         # row counter.
+        self.populate_ui()
 
-        # Add the components in the desired order with the desired spacers
+        # Finally, just ensure the UI state definitely reflects the config
+        self.adapt_to_spec()
+
+    def populate_ui(self):
+        """Add the components in the desired order with the desired spacers."""
         self.grid.addWidget(self.version_info, self.next_row(), 0, 1, 2)
 
         self.add_heading("Locations")
@@ -218,11 +232,13 @@ class MainWindow(QMainWindow):
 
         self.add_heading("Query")
         self.add_row(self.group_entry)
-        if admin_mode:
+        if self.admin_mode:
             self.add_row(self.group_name_entry)
         self.add_row(self.user_entry)
+        if self.admin_mode:
+            self.add_row(self.sample_id_entry)
 
-        if admin_mode:
+        if self.admin_mode:
             self.add_heading("Matching Patterns")
             self.add_row(self.sample_pattern_entry)
             self.add_row(self.measurement_pattern_entry)
@@ -233,7 +249,7 @@ class MainWindow(QMainWindow):
         self.add_spacer()
         self.grid.addWidget(self.save_button, self.next_row(), 0, 1, 2)
 
-        #self.add_spacer()
+        # self.add_spacer()
         # self.add_heading("Status")
         self.grid.addWidget(self.status_bar, self.next_row(), 0, 1, 2)
         self.grid.addWidget(self.prog_bar, self.next_row(), 0, 1, 2)
@@ -293,6 +309,11 @@ class MainWindow(QMainWindow):
         if self.admin_mode:
             self.sample_pattern_entry.set_text(spec_info.sample_pattern)
             self.measurement_pattern_entry.set_text(spec_info.measurement_pattern)
+            # Sample pattern is not applicable for Bruker measurements
+            if spec_info.manufacturer is Manufacturer.BRUKER:
+                self.sample_pattern_entry.hide()
+            else:
+                self.sample_pattern_entry.show()
 
     def suggest_save(self):
         """Give the user the option to save their changes to the configuration."""
@@ -377,12 +398,6 @@ class MainWindow(QMainWindow):
         QDesktopServices.openUrl(url)
 
     @Slot()
-    def _on_user_changed(self):
-        self.config.options.user = self.user_entry.text()
-        # self.folder_name_preview.regenerate_preview()
-        self.suggest_save()
-
-    @Slot()
     def _on_group_changed(self):
         if isinstance(self.group_entry, FreeEntryField):
             group = self.group_entry.text()
@@ -398,9 +413,19 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _on_group_name_changed(self):
-        self.config.options.group_name = self.group_name_entry.text()
+        self.config.options.temp["group_name"] = self.group_name_entry.text()
         # self.folder_name_preview.regenerate_preview()
         self.suggest_save()
+
+    @Slot()
+    def _on_user_changed(self):
+        self.config.options.user = self.user_entry.text()
+        # self.folder_name_preview.regenerate_preview()
+        self.suggest_save()
+
+    @Slot()
+    def _on_sample_id_changed(self):
+        self.config.options.temp["sample_id"] = self.sample_id_entry.text()
 
     @Slot()
     def _on_pattern_changed(self):

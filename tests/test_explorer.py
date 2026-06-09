@@ -1,6 +1,6 @@
 from datetime import date
 
-from . import mock_explorer
+from . import mock_explorer, empty_folder, MOCK_DEST
 
 
 class TestExplorer:
@@ -109,3 +109,17 @@ class TestExplorer:
         reporter = explorer.single_check(date(2023, 10, 14))
         # No spectra should be found, and there should also be no error
         assert len(reporter.copied()) == 0
+
+    def test_specific_sample_id(self):
+        explorer = mock_explorer()
+        explorer.config.options.group = "stu"
+        explorer.config.options.user = "dna"
+        explorer.config.options.spec = "av300"
+        reporter = explorer.single_check(date(2023, 10, 15))
+        # This should find four spectra: 1H, 13C, and 19F for 1370-1, and 1H for 1375-1
+        assert len(reporter.copied()) == 4
+        # Now when we specify the sample ID as 1375-1 we should only find one
+        empty_folder(MOCK_DEST)
+        explorer.config.options.temp["sample_id"] = "1375-1"
+        reporter = explorer.single_check(date(2023, 10, 15))
+        assert reporter.copied() == ["dna-1375-1_010101_0k_proton_150"]
