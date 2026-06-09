@@ -8,7 +8,7 @@ import re
 import tomllib
 from dataclasses import asdict, dataclass, fields
 from pathlib import Path
-from typing import Self, TypedDict
+from typing import TypedDict
 
 import tomli_w
 
@@ -186,7 +186,9 @@ class MetadataRules:
         # of `\_` in the substituted values of the variables too
         pattern = re.sub(
             escaped_sep_matching_pattern,
-            lambda match: f"(?:{self.src_sep}{match.group(1)})",  # Use a callable lambda to avoid pattern_sep being interpreted (it should be reproduced literally)
+            lambda match: (
+                f"(?:{self.src_sep}{match.group(1)})"
+            ),  # Use a callable lambda to avoid pattern_sep being interpreted (it should be reproduced literally)
             pattern,
         )
 

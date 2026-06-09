@@ -2,9 +2,8 @@ from PySide6.QtGui import QIcon
 from typing import cast
 import logging
 from pathlib import Path
-import platform
 
-from PySide6.QtCore import Qt, QFile, QIODevice
+from PySide6.QtCore import QFile, QIODevice
 from PySide6.QtWidgets import QApplication
 
 from .. import LOG_FILE, get_rsrc_dir
@@ -22,6 +21,12 @@ def load_resource(path: str) -> bytes:
     finally:
         f.close()
     return data
+
+
+def load_compiled_app_config() -> bytes:
+    """Load the app config that is compiled into the Qt resources file."""
+    app_config_file = load_resource(":/config.toml")
+    return app_config_file
 
 
 class App:
@@ -48,7 +53,7 @@ class App:
 
         logging.info("Loading program settings…")
         if app_config_file is None:
-            app_config_file = load_resource(":/config.toml")
+            app_config_file = load_compiled_app_config()
         config = Config(app_config_file, user_config_file)
         logging.info("…complete")
 
