@@ -24,6 +24,12 @@ def load_resource(path: str) -> bytes:
     return data
 
 
+def load_compiled_app_config() -> bytes:
+    """Load the app config that is compiled into the Qt resources file."""
+    app_config_file = load_resource(":/config.toml")
+    return app_config_file
+
+
 class App:
     """A wrapper for a `Controller` and the actual `QApplication`."""
 
@@ -48,7 +54,7 @@ class App:
 
         logging.info("Loading program settings…")
         if app_config_file is None:
-            app_config_file = load_resource(":/config.toml")
+            app_config_file = load_compiled_app_config()
         config = Config(app_config_file, user_config_file)
         logging.info("…complete")
 
