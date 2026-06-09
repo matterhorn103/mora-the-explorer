@@ -62,6 +62,13 @@ jobs:
       - name: Install the project
         run: uv sync --locked --dev
 
+      - name: Install Linux system deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt update
+          # Qt dependencies
+          sudo apt install -y libegl1
+
       - name: Run tests
         run: uv run pytest -vv
 
