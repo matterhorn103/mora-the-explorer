@@ -8,11 +8,12 @@ class Display(QScrollArea):
     def __init__(self):
         super().__init__()
 
+        self.viewport().setAutoFillBackground(False)
+        self.display = QWidget()
+        self.setWidget(self.display)
         self.setWidgetResizable(True)
         self._layout = QVBoxLayout()
-        self.display = QWidget()
         self.display.setLayout(self._layout)
-        self.setWidget(self.display)
 
         # Make each label only take up a single line of space rather than spreading
         # across the box, so that they stack nicely
