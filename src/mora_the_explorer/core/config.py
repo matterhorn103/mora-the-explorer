@@ -154,6 +154,7 @@ class Config:
             logging.info("App configuration loaded from provided config file")
 
         # Extract the parts of the configuration from the app config
+        self.conf_version = self.app_config["version"]
         # Extract the naming options
         user_opts = self.app_config["options"].copy()
         naming_opts = NamingOptions(**user_opts["naming"])
@@ -278,6 +279,9 @@ class Config:
             "Linux",  # Is now `paths.linux`
         ]:
             to_save["paths"].pop(old_path, None)
+
+        # Include the config version
+        to_save["version"] = self.conf_version
 
         with open(path, "wb") as f:
             tomli_w.dump(to_save, f)

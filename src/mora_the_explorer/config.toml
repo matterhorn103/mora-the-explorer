@@ -12,6 +12,8 @@
 # the config file must be transpiled to a QResource, which is done by running:
 # `uv run pyside6-rcc ./src/mora_the_explorer/resources.qrc -o ./src/mora_the_explorer/resources.py`
 
+version = 1
+
 [options]
 user = "mjm"
 group = "gil"
