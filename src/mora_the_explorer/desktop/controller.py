@@ -192,6 +192,10 @@ class Controller(QObject):
         except PermissionError:
             logging.info("The user does not have the required permissions to access the server!")
             return
+        except Exception as e:
+            logging.info("The following exception occurred while checking for updates:")
+            logging.info(e)
+            return
         remote_version = Version(remote_config["admin"]["version"])
         if self.version < remote_version:
             changelog = (
