@@ -12,6 +12,9 @@ from . import LOG_FILE, USER_CONFIG_PATH, Config, Explorer, get_rsrc_dir
 def main():
     """Run Mora the Explorer as a CLI program."""
 
+    app_config_file = get_rsrc_dir() / "config.toml"
+    default_config = Config(app_config_file, USER_CONFIG_PATH)
+
     parser = argparse.ArgumentParser(
         prog="mora_the_explorer",
         description=f"user config is being loaded automatically from {USER_CONFIG_PATH}",
@@ -39,31 +42,38 @@ def main():
         "-v",
         "--verbose",
         action="store_true",
-        help=f"print log entries to stdout instead of {LOG_FILE}",
+        help=f"print log entries to stderr (as well as {LOG_FILE})",
     )
 
     interactive_parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
-        help=f"print log entries to stdout instead of {LOG_FILE}",
+        help=f"print log entries to stderr (as well as {LOG_FILE})",
     )
 
     check_parser.add_argument(
         "group",
         action="store",
-        help="the group initialism",
+        help=f"the group initialism (supports regex) {{{', '.join(default_config.groups.all.keys())}}}",
     )
     check_parser.add_argument(
         "user",
         action="store",
-        help="the user's initialism",
+        help="the user's initialism (supports regex)",
+    )
+    check_parser.add_argument(
+        "sample",
+        action="store",
+        nargs="?",
+        default=r"\d.*",
+        help=r"a specific sample to search for (supports regex) (optional, default is a '\d.*' wildcard)",
     )
     check_parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
-        help=f"print log entries to stdout instead of {LOG_FILE}",
+        help=f"print log entries to stderr (as well as {LOG_FILE})",
     )
     check_parser.add_argument(
         "-c",
@@ -75,68 +85,37 @@ def main():
         "-d",
         "--date",
         action="store",
+        default=date.today().isoformat(),
         help=f"check DATE (default is today's date: {date.today()})",
     )
     check_parser.add_argument(
         "-m",
         "--multi",
         action="store",
-        help="check all dates since MULTI; if this option is passed, --date is ignored",
+        help="check all dates from MULTI to DATE inclusive",
     )
     check_parser.add_argument(
         "-s",
         "--spec",
         action="store",
-        help="check spectrometer SPEC",
+        help=f"check spectrometer SPEC {{{', '.join(default_config.specs.keys())}}}",
+    )
+    check_parser.add_argument(
+        "--remote",
+        action="store",
+        help="search server at REMOTE for spectra",
     )
     check_parser.add_argument(
         "--dest",
         action="store",
         help="copy spectra to DEST",
     )
-    check_parser.add_argument(
-        "-u",
-        "--inc-user",
-        action="store_true",
-        help="include user initials in copied folder name",
-    )
-    check_parser.add_argument(
-        "--no-user",
-        action="store_true",
-        help="do NOT include user initials in copied folder name",
-    )
-    check_parser.add_argument(
-        "-l",
-        "--inc-solvent",
-        action="store_true",
-        help="include solvent in copied folder name",
-    )
-    check_parser.add_argument(
-        "--no-solvent",
-        action="store_true",
-        help="do NOT include solvent in copied folder name",
-    )
 
     args = parser.parse_args()
 
     if args.verbose:
-        # Logs should be printed directly to stdout
-        logging.basicConfig(
-            stream=sys.stdout,
-            format="%(asctime)s %(message)s",
-            # encoding="utf-8", # Not necessary with a stream
-            level=logging.INFO,
-        )
-    else:
-        logging.basicConfig(
-            filename=LOG_FILE,
-            filemode="w",
-            format="%(asctime)s %(message)s",
-            encoding="utf-8",
-            level=logging.INFO,
-        )
-
-    app_config = get_rsrc_dir() / "config.toml"
+        # Logs should be additionally printed directly to stderr
+        logging.getLogger().addHandler(logging.StreamHandler(sys.stderr))
 
     # Launch desktop app if requested
     if args.command == "launch":
@@ -144,56 +123,46 @@ def main():
         from .desktop import App
 
         if args.config:
-            app = App(app_config, args.config)
+            app = App(app_config_file, args.config)
         else:
-            app = App(app_config)
+            app = App(app_config_file)
         app.run()
         # Event loop will continue until the program is closed
         return
     elif args.command == "check":
+        logging.info("Running check from command line")
         if args.config:
             # Load provided config
-            config = Config(app_config, Path(args.config))
+            config = Config(app_config_file, Path(args.config))
         else:
-            config = Config(app_config, USER_CONFIG_PATH)
+            config = default_config
     else:
         parser.print_help()
         return
 
     # Group and user are mandatory fields
-    # Let user use wild group
-    if args.group == "*":
-        config.options.group = ""
-    else:
-        config.options.group = args.group
+    config.options.group = args.group
+    config.options.user = args.user
 
-    if args.user == "*":
-        config.options.user = ""
-    else:
-        config.options.user = args.user
+    # Sample always has at least a default value
+    config.options.temp["sample_id"] = args.sample
 
     # Overwrite options if provided
+    if args.remote:
+        config.paths.set_server(args.remote)
     if args.dest:
         config.paths.save = args.dest
     if args.spec:
         config.options.spec = args.spec
-    if args.inc_user:
-        config.options.inc_user = True  # ty: ignore
-    if args.no_user:
-        config.options.inc_user = False  # ty: ignore
-    if args.inc_solvent:
-        config.options.inc_solvent = True  # ty: ignore
-    if args.no_solvent:
-        config.options.inc_solvent = False  # ty: ignore
 
     explorer = Explorer(config)
 
     if args.multi:
-        explorer.multiday_check(initial_date=date.fromisoformat(args.multi))
-    elif args.date:
-        explorer.single_check(date=date.fromisoformat(args.date))
+        explorer.multiday_check(
+            initial_date=date.fromisoformat(args.multi), final_date=date.fromisoformat(args.date)
+        )
     else:
-        explorer.single_check(date=date.today())
+        explorer.single_check(date=date.fromisoformat(args.date))
 
 
 if __name__ == "__main__":

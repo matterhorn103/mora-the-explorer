@@ -6,7 +6,7 @@ from pathlib import Path
 from PySide6.QtCore import QFile, QIODevice
 from PySide6.QtWidgets import QApplication
 
-from .. import LOG_FILE, get_rsrc_dir
+from .. import get_rsrc_dir
 from .. import resources  # noqa: F401
 from ..core.config import Config, USER_CONFIG_PATH
 from .controller import Controller
@@ -42,14 +42,6 @@ class App:
         self.app = QApplication()
         rsrc_dir = get_rsrc_dir()
         self.app.setWindowIcon(QIcon(str(rsrc_dir / "explorer.ico")))
-
-        logging.basicConfig(
-            filename=LOG_FILE,
-            filemode="w",
-            format="%(asctime)s %(message)s",
-            encoding="utf-8",
-            level=logging.INFO,
-        )
 
         logging.info("Loading program settings…")
         if app_config_file is None:

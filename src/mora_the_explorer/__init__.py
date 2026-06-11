@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import logging
+
 from pathlib import Path
 import sys
 
@@ -37,6 +39,17 @@ LOG_FILE = (
         )
     )
     / "log.log"
+)
+
+# Set up default logging for the whole package
+# (no instances of any classes have been instantiated yet, so there haven't
+# been any missed logging calls during the imports)
+logging.basicConfig(
+    filename=LOG_FILE,
+    filemode="w",
+    format="%(asctime)s %(message)s",
+    encoding="utf-8",
+    level=logging.INFO,
 )
 
 
