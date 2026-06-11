@@ -193,6 +193,7 @@ class Explorer:
     def multiday_check(
         self,
         initial_date: datetime.date,
+        final_date: datetime.date = datetime.date.today(),
         reporter: Reporter | None = None,
     ) -> Reporter:
         """Check multiple days in sequence.
@@ -204,7 +205,7 @@ class Explorer:
         # If the caller didn't provide a reporter, just create a basic one
         reporter = reporter if reporter else PrintingReporter()
 
-        end_date = datetime.date.today() + datetime.timedelta(days=1)
+        end_date = final_date + datetime.timedelta(days=1)
         date_to_check = initial_date
         while date_to_check != end_date:
             self.single_check(date_to_check, reporter)

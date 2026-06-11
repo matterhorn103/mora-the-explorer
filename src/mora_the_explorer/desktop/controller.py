@@ -113,9 +113,9 @@ class QtExplorer(Explorer, QObject):
     @Slot()
     def start_check(self, multiday: bool, date: datetime.date, reporter: QtReporter):
         if multiday:
-            self.multiday_check(date, reporter)
+            self.multiday_check(date, reporter=reporter)
         else:
-            self.single_check(date, reporter)
+            self.single_check(date, reporter=reporter)
         # Signal completion
         self.check_finished.emit()
 
