@@ -1,6 +1,6 @@
+from mora_the_explorer import LOG_FILE
 from mora_the_explorer.core.spec import Manufacturer
 from mora_the_explorer.desktop.ui.rows import FreeEntryField
-import logging
 import platform
 from urllib.parse import quote
 
@@ -69,7 +69,7 @@ class MainWindow(QMainWindow):
         # First create the UI components
         # Have a plate with the version information
         self.version = Version(config.admin.version)
-        self.version_info = create_version_label(self.version, config.admin.email)
+        self.version_info = create_version_label(self.version, config.admin.support_email)
         self.version_info.linkActivated.connect(self._on_bug_report_link_clicked)
 
         # Group entry
@@ -377,23 +377,28 @@ class MainWindow(QMainWindow):
 
     # Slots
     @Slot()
-    def _on_bug_report_link_clicked(self, mailto_link: str):
+    def _on_bug_report_link_clicked(self):
         """Open a draft email containing some basic information."""
 
         # Get system info
         os_info = platform.uname()
         # Get path to log
-        log_location = str(logging.getLogger().handlers[0].baseFilename)  # type: ignore
         email_info = "\n".join(
             [
                 f"Version: {self.config.admin.version}",
                 f"System: {os_info.system} {os_info.release}, {os_info.machine}",
                 "Description: (please describe your bug)",
-                f"Log: (please attach or insert the contents of your log here, found at {log_location})",
+                f"Log: (please attach or insert the contents of your log here, found at {LOG_FILE})",
             ]
         )
         escaped_info = quote(email_info)
-        url = QUrl(f"{mailto_link}?subject=Mora%20the%20Explorer%20bug&body={escaped_info}")
+        if self.config.admin.support_cc:
+            cc = f"&cc={self.config.admin.support_cc}"
+        else:
+            cc = ""
+        url = QUrl(
+            f"mailto:{self.config.admin.support_email}?subject=Mora%20the%20Explorer%20bug&body={escaped_info}{cc}"
+        )
         QDesktopServices.openUrl(url)
 
     @Slot()

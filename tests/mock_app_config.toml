@@ -24,10 +24,10 @@ save = "~/Documents/nmr"
 [admin]
 pattern_separator = '[\s_-]'
 version = "42"
-email = "milner@uni-muenster.de"
 changelog = """
 - No changes, because this is just a mock config
 """
+support_email = "milner@uni-muenster.de"
 
 [groups]
 gil = "gilmour"
