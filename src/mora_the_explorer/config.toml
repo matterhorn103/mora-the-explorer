@@ -24,7 +24,7 @@ start_button_colour = "#b88cce"
 
 
 [paths]
-windows = "//samba.public.os.wwu.de/usershare/projects/q_nmr-oc/nmr"
+windows = "//wwu/ddfs/Cloud/wwu1/q_nmr-oc/nmr"
 darwin = "/Volumes/usershare/projects/q_nmr-oc/nmr"  # darwin = macOS
 linux = "~/usershare/projects/q_nmr-oc/nmr"
 src = "mora_the_explorer/src/mora-the-explorer"
@@ -33,18 +33,19 @@ save = ""
 
 [admin]
 pattern_separator = '[\s_-]' # Note the single quotes! (= literal string)
-version = "2.0.0b7"
+version = "2.0.0"
 email = "milner@uni-muenster.de"
 changelog = """
-- Update for move to new server
+- Updated for move to new server
 - Big rewrite, codebase is now much more structured and maintainable
-- The search can be set to always check the current date which changes accordingly
-- Spectra always sorted into subfolders by sample (like Agilent spectra)
-- Paths are selected using the system file explorer
-- Ability to specify the server address from the GUI (useful on macOS and Linux)
-- Solvent, instrument, experiment, temperature metadata extracted on all spectrometers
-- Metadata are saved to the measurement folder in mora.toml
-- CLI and Python API work entirely independently of a GUI
+- Refreshed the UI
+- Added an option to check the current date ("today"), which updates accordingly
+- Spectra are now always sorted into subfolders by sample (like Agilent spectra)
+- Locations now selected using the system file explorer
+- Added the ability to set the server address from the GUI (useful on macOS and Linux)
+- Various metadata (inc. solvent, instrument, temperature) are now extracted on all spectrometers
+- Extracted metadata are now saved to the measurement folder in mora.toml
+- CLI and Python API now work entirely independently of a GUI
 """
 
 
