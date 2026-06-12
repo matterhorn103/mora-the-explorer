@@ -158,7 +158,7 @@ class Controller(QObject):
         logging.info("…complete")
 
         # Check for updates
-        update_path = Path(config.paths.server()) / config.paths.update
+        update_path = Path(config.paths.server()) / config.paths.src
         self.update_check(update_path)
 
         # To begin with there's no active explorer
@@ -174,14 +174,15 @@ class Controller(QObject):
     def update_check(self, update_path: Path):
         """Check for updates at the specified location.
 
-        Assumes that the directory at `update_path` contains a copy of the source code
-        of Mora the Explorer, under the subdirectory name `src`. The `config.toml`
-        file within the source code is then checked and compare to the local one
-        to see if a newer version has been released.
+        The directory at `update_path` must be the root directory of a copy of
+        the source code of Mora the Explorer. The `config.toml` file within the
+        source code (i.e. at `<update_path>/src/mora_the_explorer/config.toml`)
+        is then checked and compare to the local one to see if a newer version
+        has been released.
         """
 
         logging.info(f"Checking for updates at: {update_path}")
-        remote_config_file = update_path / "src/src/mora_the_explorer/config.toml"
+        remote_config_file = update_path / "src/mora_the_explorer/config.toml"
         try:
             if remote_config_file.exists() is True:
                 with open(remote_config_file, "rb", encoding="utf-8") as f:
