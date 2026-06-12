@@ -15,7 +15,7 @@ measurement_format = "{user}-{sample_id}_{instrument}_{completion_time:%d%m%y}_{
 windows = "//samba.public.os.wwu.de/usershare/projects/q_nmr-oc/nmr"
 darwin = "/Volumes/usershare/projects/q_nmr-oc/nmr"
 linux = "~/dfs/nmr"
-update = "mora_the_explorer"
+src = "mora_the_explorer/src/mora-the-explorer"
 save = "~/nmr"
 
 [appearance]

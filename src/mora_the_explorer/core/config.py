@@ -67,7 +67,7 @@ class Paths:
     windows: str
     darwin: str
     linux: str
-    update: str  # Relative to the server paths
+    src: str  # Location of the root directory of a copy of the source code on the server, relative to the respective server path
     save: str
 
     def server(self) -> str:

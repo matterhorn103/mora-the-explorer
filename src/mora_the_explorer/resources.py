@@ -6,7 +6,7 @@
 from PySide6 import QtCore
 
 qt_resource_data = b"\
-\x00\x00\x1b\xcd\
+\x00\x00\x1c\x0d\
 #\
  This file confi\
 gures mora_the_e\
@@ -109,12 +109,16 @@ r-oc/nmr\x22  # dar\
 win = macOS\x0alinu\
 x = \x22~/usershare\
 /projects/q_nmr-\
-oc/nmr\x22\x0aupdate =\
- \x22mora_the_explo\
-rer\x22  # Where to\
- check for app u\
-pdates, relative\
- to the server\x0as\
+oc/nmr\x22\x0asrc = \x22m\
+ora_the_explorer\
+/src/mora-the-ex\
+plorer\x22  # The r\
+oot directory of\
+ the source code\
+, relative to th\
+e server, refere\
+nced when checki\
+ng for updates\x0as\
 ave = \x22\x22  # The \
 location spectra\
  should be copie\
@@ -466,7 +470,7 @@ qt_resource_struct = b"\
 \x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x01\
 \x00\x00\x00\x00\x00\x00\x00\x00\
 \x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\
-\x00\x00\x01\x9e\xac\x7f\xbek\
+\x00\x00\x01\x9e\xbb8\xe6s\
 "
 
 def qInitResources():
