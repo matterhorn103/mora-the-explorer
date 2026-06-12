@@ -95,7 +95,7 @@ display_name = "Studer group NMR only (300 MHz)"
 measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<user2!>?\_*<sample_id!>'
 date_entry = "dd MMM yyyy"
 check_paths = [
-    "av300/av1/{date:%b%d-%Y}",
+    "av300/av1/av300_{date:%b%d-%Y}",
 ]
 archives = [
     "av300/av1/{date:%y}-av300_{date:%Y}/{date:%b%d-%Y}",

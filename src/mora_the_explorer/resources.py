@@ -6,7 +6,7 @@
 from PySide6 import QtCore
 
 qt_resource_data = b"\
-\x00\x00\x10\xd6\
+\x00\x00\x10\xdc\
 #\
  See Configurati\
 on in README.md \
@@ -203,81 +203,81 @@ _*<sample_id!>'\x0a\
 date_entry = \x22dd\
  MMM yyyy\x22\x0acheck\
 _paths = [\x0a    \x22\
-av300/av1/{date:\
-%b%d-%Y}\x22,\x0a]\x0aarc\
-hives = [\x0a    \x22a\
-v300/av1/{date:%\
-y}-av300_{date:%\
-Y}/{date:%b%d-%Y\
-}\x22,\x0a]\x0arestrict_t\
-o = [\x0a    \x22stu\x22,\
-\x0a    \x22nae\x22,\x0a]\x0asi\
-ngle_check_only \
-= false\x0a\x0a[spectr\
-ometers.neo400]\x0a\
-manufacturer = \x22\
-bruker\x22\x0adisplay_\
-name = \x22Routine \
-NMR (300 && 400 \
-MHz)\x22\x0ameasuremen\
-t_pattern = '<gr\
-oup!>\x5c_*<user_na\
-me>?\x5c_*<user!>\x5c_\
-*<user2!>?\x5c_*<sa\
-mple_id!>'\x0adate_\
-entry = \x22dd MMM \
-yyyy\x22\x0acheck_path\
-s = [\x0a    \x22neo40\
-0/av1/neo400a_{d\
-ate:%b%d-%Y}\x22,\x0a \
-   \x22neo400/av1/n\
-eo400b_{date:%b%\
-d-%Y}\x22,\x0a    \x22neo\
-400/av1/neo400c_\
+av300/av1/av300_\
 {date:%b%d-%Y}\x22,\
 \x0a]\x0aarchives = [\x0a\
+    \x22av300/av1/{\
+date:%y}-av300_{\
+date:%Y}/{date:%\
+b%d-%Y}\x22,\x0a]\x0arest\
+rict_to = [\x0a    \
+\x22stu\x22,\x0a    \x22nae\x22\
+,\x0a]\x0asingle_check\
+_only = false\x0a\x0a[\
+spectrometers.ne\
+o400]\x0amanufactur\
+er = \x22bruker\x22\x0adi\
+splay_name = \x22Ro\
+utine NMR (300 &\
+& 400 MHz)\x22\x0ameas\
+urement_pattern \
+= '<group!>\x5c_*<u\
+ser_name>?\x5c_*<us\
+er!>\x5c_*<user2!>?\
+\x5c_*<sample_id!>'\
+\x0adate_entry = \x22d\
+d MMM yyyy\x22\x0achec\
+k_paths = [\x0a    \
+\x22neo400/av1/neo4\
+00a_{date:%b%d-%\
+Y}\x22,\x0a    \x22neo400\
+/av1/neo400b_{da\
+te:%b%d-%Y}\x22,\x0a  \
+  \x22neo400/av1/ne\
+o400c_{date:%b%d\
+-%Y}\x22,\x0a]\x0aarchive\
+s = [\x0a    \x22neo40\
+0/av1/{date:%y}-\
+neo400a_{date:%Y\
+}/{date:%b%d-%Y}\
+\x22,\x0a    \x22neo400/a\
+v1/{date:%y}-neo\
+400b_{date:%Y}/{\
+date:%b%d-%Y}\x22,\x0a\
     \x22neo400/av1/\
 {date:%y}-neo400\
-a_{date:%Y}/{dat\
-e:%b%d-%Y}\x22,\x0a   \
- \x22neo400/av1/{da\
-te:%y}-neo400b_{\
-date:%Y}/{date:%\
-b%d-%Y}\x22,\x0a    \x22n\
-eo400/av1/{date:\
-%y}-neo400c_{dat\
-e:%Y}/{date:%b%d\
--%Y}\x22,\x0a]\x0ainclude\
- = [ \x22av300\x22 ]\x0as\
-ingle_check_only\
- = false\x0a\x0a[spect\
-rometers.hf]\x0aman\
-ufacturer = \x22agi\
-lent\x22\x0adisplay_na\
-me = \x22High-field\
- spectrometers (\
-500 && 600 MHz)\x22\
-\x0asample_pattern \
-= '<user!><user2\
-!>?<sample_id!>'\
-\x0ameasurement_pat\
-tern = '<user!><\
-user2!>?<sample_\
-id!>_(\x5cd{6})_<te\
-mperature>k_<exp\
-eriment>_<measur\
-ement_no>\x5c.fid'\x0a\
-date_entry = \x22yy\
-yy\x22\x0acheck_paths \
-= [\x0a    \x22500-600\
-er/{group_name}/\
-{date:%Y}\x22,\x0a]\x0aar\
-chives = [\x0a    \x22\
-archiv/500-600er\
-/{group_name}/{d\
-ate:%Y}\x22,\x0a]\x0asing\
-le_check_only = \
-true\x0a\
+c_{date:%Y}/{dat\
+e:%b%d-%Y}\x22,\x0a]\x0ai\
+nclude = [ \x22av30\
+0\x22 ]\x0asingle_chec\
+k_only = false\x0a\x0a\
+[spectrometers.h\
+f]\x0amanufacturer \
+= \x22agilent\x22\x0adisp\
+lay_name = \x22High\
+-field spectrome\
+ters (500 && 600\
+ MHz)\x22\x0asample_pa\
+ttern = '<user!>\
+<user2!>?<sample\
+_id!>'\x0ameasureme\
+nt_pattern = '<u\
+ser!><user2!>?<s\
+ample_id!>_(\x5cd{6\
+})_<temperature>\
+k_<experiment>_<\
+measurement_no>\x5c\
+.fid'\x0adate_entry\
+ = \x22yyyy\x22\x0acheck_\
+paths = [\x0a    \x225\
+00-600er/{group_\
+name}/{date:%Y}\x22\
+,\x0a]\x0aarchives = [\
+\x0a    \x22archiv/500\
+-600er/{group_na\
+me}/{date:%Y}\x22,\x0a\
+]\x0asingle_check_o\
+nly = true\x0a\
 "
 
 qt_resource_name = b"\
@@ -291,7 +291,7 @@ qt_resource_struct = b"\
 \x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x01\
 \x00\x00\x00\x00\x00\x00\x00\x00\
 \x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\
-\x00\x00\x01\x9e\xbb\xbc\xb4\x8c\
+\x00\x00\x01\x9e\xbb\xc0sv\
 "
 
 def qInitResources():
