@@ -79,9 +79,9 @@ display_name = "Pre-2020 archive (Bruker)"
 measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<user2!>?\_*<sample_id!>' # Note the single quotes! (= literal string)
 date_entry = "dd MMM yyyy"
 check_paths = [
-    "archiv/dpx300/{date:%y}-dpx300_{date:%Y}/{date:%b%d-%Y}",
-    "archiv/av300/{date:%y}-av300_{date:%Y}/{date:%b%d-%Y}",
-    "archiv/av400/{date:%y}-av400_{date:%Y}/{date:%b%d-%Y}",
+    "archiv/dpx300/{date:%y}-dpx300_{date:%Y}/dpx300_{date:%b%d-%Y}",
+    "archiv/av300/{date:%y}-av300_{date:%Y}/av300_{date:%b%d-%Y}",
+    "archiv/av400/{date:%y}-av400_{date:%Y}/av400_{date:%b%d-%Y}",
     "archiv/neo400a/{date:%y}-neo400a_{date:%Y}/neo400a_{date:%b%d-%Y}",
     "archiv/neo400b/{date:%y}-neo400b_{date:%Y}/neo400b_{date:%b%d-%Y}",
     "archiv/neo400c/{date:%y}-neo400c_{date:%Y}/neo400c_{date:%b%d-%Y}",
@@ -92,13 +92,13 @@ single_check_only = false
 [spectrometers.av300]
 manufacturer = "bruker"
 display_name = "Studer group NMR only (300 MHz)"
-measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<user2!>?\_*<sample_id!>'
+measurement_pattern = '<group!>\_*<user!>\_*<user2!>?\_*<sample_id!>'
 date_entry = "dd MMM yyyy"
 check_paths = [
     "av300/av1/av300_{date:%b%d-%Y}",
 ]
 archives = [
-    "av300/av1/{date:%y}-av300_{date:%Y}/{date:%b%d-%Y}",
+    "av300/av1/{date:%y}-av300_{date:%Y}/av300_{date:%b%d-%Y}",
 ]
 restrict_to = [
     "stu",
@@ -109,7 +109,7 @@ single_check_only = false
 [spectrometers.neo400]
 manufacturer = "bruker"
 display_name = "Routine NMR (300 && 400 MHz)"
-measurement_pattern = '<group!>\_*<user_name>?\_*<user!>\_*<user2!>?\_*<sample_id!>'
+measurement_pattern = '<group!>\_*<user!>\_*<user2!>?\_*<sample_id!>'
 date_entry = "dd MMM yyyy"
 check_paths = [
     "neo400/av1/neo400a_{date:%b%d-%Y}",
@@ -117,9 +117,9 @@ check_paths = [
     "neo400/av1/neo400c_{date:%b%d-%Y}",
 ]
 archives = [
-    "neo400/av1/{date:%y}-neo400a_{date:%Y}/{date:%b%d-%Y}",
-    "neo400/av1/{date:%y}-neo400b_{date:%Y}/{date:%b%d-%Y}",
-    "neo400/av1/{date:%y}-neo400c_{date:%Y}/{date:%b%d-%Y}",
+    "neo400/av1/{date:%y}-neo400a_{date:%Y}/neo400a_{date:%b%d-%Y}",
+    "neo400/av1/{date:%y}-neo400b_{date:%Y}/neo400b_{date:%b%d-%Y}",
+    "neo400/av1/{date:%y}-neo400c_{date:%Y}/neo400c_{date:%b%d-%Y}",
 ]
 include = [ "av300" ]
 single_check_only = false
