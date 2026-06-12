@@ -1,15 +1,7 @@
-# This file configures mora_the_explorer's *default* internal settings and should not be
-# changed by anyone other than the NMR department.
-
-# If you are looking for your user configuration, it is stored in the user's config.toml file, at:
-# Windows:  %USERPROFILE%\AppData\Roaming\mora_the_explorer\config.toml
-# macOS:    ~/Library/Application Support/mora_the_explorer/config.toml
-# Linux:    $XDG_CONFIG_HOME/mora_the_explorer or ~/.config/mora_the_explorer/config.toml
-
-# Values specified in the user config.toml take precedence over those specified here.
+# See Configuration in README.md for details on how to use this file.
 
 # Before bundling the app with pyinstaller or compiling it with pyside6-deploy,
-# the config file must be transpiled to a QResource, which is done by running:
+# this config file must be transpiled to a QResource, which is done by running:
 # `uv run pyside6-rcc ./src/mora_the_explorer/resources.qrc -o ./src/mora_the_explorer/resources.py`
 
 version = 1
@@ -32,13 +24,11 @@ start_button_colour = "#b88cce"
 
 
 [paths]
-# Paths to the server, different by OS
-# Mount point probably needs to be changed by the user on macOS and Linux
 windows = "//samba.public.os.wwu.de/usershare/projects/q_nmr-oc/nmr"
 darwin = "/Volumes/usershare/projects/q_nmr-oc/nmr"  # darwin = macOS
 linux = "~/usershare/projects/q_nmr-oc/nmr"
-src = "mora_the_explorer/src/mora-the-explorer"  # The root directory of the source code, relative to the server, referenced when checking for updates
-save = ""  # The location spectra should be copied to - if empty, the user is asked on launch
+src = "mora_the_explorer/src/mora-the-explorer"
+save = ""
 
 
 [admin]
@@ -59,11 +49,6 @@ changelog = """
 
 
 [groups]
-# Available groups, listed in the style `group = group_name`
-# `group` is the standard initialism used for each group's experiments and data
-# institute-wide and is used in the search for Bruker spectra (as it must be included in
-# the measurement title)
-# `group` is the full name, used for folders of the group e.g. for the 500-600er
 fer = "fernandez"
 gar = "garcia"
 gil = "gilmour"
@@ -74,7 +59,6 @@ rav = "ravoo"
 stu = "studer"
 
 [groups.other]
-# Groups that should be put in a separate overflow list called "Other" in the app
 ac = "ac"
 biochemie = "biochemie"
 extern = "extern"
@@ -87,33 +71,6 @@ pharmazie = "pharmazie"
 
 
 [spectrometers]
-# Provide the following information for each spectrometer category:
-#   manufacturer: the manufacturer of the spectrometer(s)
-#   display_name: the text shown next to the button in the user interface
-#       (note that some characters need escaping, e.g. write && for &)
-#   measurement_pattern: the expected fields in the measurement title
-#   date_entry: whether the user selects the full date "dd MMM yyyy" or just year "yyyy"
-#   check_paths: the paths that should be searched for new spectra
-#   archives: if spectra from previous years can't be found under check_paths, the
-#       archive folders are checked in addition
-#   include: other spectrometers which should be searched at the same time
-#   restrict_to: the list of groups that should be able to see the spectrometer - if
-#       this key is not used, the spectrometer will be visible to all
-#   admin_only: whether the spectrometer should only be chooseable in admin mode
-#   allow_solvent: whether to enable the folder naming option to include the solvent
-#   single_check_only: whether users may use multiday and repeat checks for this spec
-#
-# Variables can be interpolated into the entries in `check_paths` and `archives`
-# by wrapping them in curly brackets. The following variables can be used:
-# - group         (the chosen group's ID)
-# - group_name    (the chosen group's name)
-# - date
-#
-# For `date`, it may be desirable to format it using e.g. `{date:%Y}` to get `2026`
-# For the format codes see https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
-
-# Note that in TOML, single quotes can be used for a literal string to avoid
-# having to use backslash escapes, which is very useful for regex patterns
 
 [spectrometers.archiv]
 manufacturer = "bruker"

@@ -6,324 +6,142 @@
 from PySide6 import QtCore
 
 qt_resource_data = b"\
-\x00\x00\x1c\x0d\
+\x00\x00\x10\xad\
 #\
- This file confi\
-gures mora_the_e\
-xplorer's *defau\
-lt* internal set\
-tings and should\
- not be\x0a# change\
-d by anyone othe\
-r than the NMR d\
-epartment.\x0a\x0a# If\
- you are looking\
- for your user c\
-onfiguration, it\
- is stored in th\
-e user's config.\
-toml file, at:\x0a#\
- Windows:  %USER\
-PROFILE%\x5cAppData\
-\x5cRoaming\x5cmora_th\
-e_explorer\x5cconfi\
-g.toml\x0a# macOS: \
-   ~/Library/App\
-lication Support\
-/mora_the_explor\
-er/config.toml\x0a#\
- Linux:    $XDG_\
-CONFIG_HOME/mora\
-_the_explorer or\
- ~/.config/mora_\
-the_explorer/con\
-fig.toml\x0a\x0a# Valu\
-es specified in \
-the user config.\
-toml take preced\
-ence over those \
-specified here.\x0a\
-\x0a# Before bundli\
-ng the app with \
-pyinstaller or c\
-ompiling it with\
- pyside6-deploy,\
-\x0a# the config fi\
-le must be trans\
-piled to a QReso\
-urce, which is d\
-one by running:\x0a\
-# `uv run pyside\
-6-rcc ./src/mora\
-_the_explorer/re\
-sources.qrc -o .\
-/src/mora_the_ex\
-plorer/resources\
-.py`\x0a\x0aversion = \
-1\x0a\x0a[options]\x0ause\
-r = \x22mjm\x22\x0agroup \
-= \x22gil\x22\x0aspec = \x22\
-neo400\x22\x0arepeat_s\
-witch = false\x0are\
-peat_delay = 5\x0a\x0a\
-[options.naming]\
-\x0asample_format =\
- \x22{user}-{user2}\
--{sample_id}\x22\x0ame\
-asurement_format\
-.bruker = \x22{user\
-}-{user2}-{sampl\
-e_id}_{instrumen\
-t}_{submission_t\
-ime:%d%m%y}_{tem\
-perature}k_{expe\
-riment}_{measure\
-ment_no}\x22\x0ameasur\
-ement_format.agi\
-lent = \x22{user}-{\
+ See Configurati\
+on in README.md \
+for details on h\
+ow to use this f\
+ile.\x0a\x0a# Before b\
+undling the app \
+with pyinstaller\
+ or compiling it\
+ with pyside6-de\
+ploy,\x0a# this con\
+fig file must be\
+ transpiled to a\
+ QResource, whic\
+h is done by run\
+ning:\x0a# `uv run \
+pyside6-rcc ./sr\
+c/mora_the_explo\
+rer/resources.qr\
+c -o ./src/mora_\
+the_explorer/res\
+ources.py`\x0a\x0avers\
+ion = 1\x0a\x0a[option\
+s]\x0auser = \x22mjm\x22\x0a\
+group = \x22gil\x22\x0asp\
+ec = \x22neo400\x22\x0are\
+peat_switch = fa\
+lse\x0arepeat_delay\
+ = 5\x0a\x0a[options.n\
+aming]\x0asample_fo\
+rmat = \x22{user}-{\
 user2}-{sample_i\
-d}_{instrument}_\
-{completion_time\
-:%d%m%y}_{temper\
-ature}k_{experim\
-ent}_{measuremen\
-t_no}\x22\x0a\x0a\x0a[appear\
-ance]\x0astart_butt\
-on_colour = \x22#b8\
-8cce\x22\x0a\x0a\x0a[paths]\x0a\
-# Paths to the s\
-erver, different\
- by OS\x0a# Mount p\
-oint probably ne\
-eds to be change\
-d by the user on\
- macOS and Linux\
-\x0awindows = \x22//sa\
-mba.public.os.ww\
-u.de/usershare/p\
-rojects/q_nmr-oc\
-/nmr\x22\x0adarwin = \x22\
-/Volumes/usersha\
-re/projects/q_nm\
-r-oc/nmr\x22  # dar\
-win = macOS\x0alinu\
-x = \x22~/usershare\
-/projects/q_nmr-\
-oc/nmr\x22\x0asrc = \x22m\
-ora_the_explorer\
-/src/mora-the-ex\
-plorer\x22  # The r\
-oot directory of\
- the source code\
-, relative to th\
-e server, refere\
-nced when checki\
-ng for updates\x0as\
-ave = \x22\x22  # The \
-location spectra\
- should be copie\
-d to - if empty,\
- the user is ask\
-ed on launch\x0a\x0a\x0a[\
-admin]\x0apattern_s\
-eparator = '[\x5cs_\
--]' # Note the s\
-ingle quotes! (=\
- literal string)\
-\x0aversion = \x222.0.\
-0b7\x22\x0aemail = \x22mi\
-lner@uni-muenste\
-r.de\x22\x0achangelog \
-= \x22\x22\x22\x0a- Update f\
-or move to new s\
-erver\x0a- Big rewr\
-ite, codebase is\
- now much more s\
-tructured and ma\
-intainable\x0a- The\
- search can be s\
-et to always che\
-ck the current d\
-ate which change\
-s accordingly\x0a- \
-Spectra always s\
-orted into subfo\
-lders by sample \
-(like Agilent sp\
-ectra)\x0a- Paths a\
-re selected usin\
-g the system fil\
-e explorer\x0a- Abi\
-lity to specify \
-the server addre\
-ss from the GUI \
-(useful on macOS\
- and Linux)\x0a- So\
-lvent, instrumen\
-t, experiment, t\
-emperature metad\
-ata extracted on\
- all spectromete\
-rs\x0a- Metadata ar\
-e saved to the m\
-easurement folde\
-r in mora.toml\x0a-\
- CLI and Python \
-API work entirel\
-y independently \
-of a GUI\x0a\x22\x22\x22\x0a\x0a\x0a[\
-groups]\x0a# Availa\
-ble groups, list\
-ed in the style \
-`group = group_n\
-ame`\x0a# `group` i\
-s the standard i\
-nitialism used f\
-or each group's \
-experiments and \
-data\x0a# institute\
--wide and is use\
-d in the search \
-for Bruker spect\
-ra (as it must b\
-e included in\x0a# \
-the measurement \
-title)\x0a# `group`\
- is the full nam\
-e, used for fold\
-ers of the group\
- e.g. for the 50\
-0-600er\x0afer = \x22f\
-ernandez\x22\x0agar = \
-\x22garcia\x22\x0agil = \x22\
-gilmour\x22\x0aglo = \x22\
-glorius\x22\x0ahei = \x22\
-hein\x22\x0anae = \x22nae\
-sborg\x22\x0arav = \x22ra\
-voo\x22\x0astu = \x22stud\
-er\x22\x0a\x0a[groups.oth\
-er]\x0a# Groups tha\
-t should be put \
-in a separate ov\
-erflow list call\
-ed \x22Other\x22 in th\
-e app\x0aac = \x22ac\x22\x0a\
-biochemie = \x22bio\
-chemie\x22\x0aextern =\
- \x22extern\x22\x0aipc = \
-\x22ipc\x22\x0akb = \x22kb\x22\x0a\
-meet = \x22meet\x22\x0anu\
-k = \x22nuk\x22\x0aocf = \
-\x22ocf\x22\x0apharmazie \
-= \x22pharmazie\x22\x0a\x0a\x0a\
-[spectrometers]\x0a\
-# Provide the fo\
-llowing informat\
-ion for each spe\
-ctrometer catego\
-ry:\x0a#   manufact\
-urer: the manufa\
-cturer of the sp\
-ectrometer(s)\x0a# \
-  display_name: \
-the text shown n\
-ext to the butto\
-n in the user in\
-terface\x0a#       \
-(note that some \
-characters need \
-escaping, e.g. w\
-rite && for &)\x0a#\
-   measurement_p\
-attern: the expe\
-cted fields in t\
-he measurement t\
-itle\x0a#   date_en\
-try: whether the\
- user selects th\
-e full date \x22dd \
-MMM yyyy\x22 or jus\
-t year \x22yyyy\x22\x0a# \
-  check_paths: t\
-he paths that sh\
-ould be searched\
- for new spectra\
-\x0a#   archives: i\
-f spectra from p\
-revious years ca\
-n't be found und\
-er check_paths, \
-the\x0a#       arch\
-ive folders are \
-checked in addit\
-ion\x0a#   include:\
- other spectrome\
-ters which shoul\
-d be searched at\
- the same time\x0a#\
-   restrict_to: \
-the list of grou\
-ps that should b\
-e able to see th\
-e spectrometer -\
- if\x0a#       this\
- key is not used\
-, the spectromet\
-er will be visib\
-le to all\x0a#   ad\
-min_only: whethe\
-r the spectromet\
-er should only b\
-e chooseable in \
-admin mode\x0a#   a\
-llow_solvent: wh\
-ether to enable \
-the folder namin\
-g option to incl\
-ude the solvent\x0a\
-#   single_check\
-_only: whether u\
-sers may use mul\
-tiday and repeat\
- checks for this\
- spec\x0a#\x0a# Variab\
-les can be inter\
-polated into the\
- entries in `che\
-ck_paths` and `a\
-rchives`\x0a# by wr\
-apping them in c\
-urly brackets. T\
-he following var\
-iables can be us\
-ed:\x0a# - group   \
-      (the chose\
-n group's ID)\x0a# \
-- group_name    \
-(the chosen grou\
-p's name)\x0a# - da\
-te\x0a#\x0a# For `date\
-`, it may be des\
-irable to format\
- it using e.g. `\
-{date:%Y}` to ge\
-t `2026`\x0a# For t\
-he format codes \
-see https://docs\
-.python.org/3/li\
-brary/datetime.h\
-tml#strftime-str\
-ptime-behavior\x0a\x0a\
-# Note that in T\
-OML, single quot\
-es can be used f\
-or a literal str\
-ing to avoid\x0a# h\
-aving to use bac\
-kslash escapes, \
-which is very us\
-eful for regex p\
-atterns\x0a\x0a[spectr\
+d}\x22\x0ameasurement_\
+format.bruker = \
+\x22{user}-{user2}-\
+{sample_id}_{ins\
+trument}_{submis\
+sion_time:%d%m%y\
+}_{temperature}k\
+_{experiment}_{m\
+easurement_no}\x22\x0a\
+measurement_form\
+at.agilent = \x22{u\
+ser}-{user2}-{sa\
+mple_id}_{instru\
+ment}_{completio\
+n_time:%d%m%y}_{\
+temperature}k_{e\
+xperiment}_{meas\
+urement_no}\x22\x0a\x0a\x0a[\
+appearance]\x0astar\
+t_button_colour \
+= \x22#b88cce\x22\x0a\x0a\x0a[p\
+aths]\x0awindows = \
+\x22//samba.public.\
+os.wwu.de/usersh\
+are/projects/q_n\
+mr-oc/nmr\x22\x0adarwi\
+n = \x22/Volumes/us\
+ershare/projects\
+/q_nmr-oc/nmr\x22  \
+# darwin = macOS\
+\x0alinux = \x22~/user\
+share/projects/q\
+_nmr-oc/nmr\x22\x0asrc\
+ = \x22mora_the_exp\
+lorer/src/mora-t\
+he-explorer\x22\x0asav\
+e = \x22\x22\x0a\x0a\x0a[admin]\
+\x0apattern_separat\
+or = '[\x5cs_-]' # \
+Note the single \
+quotes! (= liter\
+al string)\x0aversi\
+on = \x222.0.0b7\x22\x0ae\
+mail = \x22milner@u\
+ni-muenster.de\x22\x0a\
+changelog = \x22\x22\x22\x0a\
+- Update for mov\
+e to new server\x0a\
+- Big rewrite, c\
+odebase is now m\
+uch more structu\
+red and maintain\
+able\x0a- The searc\
+h can be set to \
+always check the\
+ current date wh\
+ich changes acco\
+rdingly\x0a- Spectr\
+a always sorted \
+into subfolders \
+by sample (like \
+Agilent spectra)\
+\x0a- Paths are sel\
+ected using the \
+system file expl\
+orer\x0a- Ability t\
+o specify the se\
+rver address fro\
+m the GUI (usefu\
+l on macOS and L\
+inux)\x0a- Solvent,\
+ instrument, exp\
+eriment, tempera\
+ture metadata ex\
+tracted on all s\
+pectrometers\x0a- M\
+etadata are save\
+d to the measure\
+ment folder in m\
+ora.toml\x0a- CLI a\
+nd Python API wo\
+rk entirely inde\
+pendently of a G\
+UI\x0a\x22\x22\x22\x0a\x0a\x0a[groups\
+]\x0afer = \x22fernand\
+ez\x22\x0agar = \x22garci\
+a\x22\x0agil = \x22gilmou\
+r\x22\x0aglo = \x22gloriu\
+s\x22\x0ahei = \x22hein\x22\x0a\
+nae = \x22naesborg\x22\
+\x0arav = \x22ravoo\x22\x0as\
+tu = \x22studer\x22\x0a\x0a[\
+groups.other]\x0aac\
+ = \x22ac\x22\x0abiochemi\
+e = \x22biochemie\x22\x0a\
+extern = \x22extern\
+\x22\x0aipc = \x22ipc\x22\x0akb\
+ = \x22kb\x22\x0ameet = \x22\
+meet\x22\x0anuk = \x22nuk\
+\x22\x0aocf = \x22ocf\x22\x0aph\
+armazie = \x22pharm\
+azie\x22\x0a\x0a\x0a[spectro\
+meters]\x0a\x0a[spectr\
 ometers.archiv]\x0a\
 manufacturer = \x22\
 bruker\x22\x0adisplay_\
@@ -470,7 +288,7 @@ qt_resource_struct = b"\
 \x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x01\
 \x00\x00\x00\x00\x00\x00\x00\x00\
 \x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\
-\x00\x00\x01\x9e\xbb8\xe6s\
+\x00\x00\x01\x9e\xbb\xb7\x5c\xc1\
 "
 
 def qInitResources():
