@@ -34,7 +34,6 @@ save = ""
 [admin]
 pattern_separator = '[\s_-]' # Note the single quotes! (= literal string)
 version = "2.0.0"
-email = "milner@uni-muenster.de"
 changelog = """
 - Updated for move to new server
 - Big rewrite, codebase is now much more structured and maintainable
@@ -47,6 +46,8 @@ changelog = """
 - Extracted metadata are now saved to the measurement folder in mora.toml
 - CLI and Python API now work entirely independently of a GUI
 """
+support_email = "milner@uni-muenster.de"
+support_cc = "klaube@uni-muenster.de"
 
 
 [groups]

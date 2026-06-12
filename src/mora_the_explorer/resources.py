@@ -6,7 +6,7 @@
 from PySide6 import QtCore
 
 qt_resource_data = b"\
-\x00\x00\x10\xef\
+\x00\x00\x11\x1d\
 #\
  See Configurati\
 on in README.md \
@@ -80,205 +80,208 @@ rn_separator = '\
 he single quotes\
 ! (= literal str\
 ing)\x0aversion = \x22\
-2.0.0\x22\x0aemail = \x22\
+2.0.0\x22\x0achangelog\
+ = \x22\x22\x22\x0a- Updated\
+ for move to new\
+ server\x0a- Big re\
+write, codebase \
+is now much more\
+ structured and \
+maintainable\x0a- R\
+efreshed the UI\x0a\
+- Added an optio\
+n to check the c\
+urrent date (\x22to\
+day\x22), which upd\
+ates accordingly\
+\x0a- Spectra are n\
+ow always sorted\
+ into subfolders\
+ by sample (like\
+ Agilent spectra\
+)\x0a- Locations no\
+w selected using\
+ the system file\
+ explorer\x0a- Adde\
+d the ability to\
+ set the server \
+address from the\
+ GUI (useful on \
+macOS and Linux)\
+\x0a- Various metad\
+ata (inc. solven\
+t, instrument, t\
+emperature) are \
+now extracted on\
+ all spectromete\
+rs\x0a- Extracted m\
+etadata are now \
+saved to the mea\
+surement folder \
+in mora.toml\x0a- C\
+LI and Python AP\
+I now work entir\
+ely independentl\
+y of a GUI\x0a\x22\x22\x22\x0as\
+upport_email = \x22\
 milner@uni-muens\
-ter.de\x22\x0achangelo\
-g = \x22\x22\x22\x0a- Update\
-d for move to ne\
-w server\x0a- Big r\
-ewrite, codebase\
- is now much mor\
-e structured and\
- maintainable\x0a- \
-Refreshed the UI\
-\x0a- Added an opti\
-on to check the \
-current date (\x22t\
-oday\x22), which up\
-dates accordingl\
-y\x0a- Spectra are \
-now always sorte\
-d into subfolder\
-s by sample (lik\
-e Agilent spectr\
-a)\x0a- Locations n\
-ow selected usin\
-g the system fil\
-e explorer\x0a- Add\
-ed the ability t\
-o set the server\
- address from th\
-e GUI (useful on\
- macOS and Linux\
-)\x0a- Various meta\
-data (inc. solve\
-nt, instrument, \
-temperature) are\
- now extracted o\
-n all spectromet\
-ers\x0a- Extracted \
-metadata are now\
- saved to the me\
-asurement folder\
- in mora.toml\x0a- \
-CLI and Python A\
-PI now work enti\
-rely independent\
-ly of a GUI\x0a\x22\x22\x22\x0a\
-\x0a\x0a[groups]\x0afer =\
- \x22fernandez\x22\x0agar\
- = \x22garcia\x22\x0agil \
-= \x22gilmour\x22\x0aglo \
-= \x22glorius\x22\x0ahei \
-= \x22hein\x22\x0anae = \x22\
-naesborg\x22\x0arav = \
-\x22ravoo\x22\x0astu = \x22s\
-tuder\x22\x0a\x0a[groups.\
-other]\x0aac = \x22ac\x22\
-\x0abiochemie = \x22bi\
-ochemie\x22\x0aextern \
-= \x22extern\x22\x0aipc =\
- \x22ipc\x22\x0akb = \x22kb\x22\
-\x0ameet = \x22meet\x22\x0an\
-uk = \x22nuk\x22\x0aocf =\
- \x22ocf\x22\x0apharmazie\
- = \x22pharmazie\x22\x0a\x0a\
-\x0a[spectrometers]\
-\x0a\x0a[spectrometers\
-.archiv]\x0amanufac\
-turer = \x22bruker\x22\
-\x0adisplay_name = \
-\x22Pre-2020 archiv\
-e (Bruker)\x22\x0ameas\
+ter.de\x22\x0asupport_\
+cc = \x22klaube@uni\
+-muenster.de\x22\x0a\x0a\x0a\
+[groups]\x0afer = \x22\
+fernandez\x22\x0agar =\
+ \x22garcia\x22\x0agil = \
+\x22gilmour\x22\x0aglo = \
+\x22glorius\x22\x0ahei = \
+\x22hein\x22\x0anae = \x22na\
+esborg\x22\x0arav = \x22r\
+avoo\x22\x0astu = \x22stu\
+der\x22\x0a\x0a[groups.ot\
+her]\x0aac = \x22ac\x22\x0ab\
+iochemie = \x22bioc\
+hemie\x22\x0aextern = \
+\x22extern\x22\x0aipc = \x22\
+ipc\x22\x0akb = \x22kb\x22\x0am\
+eet = \x22meet\x22\x0anuk\
+ = \x22nuk\x22\x0aocf = \x22\
+ocf\x22\x0apharmazie =\
+ \x22pharmazie\x22\x0a\x0a\x0a[\
+spectrometers]\x0a\x0a\
+[spectrometers.a\
+rchiv]\x0amanufactu\
+rer = \x22bruker\x22\x0ad\
+isplay_name = \x22P\
+re-2020 archive \
+(Bruker)\x22\x0ameasur\
+ement_pattern = \
+'<group!>\x5c_*<use\
+r_name>?\x5c_*<user\
+!>\x5c_*<user2!>?\x5c_\
+*<sample_id!>' #\
+ Note the single\
+ quotes! (= lite\
+ral string)\x0adate\
+_entry = \x22dd MMM\
+ yyyy\x22\x0acheck_pat\
+hs = [\x0a    \x22arch\
+iv/dpx300/{date:\
+%y}-dpx300_{date\
+:%Y}/dpx300_{dat\
+e:%b%d-%Y}\x22,\x0a   \
+ \x22archiv/av300/{\
+date:%y}-av300_{\
+date:%Y}/av300_{\
+date:%b%d-%Y}\x22,\x0a\
+    \x22archiv/av40\
+0/{date:%y}-av40\
+0_{date:%Y}/av40\
+0_{date:%b%d-%Y}\
+\x22,\x0a    \x22archiv/n\
+eo400a/{date:%y}\
+-neo400a_{date:%\
+Y}/neo400a_{date\
+:%b%d-%Y}\x22,\x0a    \
+\x22archiv/neo400b/\
+{date:%y}-neo400\
+b_{date:%Y}/neo4\
+00b_{date:%b%d-%\
+Y}\x22,\x0a    \x22archiv\
+/neo400c/{date:%\
+y}-neo400c_{date\
+:%Y}/neo400c_{da\
+te:%b%d-%Y}\x22,\x0a]\x0a\
+admin_only = tru\
+e\x0asingle_check_o\
+nly = false\x0a\x0a[sp\
+ectrometers.av30\
+0]\x0amanufacturer \
+= \x22bruker\x22\x0adispl\
+ay_name = \x22Stude\
+r group NMR only\
+ (300 MHz)\x22\x0ameas\
 urement_pattern \
 = '<group!>\x5c_*<u\
-ser_name>?\x5c_*<us\
-er!>\x5c_*<user2!>?\
-\x5c_*<sample_id!>'\
- # Note the sing\
-le quotes! (= li\
-teral string)\x0ada\
-te_entry = \x22dd M\
-MM yyyy\x22\x0acheck_p\
-aths = [\x0a    \x22ar\
-chiv/dpx300/{dat\
-e:%y}-dpx300_{da\
-te:%Y}/dpx300_{d\
-ate:%b%d-%Y}\x22,\x0a \
-   \x22archiv/av300\
+ser!>\x5c_*<user2!>\
+?\x5c_*<sample_id!>\
+'\x0adate_entry = \x22\
+dd MMM yyyy\x22\x0ache\
+ck_paths = [\x0a   \
+ \x22av300/av1/av30\
+0_{date:%b%d-%Y}\
+\x22,\x0a]\x0aarchives = \
+[\x0a    \x22av300/av1\
 /{date:%y}-av300\
 _{date:%Y}/av300\
 _{date:%b%d-%Y}\x22\
-,\x0a    \x22archiv/av\
-400/{date:%y}-av\
-400_{date:%Y}/av\
-400_{date:%b%d-%\
-Y}\x22,\x0a    \x22archiv\
-/neo400a/{date:%\
-y}-neo400a_{date\
-:%Y}/neo400a_{da\
+,\x0a]\x0arestrict_to \
+= [\x0a    \x22stu\x22,\x0a \
+   \x22nae\x22,\x0a]\x0asing\
+le_check_only = \
+false\x0a\x0a[spectrom\
+eters.neo400]\x0ama\
+nufacturer = \x22br\
+uker\x22\x0adisplay_na\
+me = \x22Routine NM\
+R (300 && 400 MH\
+z)\x22\x0ameasurement_\
+pattern = '<grou\
+p!>\x5c_*<user!>\x5c_*\
+<user2!>?\x5c_*<sam\
+ple_id!>'\x0adate_e\
+ntry = \x22dd MMM y\
+yyy\x22\x0acheck_paths\
+ = [\x0a    \x22neo400\
+/av1/neo400a_{da\
 te:%b%d-%Y}\x22,\x0a  \
-  \x22archiv/neo400\
-b/{date:%y}-neo4\
-00b_{date:%Y}/ne\
+  \x22neo400/av1/ne\
 o400b_{date:%b%d\
--%Y}\x22,\x0a    \x22arch\
-iv/neo400c/{date\
-:%y}-neo400c_{da\
-te:%Y}/neo400c_{\
+-%Y}\x22,\x0a    \x22neo4\
+00/av1/neo400c_{\
 date:%b%d-%Y}\x22,\x0a\
-]\x0aadmin_only = t\
-rue\x0asingle_check\
-_only = false\x0a\x0a[\
-spectrometers.av\
-300]\x0amanufacture\
-r = \x22bruker\x22\x0adis\
-play_name = \x22Stu\
-der group NMR on\
-ly (300 MHz)\x22\x0ame\
-asurement_patter\
-n = '<group!>\x5c_*\
-<user!>\x5c_*<user2\
-!>?\x5c_*<sample_id\
-!>'\x0adate_entry =\
- \x22dd MMM yyyy\x22\x0ac\
-heck_paths = [\x0a \
-   \x22av300/av1/av\
-300_{date:%b%d-%\
-Y}\x22,\x0a]\x0aarchives \
-= [\x0a    \x22av300/a\
-v1/{date:%y}-av3\
-00_{date:%Y}/av3\
-00_{date:%b%d-%Y\
-}\x22,\x0a]\x0arestrict_t\
-o = [\x0a    \x22stu\x22,\
-\x0a    \x22nae\x22,\x0a]\x0asi\
-ngle_check_only \
-= false\x0a\x0a[spectr\
-ometers.neo400]\x0a\
-manufacturer = \x22\
-bruker\x22\x0adisplay_\
-name = \x22Routine \
-NMR (300 && 400 \
-MHz)\x22\x0ameasuremen\
-t_pattern = '<gr\
-oup!>\x5c_*<user!>\x5c\
-_*<user2!>?\x5c_*<s\
-ample_id!>'\x0adate\
-_entry = \x22dd MMM\
- yyyy\x22\x0acheck_pat\
-hs = [\x0a    \x22neo4\
-00/av1/neo400a_{\
-date:%b%d-%Y}\x22,\x0a\
-    \x22neo400/av1/\
+]\x0aarchives = [\x0a \
+   \x22neo400/av1/{\
+date:%y}-neo400a\
+_{date:%Y}/neo40\
+0a_{date:%b%d-%Y\
+}\x22,\x0a    \x22neo400/\
+av1/{date:%y}-ne\
+o400b_{date:%Y}/\
 neo400b_{date:%b\
 %d-%Y}\x22,\x0a    \x22ne\
-o400/av1/neo400c\
-_{date:%b%d-%Y}\x22\
-,\x0a]\x0aarchives = [\
-\x0a    \x22neo400/av1\
-/{date:%y}-neo40\
-0a_{date:%Y}/neo\
-400a_{date:%b%d-\
-%Y}\x22,\x0a    \x22neo40\
-0/av1/{date:%y}-\
-neo400b_{date:%Y\
-}/neo400b_{date:\
-%b%d-%Y}\x22,\x0a    \x22\
-neo400/av1/{date\
-:%y}-neo400c_{da\
-te:%Y}/neo400c_{\
-date:%b%d-%Y}\x22,\x0a\
-]\x0ainclude = [ \x22a\
-v300\x22 ]\x0asingle_c\
-heck_only = fals\
-e\x0a\x0a[spectrometer\
-s.hf]\x0amanufactur\
-er = \x22agilent\x22\x0ad\
-isplay_name = \x22H\
-igh-field spectr\
-ometers (500 && \
-600 MHz)\x22\x0asample\
-_pattern = '<use\
-r!><user2!>?<sam\
-ple_id!>'\x0ameasur\
-ement_pattern = \
-'<user!><user2!>\
-?<sample_id!>_(\x5c\
-d{6})_<temperatu\
-re>k_<experiment\
->_<measurement_n\
-o>\x5c.fid'\x0adate_en\
-try = \x22yyyy\x22\x0ache\
-ck_paths = [\x0a   \
- \x22500-600er/{gro\
-up_name}/{date:%\
-Y}\x22,\x0a]\x0aarchives \
-= [\x0a    \x22archiv/\
+o400/av1/{date:%\
+y}-neo400c_{date\
+:%Y}/neo400c_{da\
+te:%b%d-%Y}\x22,\x0a]\x0a\
+include = [ \x22av3\
+00\x22 ]\x0asingle_che\
+ck_only = false\x0a\
+\x0a[spectrometers.\
+hf]\x0amanufacturer\
+ = \x22agilent\x22\x0adis\
+play_name = \x22Hig\
+h-field spectrom\
+eters (500 && 60\
+0 MHz)\x22\x0asample_p\
+attern = '<user!\
+><user2!>?<sampl\
+e_id!>'\x0ameasurem\
+ent_pattern = '<\
+user!><user2!>?<\
+sample_id!>_(\x5cd{\
+6})_<temperature\
+>k_<experiment>_\
+<measurement_no>\
+\x5c.fid'\x0adate_entr\
+y = \x22yyyy\x22\x0acheck\
+_paths = [\x0a    \x22\
 500-600er/{group\
 _name}/{date:%Y}\
-\x22,\x0a]\x0asingle_chec\
-k_only = true\x0a\
+\x22,\x0a]\x0aarchives = \
+[\x0a    \x22archiv/50\
+0-600er/{group_n\
+ame}/{date:%Y}\x22,\
+\x0a]\x0asingle_check_\
+only = true\x0a\
 "
 
 qt_resource_name = b"\
@@ -292,7 +295,7 @@ qt_resource_struct = b"\
 \x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x01\
 \x00\x00\x00\x00\x00\x00\x00\x00\
 \x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\
-\x00\x00\x01\x9e\xbc\x09\x06{\
+\x00\x00\x01\x9e\xbc\x12\xc0\xa1\
 "
 
 def qInitResources():

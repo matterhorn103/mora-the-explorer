@@ -426,9 +426,11 @@ Additionally, all non-ASCII, non-alphanumerical characters are normalized by rep
 
 `admin.version` – The version of the app; should not be changed independently, and must always be the same as the value in `pyproject.toml`
 
-`admin.email` – The email address that an email should be sent to for bug reports, used by the **Report a bug** link in the app
-
 `admin.changelog` – Release notes for the current version, which are shown to the user when a new version of the app is found on the server during startup
+
+`admin.support_email` – The email address that an email should be sent to for bug reports, used by the **Report a bug** link in the app; separate with commas for multiple recipients
+
+`admin.support_cc` – As `support_email`, but specifies the addresses for the CC field; separate with commas for multiple recipients
 
 #### `[groups]`
 

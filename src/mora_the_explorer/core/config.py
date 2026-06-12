@@ -83,8 +83,9 @@ class Paths:
 class Admin:
     pattern_separator: str
     version: str
-    email: str
     changelog: str
+    support_email: str
+    support_cc: str | None = None
 
 
 @dataclass
